@@ -1,0 +1,36 @@
+<!doctype html>
+<html>
+<head>
+  <title>Assign Task</title>
+  <link rel="stylesheet" href="/admin.css">
+</head>
+<body>
+  <div class="layout">
+    <div class="sidebar">
+      <h2>Admin</h2>
+      <a href="/admin-dashboard">View Tasks</a>
+      <a href="/assign">Assign Task</a>
+      <a href="/logout">Logout</a>
+    </div>
+
+    <div class="main">
+      <h2>Assign Task</h2>
+      <form method="POST" action="/assign">
+        <input name="title" placeholder="Title" required />
+        <textarea name="description" placeholder="Description"></textarea>
+        <input type="date" name="startDate" />
+        <input type="date" name="endDate" />
+        <select name="status">
+          <option>Pending</option>
+          <option>In Progress</option>
+          <option>Completed</option>
+        </select>
+        <select name="assigneeEmail" required>
+          <%- options %>
+        </select>
+        <button type="submit">Assign</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

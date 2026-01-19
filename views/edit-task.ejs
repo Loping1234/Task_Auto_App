@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Task</title>
+  <style>
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 { 
+      color: #333;
+      margin-bottom: 30px;
+    }
+    form { 
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin-top: 15px;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+    input, textarea, select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    button { 
+      margin-top: 25px;
+      background: #007bff; 
+      color: white; 
+      border: none; 
+      cursor: pointer; 
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    button:hover { 
+      background: #0056b3; 
+    }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 20px;
+      color: #007bff;
+      text-decoration: none;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/admin-dashboard" class="back-link">← Back to Dashboard</a>
+    <h1>Edit Task</h1>
+    <form action="/update-task/<%= task._id %>" method="POST">
+      <label for="title">Task Title *</label>
+      <input id="title" name="title" placeholder="Enter task title" value="<%= task.title %>" required>
+      
+      <label for="description">Description</label>
+      <textarea id="description" name="description" placeholder="Enter task description"><%= task.description || '' %></textarea>
+      
+      <label for="startDate">Start Date</label>
+      <input id="startDate" type="date" name="startDate" value="<%= task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '' %>">
+      
+      <label for="endDate">End Date</label>
+      <input id="endDate" type="date" name="endDate" value="<%= task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '' %>">
+      
+      <label for="status">Status</label>
+      <select id="status" name="status">
+        <option <%= task.status === 'Pending' ? 'selected' : '' %>>Pending</option>
+        <option <%= task.status === 'In Progress' ? 'selected' : '' %>>In Progress</option>
+        <option <%= task.status === 'Completed' ? 'selected' : '' %>>Completed</option>
+      </select>
+      
+      <label for="assigneeEmail">Assign To *</label>
+      <select id="assigneeEmail" name="assigneeEmail" required>
+        <% employees.forEach(emp => { %>
+          <option value="<%= emp.email %>" <%= emp.email === task.assigneeEmail ? 'selected' : '' %>><%= emp.email %></option>
+        <% }); %>
+      </select>
+      
+      <button type="submit">Update Task</button>
+    </form>
+  </div>
+</body>
+</html>

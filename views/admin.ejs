@@ -1,0 +1,116 @@
+<!doctype html>
+<html>
+<head>
+  <title>Admin Dashboard</title>
+  <link rel = "stylesheet" href="/admin.css">
+  <style>
+    .task-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    .task-card {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    .task-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+    }
+    .task-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    .task-description {
+      color: #666;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .task-info {
+      font-size: 13px;
+      color: #888;
+      margin: 5px 0;
+    }
+    .task-status {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    .status-pending { background: #fff3cd; color: #856404; }
+    .status-inprogress { background: #cce5ff; color: #004085; }
+    .status-completed { background: #d4edda; color: #155724; }
+    .task-actions {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-edit { background: #007bff; color: white; }
+    .btn-delete { background: #dc3545; color: white; }
+    .btn:hover { opacity: 0.8; }
+    .no-tasks {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+      grid-column: 1 / -1;
+    }
+  </style>
+</head>
+<body>
+  <div class = "layout">
+    <div class = "sidebar">
+      <h1>Admin Dashboard</h1>
+      <a href="/assign">Assign Task</a>
+      <a href="/logout">Logout</a>
+    </div>
+
+    <div class = "main">
+      <h1>Tasks</h1>
+      <div class="task-grid">
+        <% if (tasks.length === 0) { %>
+          <div class="no-tasks">No tasks assigned yet.</div>
+        <% } else { %>
+          <% tasks.forEach(task => { %>
+            <div class="task-card">
+              <div class="task-title"><%= task.title %></div>
+              <div class="task-description"><%= task.description || 'No description' %></div>
+              <div class="task-info"><strong>Assigned to:</strong> <%= task.assigneeEmail %></div>
+              <div class="task-info"><strong>Start:</strong> <%= task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A' %></div>
+              <div class="task-info"><strong>End:</strong> <%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'N/A' %></div>
+              <span class="task-status status-<%= task.status.toLowerCase().replace(' ', '') %>">
+                <%= task.status %>
+              </span>
+              <div class="task-actions">
+                <form action="/update-task/<%= task._id %>" method="GET" style="display: inline;">
+                  <button type="submit" class="btn btn-edit">Edit</button>
+                </form>
+                <form action="/delete-task/<%= task._id %>" method="POST" style="display: inline;" onsubmit="return confirm('Delete this task?')">
+                  <button type="submit" class="btn btn-delete">Delete</button>
+                </form>
+              </div>
+            </div>
+          <% }); %>
+        <% } %>
+      </div>
+    </div>
+  </div>  
+</body>
+</html>

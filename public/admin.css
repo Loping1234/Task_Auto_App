@@ -1,0 +1,90 @@
+* {
+  box-sizing: border-box;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f4f6f8;
+  color: #333;
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background: #1f2937;
+  color: #fff;
+  padding: 20px;
+}
+
+.sidebar h2 {
+  margin-top: 0;
+  font-size: 18px;
+}
+
+.sidebar a {
+  display: block;
+  color: #e5e7eb;
+  text-decoration: none;
+  padding: 10px 0;
+}
+
+.sidebar a:hover {
+  color: #fff;
+}
+
+/* Main content */
+.main {
+  flex: 1;
+  padding: 30px;
+}
+
+/* Task cards */
+.task-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 15px;
+}
+
+.task-card {
+  background: #fff;
+  padding: 15px;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  cursor: pointer;
+}
+
+.task-card:hover {
+  transform: translateY(-2px);
+}
+
+.task-card h4 {
+  margin: 0 0 8px;
+}
+
+/* Forms */
+input, textarea, select, button {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+}
+
+button {
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1e4fd6;
+}
+
+a.danger {
+  color: #dc2626;
+}
