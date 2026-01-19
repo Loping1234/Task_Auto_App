@@ -3,8 +3,27 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 const collection = require("./config");
 const Task = require("../models/task");
+const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
+
+const imgsDir = path.join(__dirname, '../imgs');
+if (!fs.existsSync(imgsDir)) {
+    fs.mkdirSync(imgsDir, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, imgsDir);
+    },
+    filename: (req, file, cb) => {
+        cb(null, Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({storage:storage});
+app.use('/fontawesome', express.static('node_modules/@fortawesome/fontawesome-free'));
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
 app.use(session({
@@ -93,11 +112,31 @@ app.get("/admin-dashboard", async (req, res) =>{
         });
         const options = employees.map(emp=> `<option value="${emp.email}">${emp.email}</option>`).join('');
         const allTasks = await Task.find().sort({ createdAt: -1});
-        res.render("admin", {options, tasks:allTasks, employees});
+        const emp = employees.length;
+        const emp_names = employees.map(emp => emp.email);
+        const taskCount = allTasks.length;
+        const task_names = allTasks.map(taskCount => taskCount.title)
+        res.render("admin", {options, tasks:allTasks, emp, employees, taskCount, task_names, emp_names});
     }
     catch(err){
         console.error("Error fetching employees", err)
         res.status(500).send("Error loading admin dashboard");
+    }
+})
+
+app.get("/view-emp", async (req, res) =>{
+    try{
+        const employee = await collection.find({
+            $or: [
+                {role: "employee"},
+                {email: {$regex: "@emp\\.com$"}}
+            ]
+        })
+        res.render("viewemps", {employee});
+        }
+    catch(err){
+        console.error("Error fetching employees", err);
+        res.status(500).send("Error loading employees");
     }
 })
 
@@ -117,7 +156,7 @@ app.get("/assign", async (req, res) => {
     }
 });
 
-app.post("/assign", async (req, res) => {
+app.post("/assign", upload.single('image'), async (req, res) => {
     try{
         const { title, description, startDate, endDate, status, assigneeEmail } = req.body;
         if (!title || !assigneeEmail) {
@@ -131,6 +170,8 @@ app.post("/assign", async (req, res) => {
         const task = await Task.create({
             title,
             description,
+            image: req.file ? req.file.filename : null,
+            imageContentType: req.file ? req.file.mimetype : null,
             startDate: startDate ? new Date(startDate) : undefined,
             endDate: endDate ? new Date(endDate) : undefined,
             status: status || "Pending",
@@ -149,6 +190,42 @@ app.post("/assign", async (req, res) => {
     }
 })
 
+app.get("/task-img/:id", async (req, res) =>{
+    try{
+        const task = await Task.findById(req.params.id);
+        if (!task || !task.image){
+            return res.status(404).send("Image not found");
+        }
+        const imagePath = path.join(imgsDir, task.image);
+        if (!fs.existsSync(imagePath)) {
+            return res.status(404).send("Image file not found");
+        }
+        res.sendFile(imagePath);
+    }
+    catch(err){
+        console.error("Error fetching image,", err);
+        res.status(500).send("Error loading image");
+    }
+});
+
+app.get("/existingtasks", async (req, res) =>{
+    try{
+        const employees = await collection.find({
+            $or: [
+                { role: "employee" },
+                { email: { $regex: "@emp\\.com$" } }
+            ]
+        });
+        const options = employees.map(emp=> `<option value="${emp.email}">${emp.email}</option>`).join('');
+        const allTasks = await Task.find().sort({ createdAt: -1});
+        res.render("existingtasks", {options, tasks:allTasks, employees});        
+    }
+    catch (err){
+        console.error("Error fetching tasks", err)
+        res.status(500).send("No tasks found");
+    }
+})
+
 app.get("/logout", (req, res) => {
     req.session.destroy((err) => {
         if (err) {
@@ -158,7 +235,6 @@ app.get("/logout", (req, res) => {
         res.redirect("/");
     });
 });
-
 
 app.get("/update-task/:id", async (req, res) => {
     try {
@@ -183,7 +259,7 @@ app.get("/update-task/:id", async (req, res) => {
     }
 });
 
-app.post("/update-task/:id", async (req, res) => {
+app.post("/update-task/:id", upload.single('image'), async (req, res) => {
     try {
         const { title, description, startDate, endDate, status, assigneeEmail } = req.body;
         const taskId = req.params.id;
@@ -197,11 +273,35 @@ app.post("/update-task/:id", async (req, res) => {
             return res.status(404).send("Task not found");
         }
 
+        const updateData = {
+            title,
+            description,
+            startDate: startDate ? new Date(startDate) : undefined,
+            endDate: endDate ? new Date(endDate) : undefined,
+            status: status || "Pending",
+            assigneeEmail
+        };
+
+        // Delete old image if new one is provided
+        if (req.file) {
+            if (oldTask.image) {
+                const oldImagePath = path.join(imgsDir, oldTask.image);
+                if (fs.existsSync(oldImagePath)) {
+                    fs.unlinkSync(oldImagePath);
+                }
+            }
+            updateData.image = req.file.filename;
+            updateData.imageContentType = req.file.mimetype;
+        }
+
         const updatedTask = await Task.findByIdAndUpdate(
             taskId,
+            updateData,
             {
                 title,
                 description,
+                image: req.file ? req.file.buffer : null,
+                imageContentType: req.file ? req.file.mimetype : null,
                 startDate: startDate ? new Date(startDate) : undefined,
                 endDate: endDate ? new Date(endDate) : undefined,
                 status: status || "Pending",
@@ -209,6 +309,11 @@ app.post("/update-task/:id", async (req, res) => {
             },
             { new: true }
         );
+
+        if (req.file) {
+            updateData.image = req.file.buffer;
+            updateData.imageContentType = req.file.mimetype;
+        }
 
         if (oldTask.assigneeEmail !== assigneeEmail) {
             await collection.updateOne(
@@ -222,7 +327,7 @@ app.post("/update-task/:id", async (req, res) => {
             );
         }
 
-        res.redirect("/admin-dashboard");
+        res.redirect("/existingtasks");
     } catch (err) {
         console.error("Error updating task", err);
         res.status(500).send("Update failed");
@@ -238,6 +343,14 @@ app.post("/delete-task/:id", async (req, res) => {
             return res.status(404).send("Task not found");
         }
 
+        // Delete image file if it exists
+        if (task.image) {
+            const imagePath = path.join(imgsDir, task.image);
+            if (fs.existsSync(imagePath)) {
+                fs.unlinkSync(imagePath);
+            }
+        }
+
         await collection.updateOne(
             { email: task.assigneeEmail },
             { $pull: { assignedTasks: taskId } }
@@ -245,7 +358,7 @@ app.post("/delete-task/:id", async (req, res) => {
 
         await Task.findByIdAndDelete(taskId);
 
-        res.redirect("/admin-dashboard");
+        res.redirect("/existingtasks");
     } catch (err) {
         console.error("Error deleting task", err);
         res.status(500).send("Delete failed");

@@ -10,6 +10,14 @@ const TaskSchema = new mongoose.Schema(
             type: String,
             required: false
         },
+        image: {
+            type: String,
+            required: false
+        },
+        imageContentType: {
+            type: String,
+            required: false
+        },
         startDate: {
             type: Date,
             required: false

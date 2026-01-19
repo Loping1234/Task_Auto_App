@@ -16,12 +16,23 @@ h2{
     margin-bottom: 30px;
 }
 
-.form-container{
-    width: 300px;
-    margin: 0 auto;
-    padding: 20px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
+html, body {
+    height: 100%;
+    margin: 0;
+  }
+  #bg-root {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+.form-container {
+   position: relative;
+   z-index: 1;
+   width: 300px;
+   margin: 0 auto;
+   padding: 20px;
+   border: 1px solid #ccc;
+   border-radius: 5px;
 }
 
 .form-group{

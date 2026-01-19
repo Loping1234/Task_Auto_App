@@ -7,17 +7,18 @@
 <body>
   <div class="layout">
     <div class="sidebar">
-      <h2>Admin</h2>
-      <a href="/admin-dashboard">View Tasks</a>
+      <h1>Admin Dashboard</h1>
+      <a href="/admin-dashboard">Back to Dashboard</a>
       <a href="/assign">Assign Task</a>
       <a href="/logout">Logout</a>
     </div>
 
     <div class="main">
       <h2>Assign Task</h2>
-      <form method="POST" action="/assign">
+      <form method="POST" action="/assign" enctype="multipart/form-data">
         <input name="title" placeholder="Title" required />
         <textarea name="description" placeholder="Description"></textarea>
+        <input type="file" name="image" accept="image/*">
         <input type="date" name="startDate" />
         <input type="date" name="endDate" />
         <select name="status">
