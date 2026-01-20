@@ -35,6 +35,36 @@ const TaskSchema = new mongoose.Schema(
             type: String,
             required: true
         },
+        titleHistory: [
+            {
+                value: String,
+                changedAt: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+        descriptionHistory: [
+            {
+                value: String,
+                changedAt: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
+        activityLog: [
+            {
+                field: String,
+                oldValue: String,
+                newValue: String,
+                changedBy: String,
+                changedAt: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ],
         deletedAt: {
             type: Date,
             required: false

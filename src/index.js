@@ -81,16 +81,26 @@ app.post("/login", async (req, res) => {
             req.session.userEmail = user.email;
             req.session.userRole = user.role;
             
-            const domain = user.email.split("@")[1];
-            if (domain === "emp.com"){
-                res.redirect("/emp-dashboard");
-            }
-            else if (domain === "admin.com"){
-                res.redirect("/admin-dashboard");
-            }
-            else{
-                res.redirect("/dashboard");
-            }
+            // Explicitly save session before redirect
+            req.session.save((err) => {
+                if (err) {
+                    console.error("Session save error:", err);
+                    return res.status(500).send("Login failed");
+                }
+                
+                console.log("Session saved. User email:", req.session.userEmail);
+                
+                const domain = user.email.split("@")[1];
+                if (domain === "emp.com"){
+                    res.redirect("/emp-dashboard");
+                }
+                else if (domain === "admin.com"){
+                    res.redirect("/admin-dashboard");
+                }
+                else{
+                    res.redirect("/dashboard");
+                }
+            });
         }
         else{
             res.status(401).send("Invalid password");
@@ -182,7 +192,7 @@ app.post("/assign", upload.single('image'), async (req, res) => {
         assignee.assignedTasks.push(task._id);
         await assignee.save();
 
-        res.redirect("/admin-dashboard");
+        res.redirect("/existingtasks");
     }
     catch(err){
         console.error("Error assigning tasks", err)
@@ -223,6 +233,34 @@ app.get("/existingtasks", async (req, res) =>{
     catch (err){
         console.error("Error fetching tasks", err)
         res.status(500).send("No tasks found");
+    }
+})
+
+app.get("/taskDetails/:id", async (req, res) => {
+    try {
+        const taskId = req.params.id;
+        const task = await Task.findById(taskId);
+        
+        if (!task) {
+            return res.status(404).send("Task not found");
+        }
+
+        // Sort activity log by date, newest first
+        if (task.activityLog) {
+            task.activityLog.sort((a, b) => new Date(b.changedAt) - new Date(a.changedAt));
+        }
+        
+        const employees = await collection.find({
+            $or: [
+                { role: "employee" },
+                { email: { $regex: "@emp\\.com$" } }
+            ]
+        });
+        
+        res.render("taskDetails", { task, employees });
+    } catch (err) {
+        console.error("Error fetching task details", err);
+        res.status(500).send("Error loading task details");
     }
 })
 
@@ -282,6 +320,92 @@ app.post("/update-task/:id", upload.single('image'), async (req, res) => {
             assigneeEmail
         };
 
+        // Track prior values so the UI can offer a rollback list
+        const pushOps = {};
+        if (oldTask.title !== title) {
+            pushOps.titleHistory = { value: oldTask.title || "", changedAt: new Date() };
+        }
+        if (oldTask.description !== description) {
+            pushOps.descriptionHistory = { value: oldTask.description || "", changedAt: new Date() };
+        }
+
+        // Build activity log entries
+        const activityEntries = [];
+        console.log("Update-task session:", req.session.userEmail);
+        const changedBy = req.session.userEmail || "Unknown";
+        
+        if (oldTask.title !== title) {
+            activityEntries.push({
+                field: "Title",
+                oldValue: oldTask.title || "Empty",
+                newValue: title,
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+        if (oldTask.description !== description) {
+            activityEntries.push({
+                field: "Description",
+                oldValue: oldTask.description ? (oldTask.description.substring(0, 50) + "...") : "Empty",
+                newValue: description ? (description.substring(0, 50) + "...") : "Empty",
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+        if (oldTask.status !== status) {
+            activityEntries.push({
+                field: "Status",
+                oldValue: oldTask.status,
+                newValue: status,
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+        if (oldTask.assigneeEmail !== assigneeEmail) {
+            activityEntries.push({
+                field: "Assigned To",
+                oldValue: oldTask.assigneeEmail,
+                newValue: assigneeEmail,
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+        const oldStartDate = oldTask.startDate ? new Date(oldTask.startDate).toISOString().split('T')[0] : null;
+        const newStartDate = startDate ? new Date(startDate).toISOString().split('T')[0] : null;
+        if (oldStartDate !== newStartDate) {
+            activityEntries.push({
+                field: "Start Date",
+                oldValue: oldStartDate || "Not set",
+                newValue: newStartDate || "Not set",
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+        const oldEndDate = oldTask.endDate ? new Date(oldTask.endDate).toISOString().split('T')[0] : null;
+        const newEndDate = endDate ? new Date(endDate).toISOString().split('T')[0] : null;
+        if (oldEndDate !== newEndDate) {
+            activityEntries.push({
+                field: "End Date",
+                oldValue: oldEndDate || "Not set",
+                newValue: newEndDate || "Not set",
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+        if (req.file) {
+            activityEntries.push({
+                field: "Image",
+                oldValue: oldTask.image ? "Image updated" : "No image",
+                newValue: "New image uploaded",
+                changedBy,
+                changedAt: new Date()
+            });
+        }
+
+        if (activityEntries.length > 0) {
+            pushOps.activityLog = { $each: activityEntries };
+        }
+
         // Delete old image if new one is provided
         if (req.file) {
             if (oldTask.image) {
@@ -294,19 +418,14 @@ app.post("/update-task/:id", upload.single('image'), async (req, res) => {
             updateData.imageContentType = req.file.mimetype;
         }
 
+        const updatePayload = { $set: updateData };
+        if (Object.keys(pushOps).length) {
+            updatePayload.$push = pushOps;
+        }
+
         const updatedTask = await Task.findByIdAndUpdate(
             taskId,
-            updateData,
-            {
-                title,
-                description,
-                image: req.file ? req.file.buffer : null,
-                imageContentType: req.file ? req.file.mimetype : null,
-                startDate: startDate ? new Date(startDate) : undefined,
-                endDate: endDate ? new Date(endDate) : undefined,
-                status: status || "Pending",
-                assigneeEmail
-            },
+            updatePayload,
             { new: true }
         );
 
@@ -383,6 +502,104 @@ app.get("/dashboard", (req, res) => {
     res.render("home");
 });
 
+// Quick status update endpoint
+app.post("/update-status/:id", async (req, res) => {
+    try {
+        const { status } = req.body;
+        const taskId = req.params.id;
+
+        if (!status) {
+            return res.status(400).json({ error: "Status is required" });
+        }
+
+        const oldTask = await Task.findById(taskId);
+        if (!oldTask) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        console.log("Update-status session:", req.session.userEmail);
+        const changedBy = req.session.userEmail || "Unknown";
+        const activityEntry = {
+            field: "Status",
+            oldValue: oldTask.status,
+            newValue: status,
+            changedBy,
+            changedAt: new Date()
+        };
+
+        const updatedTask = await Task.findByIdAndUpdate(
+            taskId,
+            { 
+                status,
+                $push: { activityLog: activityEntry }
+            },
+            { new: true }
+        );
+
+        if (!updatedTask) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        res.json({ success: true, task: updatedTask });
+    } catch (error) {
+        console.error("Error updating status:", error);
+        res.status(500).json({ error: "Failed to update status" });
+    }
+});
+
+// Quick assignee update endpoint
+app.post("/update-assignee/:id", async (req, res) => {
+    try {
+        const { assigneeEmail } = req.body;
+        const taskId = req.params.id;
+
+        if (!assigneeEmail) {
+            return res.status(400).json({ error: "Assignee email is required" });
+        }
+
+        const oldTask = await Task.findById(taskId);
+        if (!oldTask) {
+            return res.status(404).json({ error: "Task not found" });
+        }
+
+        console.log("Update-assignee session:", req.session.userEmail);
+        const changedBy = req.session.userEmail || "Unknown";
+        const activityEntry = {
+            field: "Assignee",
+            oldValue: oldTask.assigneeEmail,
+            newValue: assigneeEmail,
+            changedBy,
+            changedAt: new Date()
+        };
+
+        const updatedTask = await Task.findByIdAndUpdate(
+            taskId,
+            { 
+                assigneeEmail,
+                $push: { activityLog: activityEntry }
+            },
+            { new: true }
+        );
+
+        // Update user task assignments
+        if (oldTask.assigneeEmail !== assigneeEmail) {
+            await collection.updateOne(
+                { email: oldTask.assigneeEmail },
+                { $pull: { assignedTasks: taskId } }
+            );
+            
+            await collection.updateOne(
+                { email: assigneeEmail },
+                { $addToSet: { assignedTasks: taskId } }
+            );
+        }
+
+        res.json({ success: true, task: updatedTask });
+    } catch (error) {
+        console.error("Error updating assignee:", error);
+        res.status(500).json({ error: "Failed to update assignee" });
+    }
+});
 
 const PORT = 3000;
 app.listen(PORT, () => {
