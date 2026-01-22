@@ -32,13 +32,43 @@ app.use(session({
     saveUninitialized: false,
     cookie: { secure: false }
 }));
+
+// Prevent caching for all routes to handle back button after logout
+app.use((req, res, next) => {
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate'); // HTTP 1.1.
+    res.setHeader('Pragma', 'no-cache'); // HTTP 1.0.
+    res.setHeader('Expires', '0'); // Proxies.
+    next();
+});
+
+// Middleware to check if user is logged in
+const isAuthenticated = (req, res, next) => {
+    if (req.session.userEmail) {
+        return next();
+    }
+    res.redirect("/login");
+};
+
+// Middleware to check if user is already logged in (for login/signup pages)
+const isAlreadyAuthenticated = (req, res, next) => {
+    if (req.session.userEmail) {
+        if (req.session.userRole === "admin") {
+            return res.redirect("/admin-dashboard");
+        } else if (req.session.userRole === "employee") {
+            return res.redirect("/emp-dashboard");
+        }
+    }
+    next();
+};
+
 app.set('view engine', 'ejs');
 app.use(express.static("public"));
-app.get("/", (req, res) => {
+
+app.get("/", isAlreadyAuthenticated, (req, res) => {
     res.render("login");
 });
 
-app.get("/signup", (req, res) => {
+app.get("/signup", isAlreadyAuthenticated, (req, res) => {
     res.render("signup");
 });
 app.post("/signup", async (req, res) => {
@@ -67,7 +97,7 @@ app.post("/signup", async (req, res) => {
 });
 
 
-app.get("/login", (req, res) => {
+app.get("/login", isAlreadyAuthenticated, (req, res) => {
     res.render("login");
 });
 app.post("/login", async (req, res) => {
@@ -112,7 +142,7 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.get("/admin-dashboard", async (req, res) =>{
+app.get("/admin-dashboard", isAuthenticated, async (req, res) =>{
     try{
         const employees = await collection.find({
             $or: [
@@ -134,7 +164,7 @@ app.get("/admin-dashboard", async (req, res) =>{
     }
 })
 
-app.get("/view-emp", async (req, res) =>{
+app.get("/view-emp", isAuthenticated, async (req, res) =>{
     try{
         const employee = await collection.find({
             $or: [
@@ -150,7 +180,7 @@ app.get("/view-emp", async (req, res) =>{
     }
 })
 
-app.get("/assign", async (req, res) => {
+app.get("/assign", isAuthenticated, async (req, res) => {
     try {
         const employees = await collection.find({
             $or: [
@@ -218,7 +248,106 @@ app.get("/task-img/:id", async (req, res) =>{
     }
 });
 
-app.get("/existingtasks", async (req, res) =>{
+// Route to serve comment images
+app.get("/comment-img/:taskId/:commentId", async (req, res) => {
+    try {
+        const task = await Task.findById(req.params.taskId);
+        if (!task) return res.status(404).send("Task not found");
+        
+        const comment = task.comments.id(req.params.commentId);
+        if (!comment || !comment.image) return res.status(404).send("Image not found");
+
+        const imagePath = path.join(imgsDir, comment.image);
+        if (!fs.existsSync(imagePath)) return res.status(404).send("File not found");
+
+        res.sendFile(imagePath);
+    } catch (err) {
+        console.error("Error fetching comment image", err);
+        res.status(500).send("Error loading image");
+    }
+});
+
+// Route to add a comment
+app.post("/task/:id/comment", isAuthenticated, upload.single('image'), async (req, res) => {
+    try {
+        const { text } = req.body;
+        const taskId = req.params.id;
+
+        if (!text) {
+            return res.status(400).send("Comment text is required");
+        }
+
+        const comment = {
+            text,
+            author: req.session.userEmail,
+            image: req.file ? req.file.filename : null
+        };
+
+        await Task.findByIdAndUpdate(taskId, {
+            $push: { comments: comment }
+        });
+
+                // Render the same page with an acknowledgement message
+                const updatedTask = await Task.findById(taskId);
+                const employees = await collection.find({
+                    $or: [
+                        { role: "employee" },
+                        { email: { $regex: "@emp\\.com$" } }
+                    ]
+                });
+                res.render('emptaskDetails', {
+                    task: updatedTask,
+                    employees,
+                    userRole: req.session.userRole,
+                    userEmail: req.session.userEmail,
+                    commentSuccess: true
+                });
+    } catch (err) {
+        console.error("Error adding comment", err);
+        res.status(500).send("Failed to add comment");
+    }
+});
+
+app.get('/emptaskDetails/:id', async (req, res) => {
+    try {
+      const taskId = req.params.id;
+      const task = await Task.findById(taskId);
+      const employees = await collection.find({
+        $or: [
+          { role: "employee" },
+          { email: { $regex: "@emp\\.com$" } }
+        ]
+      });
+      if (!task) {
+        return res.status(404).send('Task not found');
+      }
+      res.render('emptaskDetails', { 
+        task, 
+        employees, 
+        userRole: req.session.userRole, 
+        userEmail: req.session.userEmail 
+      });
+    } catch (err) {
+      console.error("Error fetching task details", err);
+      res.status(500).send("Error loading task details");
+    }
+  });
+
+app.get('/emptaskComment/:id', async(req, res) => {
+    const id = req.params.id;
+    const employees = await collection.find({
+        $or: [
+            { role: "employee" },
+            { email: { $regex: "@emp\\.com$" } }
+        ]
+    });
+    const options = employees.map(emp=> `<option value="${emp.email}">${emp.email}</option>`).join('');
+    const allTasks = await Task.find().sort({ createdAt: -1});
+    res.render("emptaskComment", {options, tasks:allTasks, employees}); 
+  });
+  
+
+app.get("/existingtasks", isAuthenticated, async (req, res) =>{
     try{
         const employees = await collection.find({
             $or: [
@@ -236,13 +365,20 @@ app.get("/existingtasks", async (req, res) =>{
     }
 })
 
-app.get("/taskDetails/:id", async (req, res) => {
+app.get("/taskDetails/:id", isAuthenticated, async (req, res) => {
     try {
         const taskId = req.params.id;
-        const task = await Task.findById(taskId);
+        
+        let findQuery = { _id: taskId };
+        // Employee can only view tasks assigned to them
+        if (req.session.userRole === "employee") {
+            findQuery.assigneeEmail = req.session.userEmail;
+        }
+
+        const task = await Task.findOne(findQuery);
         
         if (!task) {
-            return res.status(404).send("Task not found");
+            return res.status(404).send("Task not found or unauthorized");
         }
 
         // Sort activity log by date, newest first
@@ -257,7 +393,12 @@ app.get("/taskDetails/:id", async (req, res) => {
             ]
         });
         
-        res.render("taskDetails", { task, employees });
+        res.render("taskDetails", { 
+            task, 
+            employees, 
+            userRole: req.session.userRole, 
+            userEmail: req.session.userEmail 
+        });
     } catch (err) {
         console.error("Error fetching task details", err);
         res.status(500).send("Error loading task details");
@@ -274,13 +415,20 @@ app.get("/logout", (req, res) => {
     });
 });
 
-app.get("/update-task/:id", async (req, res) => {
+app.get("/update-task/:id", isAuthenticated, async (req, res) => {
     try {
         const taskId = req.params.id;
-        const task = await Task.findById(taskId);
+        
+        let findQuery = { _id: taskId };
+        // Employee can only view tasks assigned to them
+        if (req.session.userRole === "employee") {
+            findQuery.assigneeEmail = req.session.userEmail;
+        }
+
+        const task = await Task.findOne(findQuery);
         
         if (!task) {
-            return res.status(404).send("Task not found");
+            return res.status(404).send("Task not found or unauthorized");
         }
 
         const employees = await collection.find({
@@ -484,12 +632,8 @@ app.post("/delete-task/:id", async (req, res) => {
     }
 });
 
-app.get("/emp-dashboard", async (req, res) => {
+app.get("/emp-dashboard", isAuthenticated, async (req, res) => {
     try {
-        if (!req.session.userEmail) {
-            return res.redirect("/login");
-        }
-        
         const tasks = await Task.find({ assigneeEmail: req.session.userEmail });
         res.render("employee", { tasks, email: req.session.userEmail });
     } catch (err) {
@@ -599,6 +743,19 @@ app.post("/update-assignee/:id", async (req, res) => {
         console.error("Error updating assignee:", error);
         res.status(500).json({ error: "Failed to update assignee" });
     }
+});
+
+// Example route handler
+app.get('/task/:id', async (req, res) => {
+  try {
+    const task = await Task.findById(req.params.id); // or your DB fetch logic
+    if (!task) {
+      return res.status(404).send('Task not found');
+    }
+    res.render('emptaskDetails', { task, /* other variables if needed */ });
+  } catch (err) {
+    res.status(500).send('Server error');
+  }
 });
 
 const PORT = 3000;

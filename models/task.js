@@ -68,7 +68,27 @@ const TaskSchema = new mongoose.Schema(
         deletedAt: {
             type: Date,
             required: false
-        }
+        },
+        comments: [
+            {
+                text: {
+                    type: String,
+                    required: true
+                },
+                author: {
+                    type: String,
+                    required: true
+                },
+                image: {
+                    type: String,
+                    required: false
+                },
+                createdAt: {
+                    type: Date,
+                    default: Date.now
+                }
+            }
+        ]
     },
     {
         timestamps: true

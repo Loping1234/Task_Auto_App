@@ -3,6 +3,7 @@
     "@fortawesome/fontawesome-free": "^7.1.0",
     "bcrypt": "^6.0.0",
     "body-parser": "^2.2.2",
+    "bootstrap": "^5.3.8",
     "cors": "^2.8.5",
     "denque": "^2.1.0",
     "dotenv": "^17.2.3",

@@ -1,9 +1,68 @@
 <!DOCTYPE html>
 <html lang="en">
+    <!-- Main Task Details Content -->
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card detail-card p-4 mb-4">
+                    <h1 class="h3 fw-bold mb-3 text-dark"><%= task.title %></h1>
+                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="fas fa-align-left text-primary small"></i> Description
+                    </h5>
+                    <div class="text-secondary lh-lg mb-4">
+                        <%- task.description || '<span class="text-muted fst-italic">No description provided.</span>' %>
+                    </div>
+                    <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                        <i class="fas fa-image text-primary small"></i> Attachment
+                    </h5>
+                    <% if (task.image) { %>
+                        <img src="/task-img/<%= task._id %>" alt="<%= task.title %>" class="task-image mb-2">
+                    <% } else { %>
+                        <div class="text-center py-4 bg-light rounded-3">
+                            <i class="fas fa-file-upload fs-2 text-muted opacity-25 mb-2 d-block"></i>
+                            <span class="text-muted small">No images attached</span>
+                        </div>
+                    <% } %>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase mb-2">Start Date</label>
+                            <div class="p-2 bg-light rounded small text-center"><%= task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A' %></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold text-muted text-uppercase mb-2">End Date</label>
+                            <div class="p-2 bg-light rounded small text-center"><%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'N/A' %></div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <label class="form-label small fw-bold text-muted text-uppercase mb-2">Status</label>
+                        <div class="p-2 bg-light rounded small text-center"><%= task.status %></div>
+                    </div>
+                </div>
+                                <!-- Comment Form at the bottom -->
+                                <% if (typeof commentSuccess !== 'undefined' && commentSuccess) { %>
+                                    <div class="alert alert-success">Comment submitted successfully!</div>
+                                <% } %>
+                <div class="card detail-card p-4 mb-4 mt-5">
+                    <h5 class="fw-bold mb-3 text-dark">Add a Comment</h5>
+                    <form action="/task/<%= task._id %>/comment" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="commentText" class="form-label">Comment</label>
+                            <textarea id="commentText" name="text" class="form-control" rows="3" placeholder="Write your comment here..." required></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="commentImage" class="form-label">Attach Image (optional)</label>
+                            <input type="file" id="commentImage" name="image" accept="image/*" class="form-control">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit Comment</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= task.title %> | Task Details</title>
+    <title><%= typeof task !== 'undefined' && task ? task.title : 'Task' %> | Task Details</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -78,104 +137,47 @@
         }
         .edit-field { display: none; }
         .editing .edit-field { display: block; }
-        .editing .view-field { display: none; }
-        .logout-btn {
-            position: absolute;
-            bottom: 24px;
-            left: 24px;
-            right: 24px;
-        }
-        .nav-tabs .nav-link {
-            border: none;
-            color: #64748b;
-            font-weight: 600;
-            padding: 12px 20px;
-            border-bottom: 2px solid transparent;
-        }
-        .nav-tabs .nav-link.active {
-            color: #4f46e5;
-            background: transparent;
-            border-bottom-color: #4f46e5;
-        }
-        .comment-avatar {
-            width: 36px;
-            height: 36px;
-            background: #e2e8f0;
-            color: #475569;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 14px;
-        }
-        .comment-bubble {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 12px 16px;
-            border: 1px solid #e2e8f0;
-        }
-    </style>
-</head>
-<body>
-    <div class="sidebar">
-        <a href="/admin-dashboard" class="sidebar-brand text-white">
-            <i class="fas fa-check-double text-primary"></i>
-            <span>TaskApp</span>
-        </a>
-        <nav class="nav flex-column mt-4">
-            <a href="/admin-dashboard" class="nav-link">
-                <i class="fas fa-home"></i> Dashboard
-            </a>
-            <a href="/existingtasks" class="nav-link">
-                <i class="fas fa-tasks"></i> All Tasks
-            </a>
-            <a href="/assign" class="nav-link">
-                <i class="fas fa-plus-circle"></i> Assign Task
-            </a>
-            <a href="/view-emp" class="nav-link">
-                <i class="fas fa-users"></i> Employees
-            </a>
-        </nav>
-        <div class="logout-btn">
-            <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
-        </div>
-    </div>
-
-    <main class="main-content">
-        <div class="container-fluid p-0">
-            <form id="inlineEditForm" enctype="multipart/form-data">
-                <header class="mb-4 d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1 me-4">
-                        <div id="successMessage" class="alert alert-success py-2 px-3 small mb-3" style="display: none;">
-                            <i class="fas fa-check-circle me-2"></i> Changes saved successfully.
-                        </div>
-                        
-                        <div class="view-field">
-                            <h1 class="h3 fw-bold mb-1 text-dark"><%= task.title %></h1>
-                            <p class="text-muted small mb-0">Task ID: <%= task._id %></p>
-                        </div>
-                        
-                        <div class="edit-field">
-                            <label class="form-label small fw-bold text-muted">Task Title</label>
-                            <input type="text" id="titleInput" name="title" value="<%= task.title %>" class="form-control form-control-lg fw-bold">
+        <main class="main-content">
+            <div class="container-fluid p-0">
+                <div class="row justify-content-center">
+                    <div class="col-md-8">
+                        <div class="card detail-card p-4 mb-4">
+                            <h1 class="h3 fw-bold mb-3 text-dark"><%= task.title %></h1>
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fas fa-align-left text-primary small"></i> Description
+                            </h5>
+                            <div class="text-secondary lh-lg mb-4">
+                                <%- task.description || '<span class="text-muted fst-italic">No description provided.</span>' %>
+                            </div>
+                            <h5 class="fw-bold mb-3 d-flex align-items-center gap-2">
+                                <i class="fas fa-image text-primary small"></i> Attachment
+                            </h5>
+                            <% if (task.image) { %>
+                                <img src="/task-img/<%= task._id %>" alt="<%= task.title %>" class="task-image mb-2">
+                            <% } else { %>
+                                <div class="text-center py-4 bg-light rounded-3">
+                                    <i class="fas fa-file-upload fs-2 text-muted opacity-25 mb-2 d-block"></i>
+                                    <span class="text-muted small">No images attached</span>
+                                </div>
+                            <% } %>
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">Start Date</label>
+                                    <div class="p-2 bg-light rounded small text-center"><%= task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A' %></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">End Date</label>
+                                    <div class="p-2 bg-light rounded small text-center"><%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'N/A' %></div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-2">Status</label>
+                                <div class="p-2 bg-light rounded small text-center"><%= task.status %></div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="d-flex gap-2 pt-1">
-                        <button type="button" class="btn btn-primary rounded-pill px-4" id="editBtn">
-                            <i class="fas fa-edit me-2"></i> Edit
-                        </button>
-                        <button type="submit" class="btn btn-success rounded-pill px-4" id="saveBtn" style="display: none;">
-                            <i class="fas fa-save me-2"></i> Save
-                        </button>
-                        <button type="button" class="btn btn-light border rounded-pill px-4 text-muted" id="cancelEditBtn" style="display: none;">
-                            Cancel
-                        </button>
-                        <button type="button" class="btn btn-danger rounded-pill px-4" id="deleteBtn">
-                            <i class="fas fa-trash me-2"></i> Delete
+                </div>
+            </div>
                         </button>
                     </div>
                 </header>
@@ -210,7 +212,7 @@
                                 <% } %>
                             </div>
                             <div class="edit-field">
-                                <input type="file" name="image" accept="image/*" class="form-control">
+                                <input type="file" name="image" accept="image/" class="form-control">
                             </div>
                         </div>
                     </div>

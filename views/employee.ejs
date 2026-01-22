@@ -3,70 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Employee Dashboard</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Employee Dashboard | TaskApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        body {
+            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
+        .navbar {
+            background-color: #ffffff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
         }
-        th {
-            background-color: #4CAF50;
-            color: white;
+        .dashboard-card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
-        tr:hover {
-            background-color: #f5f5f5;
+        .task-row:hover {
+            background-color: #f8f9fa;
         }
-        .status-pending { color: orange; font-weight: bold; }
-        .status-inprogress { color: blue; font-weight: bold; }
-        .status-completed { color: green; font-weight: bold; }
+        .status-badge {
+            font-weight: 500;
+            padding: 6px 12px;
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h1>Employee Dashboard</h1>
-        <p>Welcome, <%= email %>!</p>
-        <div class="dashboard-content">
-            <h2>Your Assigned Tasks</h2>
-            <% if (tasks.length === 0) { %>
-                <p>No tasks assigned yet.</p>
-            <% } else { %>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Description</th>
-                            <th>Image</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% tasks.forEach(task => { %>
-                            <tr>
-                                <td><%= task.title %></td>
-                                <td><%= task.description || 'N/A' %></td>
-                                <td>
-                                    <% if (task.image) { %>
-                                        <img src="/task-image/<%= task._id %>" alt="Task Image" style="max-width: 100%; height: auto;">
-                                    <% } %>
-                                </td>
-                                <td><%= task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A' %></td>
-                                <td><%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'N/A' %></td>
-                                <td class="status-<%= task.status.toLowerCase().replace(' ', '') %>"><%= task.status %></td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            <% } %>
+    <nav class="navbar navbar-expand-lg navbar-light sticky-top mb-4">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#">
+                <i class="fas fa-tasks me-2"></i>TaskApp
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                <span class="me-3 text-muted d-none d-md-inline small">
+                    <i class="fas fa-user-circle me-1"></i> <%= email %>
+                </span>
+                <a href="/logout" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirmLogout()">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container py-4">
+        <div class="row mb-4 align-items-center">
+            <div class="col">
+                <h1 class="h3 fw-bold mb-0">My Tasks</h1>
+                <p class="text-muted small">Manage and track your assigned responsibilities</p>
+            </div>
+        </div>
+
+        <div class="card dashboard-card bg-white">
+            <div class="card-body p-0">
+                <% if (tasks.length === 0) { %>
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-check fs-1 text-muted opacity-25 mb-3"></i>
+                        <p class="text-muted">You have no assigned tasks at the moment.</p>
+                    </div>
+                <% } else { %>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4 py-3">Task Details</th>
+                                    <th class="py-3">Deadline</th>
+                                    <th class="py-3">Status</th>
+                                    <th class="pe-4 py-3 text-end">View</th>
+                                    <th class="pe-4 py-3 text-end">Comment</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% tasks.forEach(task => { %>
+                                    <tr class="task-row">
+                                        <td class="ps-4 py-3">
+                                            <div class="d-flex align-items-center">
+                                                <% if (task.image) { %>
+                                                    <img src="/task-img/<%= task._id %>" class="rounded me-3" style="width: 48px; height: 48px; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div class="bg-light rounded d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                                                        <i class="fas fa-file-alt text-muted"></i>
+                                                    </div>
+                                                <% } %>
+                                                <div>
+                                                    <div class="fw-bold text-dark mb-0"><%= task.title %></div>
+                                                    <div class="text-muted small text-truncate" style="max-width: 300px;">
+                                                        <%- task.description ? task.description.replace(/<[^>]*>?/gm, '').substring(0, 50) + '...' : 'No description' %>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="py-3 text-muted small">
+                                            <i class="far fa-calendar-alt me-1"></i>
+                                            <%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'No deadline' %>
+                                        </td>
+                                        <td class="py-3">
+                                            <span class="badge rounded-pill status-badge
+                                                <%= task.status === 'completed' ? 'bg-success-subtle text-success border border-success-subtle' : 
+                                                   task.status === 'inprogress' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 
+                                                   'bg-warning-subtle text-warning border border-warning-subtle' %>">
+                                                <%= task.status %>
+                                            </span>
+                                        </td>
+                                        <td class="pe-4 py-3 text-end">
+                                            <a href="/emptaskDetails/<%= task._id %>" target="_blank" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                                                View Task
+                                            </a>
+                                        </td>
+                                        <td class="pe-4 py-3 text-end">
+                                            <a href="/emptaskComment/<%= task._id %>" class="btn btn-sm btn-primary rounded-pill px-3 shadow-sm">
+                                                Comment
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                <% } %>
+            </div>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmLogout() {
+            return confirm("Are you sure you want to log out?");
+        }
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
 </body>
 </html>
