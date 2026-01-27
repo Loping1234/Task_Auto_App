@@ -73,7 +73,7 @@
             <a href="/admin-dashboard" class="nav-link">
                 <i class="fas fa-home"></i> Dashboard
             </a>
-            <a href="/view-teammgmt" class="nav-link active">
+            <a href="/admin/team/manage" class="nav-link active">
                 <i class="fas fa-users-line"></i> Team Management
             </a>
             <a href="/viewsubadm" class="nav-link">
@@ -81,6 +81,9 @@
             </a>
             <a href="/view-emp" class="nav-link">
                 <i class="fas fa-users"></i> Employees
+            </a>
+            <a href="/admin-subadmin-chat" class="nav-link">
+                <i class="fas fa-comments"></i> Admin/Sub-admin Chat
             </a>
         </nav>
         <div class="logout-btn">
@@ -97,7 +100,7 @@
                 <p class="text-muted mb-0">Update team details and assignments</p>
             </div>
             <div class="d-flex gap-3">
-                <a href="/view-teammgmt" class="btn btn-secondary px-4 py-2 rounded-pill shadow-sm">
+                <a href="/admin/team/manage" class="btn btn-secondary px-4 py-2 rounded-pill shadow-sm">
                     <i class="fas fa-arrow-left me-2"></i> Back to Team Management
                 </a>
             </div>
@@ -110,10 +113,10 @@
                         <h5 class="mb-0 fw-bold">Team Information</h5>
                     </div>
                     <div class="card-body">
-                        <form action="/update-team/<%= team._id %>" method="POST">
+                        <form action="/admin/team/update/<%= team.teamName %>" method="POST">
                             <div class="mb-3">
                                 <label for="teamName" class="form-label fw-bold">Team Name</label>
-                                <input type="text" class="form-control" id="teamName" name="teamName" value="<%= team.teamName %>" required>
+                                <input type="text" class="form-control" id="teamName" name="newTeamName" value="<%= team.teamName %>" required>
                             </div>
                             <div class="mb-3">
                                 <label for="subadminEmail" class="form-label fw-bold">Assign to Sub-admin</label>
@@ -126,18 +129,25 @@
                             </div>
                             <div class="mb-3">
                                 <label for="employees" class="form-label fw-bold">Select Employees</label>
-                                <select class="form-select" id="employees" name="employees" multiple required>
+                                <select class="form-select" id="employees" name="employees" multiple size="8">
                                     <% employees.forEach((employee) => { %>
-                                        <option value="<%= employee.email %>" <%= team.employees.includes(employee.email) ? 'selected' : '' %>><%= employee.email %></option>
+                                        <% const inCurrentTeam = team.employees.includes(employee.email); %>
+                                        <% const inOtherTeam = employee.teamName && employee.teamName !== team.teamName; %>
+                                        <option value="<%= employee.email %>" 
+                                                <%= inCurrentTeam ? 'selected' : '' %>
+                                                <%= inOtherTeam ? 'disabled' : '' %>
+                                        >
+                                            <%= employee.email %> <%= inOtherTeam ? `(In: ${employee.teamName})` : '' %>
+                                        </option>
                                     <% }); %>
                                 </select>
-                                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple employees.</small>
+                                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple. Disabled employees are currently in a different team.</small>
                             </div>
                             <div class="d-flex gap-3">
                                 <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
                                     <i class="fas fa-save me-2"></i> Update Team
                                 </button>
-                                <a href="/view-teammgmt" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                                <a href="/admin/team/manage" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
                                     <i class="fas fa-times me-2"></i> Cancel
                                 </a>
                             </div>

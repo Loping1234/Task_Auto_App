@@ -104,6 +104,9 @@
             <a href="/view-emp" class="nav-link">
                 <i class="fas fa-users"></i> Employees
             </a>
+            <a href="/admin-subadmin-chat" class="nav-link">
+                <i class="fas fa-comments"></i> Admin/Sub-admin Chat
+            </a>
         </nav>
         <div class="logout-btn">
             <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
@@ -158,48 +161,44 @@
 
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
             <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-bold">Recent Tasks</h5>
-                <a href="/existingtasks" class="btn btn-sm btn-outline-primary rounded-pill">View All</a>
+                <h5 class="mb-0 fw-bold">Managed Teams</h5>
+                <a href="/admin/team/manage" class="btn btn-sm btn-outline-primary rounded-pill">Manage All</a>
             </div>
             <div class="table-responsive">
                 <table class="table table-hover align-middle mb-0">
                     <thead class="bg-light text-muted small text-uppercase">
                         <tr>
-                            <th class="ps-4 py-3">Task Title</th>
-                            <th class="py-3">Status</th>
-                            <th class="py-3">Assignee</th>
+                            <th class="ps-4 py-3">Team Name</th>
+                            <th class="py-3">Team Members</th>
+                            <th class="py-3">Team Tasks</th>
                             <th class="pe-4 py-3 text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <% tasks.slice(0, 5).forEach(task => { %>
+                        <% teams.forEach(team => { %>
                         <tr>
                             <td class="ps-4 py-3">
-                                <span class="fw-medium"><%= task.title %></span>
-                            </td>
-                            <td class="py-3">
-                                <span class="badge rounded-pill 
-                                    <%= task.status === 'completed' ? 'bg-success-subtle text-success border border-success-subtle' : 
-                                       task.status === 'inprogress' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 
-                                       'bg-warning-subtle text-warning border border-warning-subtle' %>">
-                                    <%= task.status %>
-                                </span>
+                                <span class="fw-medium"><%= team.teamName %></span>
                             </td>
                             <td class="py-3 text-muted small">
-                                <%= task.assigneeEmail %>
+                                <%= team.employees && team.employees.length > 0 ? team.employees.join(', ') : 'No members' %>
+                            </td>
+                            <td class="py-3 text-muted small">
+                                <% const teamTasks = tasks.filter(t => t.teamName === team.teamName); %>
+                                <%= teamTasks.length %> Active Tasks
                             </td>
                             <td class="pe-4 py-3 text-end">
-                                <a href="/taskDetails/<%= task._id %>" class="btn btn-sm btn-light border rounded-pill">
-                                    View Details
+                                <a href="/existingtasks?teamName=<%= team.teamName %>" class="btn btn-sm btn-light border rounded-pill">
+                                    View Tasks
                                 </a>
                             </td>
                         </tr>
                         <% }); %>
-                        <% if (tasks.length === 0) { %>
+                        <% if (teams.length === 0) { %>
                         <tr>
                             <td colspan="4" class="text-center py-5 text-muted">
-                                <i class="fas fa-inbox fs-1 mb-3 d-block opacity-25"></i>
-                                No tasks found
+                                <i class="fas fa-users-slash fs-1 mb-3 d-block opacity-25"></i>
+                                No teams assigned to you yet
                             </td>
                         </tr>
                         <% } %>

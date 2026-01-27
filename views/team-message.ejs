@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= teamName ? 'Team Chat: ' + teamName : 'Select a Team Chat' %> | TaskApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --primary-color: #4f46e5;
+            --secondary-color: #1e293b;
+        }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .chat-container {
+            max-width: 900px;
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 40px;
+        }
+        .chat-header { background-color: #0d6efd; color: white; padding: 15px 20px; border-bottom: 1px solid #0a58ca; }
+        .chat-body { flex-grow: 1; padding: 20px; overflow-y: auto; background-color: #f8f9fa; }
+        .chat-footer { padding: 15px 20px; border-top: 1px solid #dee2e6; background-color: #fff; }
+        .message-bubble { 
+            padding: 10px 15px; 
+            border-radius: 15px; 
+            margin-bottom: 10px; 
+            max-width: 70%;
+            word-wrap: break-word;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 24px;
+            z-index: 1000;
+        }
+        .sidebar-brand {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .nav-link {
+            color: #cbd5e1;
+            padding: 10px 14px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.2s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255,255,255,0.06);
+            color: white;
+        }
+        .message-incoming { background-color: #ffffff; border: 1px solid #e9ecef; margin-right: auto; }
+        .message-outgoing { background-color: #d1e7dd; margin-left: auto; color: #0f5132; }
+        .message-sender { font-size: 0.75em; font-weight: bold; margin-bottom: 2px; }
+        .no-team { text-align: center; padding: 50px; }
+        .member-list { padding: 15px; background-color: #e9ecef; border-radius: 8px; margin-bottom: 20px; }
+        .team-selection-card { transition: transform 0.2s; border: none; border-radius: 12px; }
+        .team-selection-card:hover { transform: translateY(-5px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <a href="/emp-dashboard" class="sidebar-brand text-white">
+                <i class="fas fa-users me-1 text-primary"></i>
+                <span>TaskApp</span>
+            </a>
+        <nav class="nav flex-column mt-4">
+            <a href="/emp-dashboard" class="nav-link">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="/team-message" class="nav-link active">
+                <i class="fas fa-comments"></i> Team Chat
+            </a>
+            <a href="/existingtasks" class="nav-link">
+                <i class="fas fa-clipboard-list"></i> Personal Assignments
+            </a>
+        </nav>
+    </div>
+        <main class="main-content">
+        <% if (!teamName) { %>
+            <div class="py-5">
+                <h2 class="text-center mb-4">Choose a Team Chat</h2>
+                <% if (availableTeams && availableTeams.length > 0) { %>
+                    <div class="row g-4 justify-content-center">
+                        <% availableTeams.forEach(team => { %>
+                        <div class="col-md-5">
+                            <a href="/team-message?teamName=<%= encodeURIComponent(team.teamName) %>" class="text-decoration-none">
+                                <div class="card team-selection-card bg-white p-4 text-center">
+                                    <i class="fas fa-users fs-1 text-primary mb-3"></i>
+                                    <h4 class="text-dark"><%= team.teamName %></h4>
+                                    <p class="text-muted small mb-0"><%= team.employees.length %> Members</p>
+                                </div>
+                            </a>
+                        </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="chat-container no-team">
+                        <h2 class="text-muted">You are not currently assigned to any team.</h2>
+                        <p>Team chat is only available to assigned team members.</p>
+                    </div>
+                <% } %>
+            </div>
+        <% } else { %>
+            <div class="chat-container">
+                <div class="chat-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-comments me-2"></i> Team Chat: <%= teamName %></h4>
+                    <a href="/team-message" class="btn btn-sm btn-light rounded-pill px-3">Switch Team</a>
+                </div>
+                
+                <div class="member-list">
+                    <span class="fw-bold me-2">Members:</span>
+                    <span class="badge bg-success-subtle text-success me-1"><i class="fas fa-crown me-1"></i> You</span>
+                    <% for (var _i = 0; _i < teamMembers.length; _i++) { var member = teamMembers[_i]; %>
+                        <span class="badge bg-light text-dark border me-1"><%= member.email %></span>
+                    <% } %>
+                </div>
+
+                <div class="chat-body" id="chat-body">
+                    <% if (messages.length === 0) { %>
+                        <div class="text-center text-muted mt-5">Start a conversation for team <%= teamName %>!</div>
+                    <% } %>
+                    <% for (var _j = 0; _j < messages.length; _j++) { var msg = messages[_j];
+                       var isOutgoing = (msg.senderEmail === email);
+                    %>
+                        <div class="d-flex <%= isOutgoing ? 'justify-content-end' : 'justify-content-start' %>">
+                            <div class="message-bubble <%= isOutgoing ? 'message-outgoing' : 'message-incoming' %>">
+                                <% if (!isOutgoing) { %>
+                                    <div class="message-sender text-primary"><%= msg.senderEmail %></div>
+                                <% } %>
+                                <div><%= msg.message %></div>
+                                <div class="text-end text-muted small mt-1" style="font-size: 0.65em;">
+                                    <%= new Date(msg.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) %>
+                                </div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <div class="chat-footer">
+                    <form action="/team-message" method="POST" class="d-flex" onsubmit="return validateMessage()">
+                        <input type="hidden" name="teamName" value="<%= teamName %>">
+                        <textarea class="form-control me-2" name="message" id="messageInput" placeholder="Type your message..." rows="1" required></textarea>
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Send</button>
+                    </form>
+                </div>
+            </div>
+        <% } %>
+    </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var chatBody = document.getElementById('chat-body');
+            if (chatBody) {
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+        });
+
+        function validateMessage() {
+            const messageInput = document.getElementById('messageInput');
+            if (!messageInput.value.trim()) {
+                alert('Message cannot be empty.');
+                return false;
+            }
+            return true;
+        }
+
+        <% if (teamName) { %>
+            (function () {
+                var chatRefreshInterval = 5000;
+                var isFetching = false;
+                var teamNameEncoded = encodeURIComponent('<%= teamName %>');
+
+                setInterval(function () {
+                    var chatBody = document.getElementById('chat-body');
+                    if (!chatBody || isFetching) return;
+
+                    var isScrolledToBottom = (chatBody.scrollHeight - chatBody.scrollTop) <= (chatBody.clientHeight + 10);
+
+                    isFetching = true;
+                    fetch('/team-message?teamName=' + teamNameEncoded).then(function (response) {
+                        return response.text();
+                    }).then(function (html) {
+                        var newDoc = new DOMParser().parseFromString(html, 'text/html');
+                        var newChatBody = newDoc.getElementById('chat-body');
+
+                        if (newChatBody) {
+                            var previousScrollTop = chatBody.scrollTop;
+                            chatBody.innerHTML = newChatBody.innerHTML;
+
+                            if (isScrolledToBottom) {
+                                chatBody.scrollTop = chatBody.scrollHeight;
+                            } else {
+                                chatBody.scrollTop = previousScrollTop;
+                            }
+                        }
+                    }).catch(function (err) {
+                        console.error('Chat refresh failed:', err);
+                    }).finally(function () {
+                        isFetching = false;
+                    });
+                }, chatRefreshInterval);
+            })();
+        <% } %>
+    </script>
+</body>
+</html>

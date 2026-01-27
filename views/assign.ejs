@@ -153,10 +153,18 @@
                         </select>
                     </div>
                     <div class="col-md-6">
-                        <label for="assigneeEmail" class="form-label fw-semibold">Assign To <span class="required-star">*</span></label>
-                        <select class="form-select px-3 py-2" id="assigneeEmail" name="assigneeEmail" required>
-                            <%- options %>
+                        <label for="assignee" class="form-label fw-semibold">Assign To <span class="required-star">*</span></label>
+                        <select class="form-select px-3 py-2" id="assignee" name="assignee" required onchange="updateAssigneeFields()">
+                            <option value="">Select Employee or Team</option>
+                            <optgroup label="Individual Employees">
+                                <%- options %>
+                            </optgroup>
+                            <optgroup label="Teams">
+                                <%- teamOptions %>
+                            </optgroup>
                         </select>
+                        <input type="hidden" id="assigneeEmail" name="assigneeEmail">
+                        <input type="hidden" id="teamName" name="teamName">
                     </div>
                     <!-- Image -->
                     <div class="col-12">
@@ -201,7 +209,35 @@
         form.addEventListener('submit', function(e) {
             const descHTML = descriptionQuill.root.innerHTML;
             document.getElementById('description').value = descHTML;
+            
+            // Re-validate and set hidden fields before submission
+            updateAssigneeFields();
+            
+            if (!document.getElementById('assigneeEmail').value && !document.getElementById('teamName').value) {
+                e.preventDefault();
+                alert('Please select an employee or a team to assign the task.');
+                return false;
+            }
         });
+
+        function updateAssigneeFields() {
+            const assigneeSelect = document.getElementById('assignee');
+            const selectedOption = assigneeSelect.options[assigneeSelect.selectedIndex];
+            
+            document.getElementById('assigneeEmail').value = '';
+            document.getElementById('teamName').value = '';
+            
+            if (selectedOption.value) {
+                const groupLabel = selectedOption.parentElement.label;
+                
+                if (groupLabel.includes('Individual Employees')) {
+                    document.getElementById('assigneeEmail').value = selectedOption.value;
+                } else if (groupLabel.includes('Teams')) {
+                    document.getElementById('teamName').value = selectedOption.value;
+                }
+            }
+        }
+        
         function confirmLogout() {
             return confirm("Are you sure you want to log out?");
         }

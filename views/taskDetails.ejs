@@ -230,12 +230,14 @@
 
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase mb-2">Assigned To</label>
-                                <select id="assigneeDropdown" name="assigneeEmail" class="form-select border-0 bg-light fw-semibold">
-                                    <% employees.forEach(function(emp) { %>
-                                        <option value="<%= emp.email %>" <%= task.assigneeEmail === emp.email ? 'selected' : '' %>>
-                                            <%= emp.email %>
-                                        </option>
-                                    <% }); %>
+                                <select id="assigneeDropdown" name="assignee" class="form-select border-0 bg-light fw-semibold" style="max-width: 100%;">
+                                    <option value="">Select Employee or Team</option>
+                                    <optgroup label="Individual Employees">
+                                        <%- employeeOptions %>
+                                    </optgroup>
+                                    <optgroup label="Teams">
+                                        <%- teamOptions %>
+                                    </optgroup>
                                 </select>
                                 <span id="savingAssignee" class="small"></span>
                             </div>
@@ -447,19 +449,30 @@
 
         const assigneeDropdown = document.getElementById('assigneeDropdown');
         if (assigneeDropdown) {
+            // Pre-select the current assignee or team
+            const currentAssignmentType = '<%= task.teamName ? "team" : (task.assigneeEmail ? "emp" : "") %>';
+            const currentAssignmentValue = '<%= task.teamName || task.assigneeEmail || "" %>';
+            const valueToSelect = currentAssignmentType + ':' + currentAssignmentValue;
+
+            Array.from(assigneeDropdown.options).forEach(option => {
+                if (option.value === valueToSelect) {
+                    option.selected = true;
+                }
+            });
+
             assigneeDropdown.addEventListener('change', async function() {
                 const taskId = '<%= task._id %>';
                 const savingSpan = document.getElementById('savingAssignee');
                 savingSpan.innerHTML = '<i class="fas fa-spinner fa-spin text-muted"></i>';
                 try {
-                    const response = await fetch(`/update-assignee/${taskId}`, {
+                    const response = await fetch(`/update-assignee-team/${taskId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ assigneeEmail: this.value })
+                        body: JSON.stringify({ assignee: this.value })
                     });
                     if (response.ok) {
                         savingSpan.innerHTML = '<i class="fas fa-check text-success"></i>';
-                        setTimeout(() => { savingSpan.innerHTML = ''; }, 2000);
+                        setTimeout(() => { location.reload(); }, 500); // Reload to show new assignment
                     }
                 } catch (error) { savingSpan.innerHTML = '<i class="fas fa-exclamation-circle text-danger"></i>'; }
             });

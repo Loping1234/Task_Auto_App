@@ -6,10 +6,12 @@ const TeamSchema = new mongoose.Schema({
         required: true,
         unique: true
     },
+    // The subadmin who owns this team. Stored as email/string, which is fine for now.
     subadminEmail: {
         type: String,
         required: true
     },
+    // Employees in the team (stored as email/string)
     employees: [{
         type: String,
         required: true

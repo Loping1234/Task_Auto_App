@@ -87,6 +87,9 @@
             <a href="/view-emp" class="nav-link active">
                 <i class="fas fa-users"></i> Employees
             </a>
+            <a href="/admin-subadmin-chat" class="nav-link">
+                <i class="fas fa-comments"></i> Admin/Sub-admin Chat
+            </a>
         </nav>
         <% } else if (userRole === "subadmin") { %>
         <a href="/subadmin-dashboard" class="sidebar-brand text-white">
@@ -130,7 +133,6 @@
                         <tr>
                             <th class="ps-4 py-3" style="width: 100px;">Sr. No.</th>
                             <th class="py-3">Employee Details</th>
-                            <th class="py-3">Role</th>
                             <th class="pe-4 py-3 text-end">Tasks</th>
                         </tr>
                     </thead>
@@ -156,11 +158,6 @@
                                         <div class="text-muted small">Registered Employee</div>
                                     </div>
                                 </div>
-                            </td>
-                            <td class="py-3">
-                                <span class="badge bg-info-subtle text-info border border-info-subtle rounded-pill">
-                                    Employee
-                                </span>
                             </td>
                             <td class="pe-4 py-3 text-end">
                                 <span class="text-muted small"><%= emp.assignedTasks ? emp.assignedTasks.length : 0 %> Tasks</span>
