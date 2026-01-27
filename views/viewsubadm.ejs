@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employees | TaskApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --secondary-color: #1e293b;
+        }
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 24px;
+            z-index: 1000;
+        }
+        .sidebar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .nav-link {
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 40px;
+        }
+        .emp-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .logout-btn {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/admin-dashboard" class="sidebar-brand text-white">
+            <i class="fas fa-shield-alt text-primary"></i>
+            <span>Admin Panel</span>
+        </a>
+        <nav class="nav flex-column mt-4">
+            <a href="/admin-dashboard" class="nav-link">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="/view-teammgmt" class="nav-link">
+                <i class="fas fa-users-line"></i> Team Management
+            </a>
+            <a href="/viewsubadm" class="nav-link active">
+                <i class="fas fa-users-cog"></i> Sub-admin Management
+            </a>
+            <a href="/view-emp" class="nav-link">
+                <i class="fas fa-users"></i> Employees
+            </a>
+        </nav>
+        <div class="logout-btn">
+            <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <div class="row mt-5">
+            <div class="col-lg-12">
+                <div class="card subadmin-list">
+                    <div class="card-header bg-white border-0 pb-0">
+                        <h5 class="mb-0 fw-bold">Sub-admin Directory</h5>
+                        <p class="text-muted small mb-0">All registered sub-administrators</p>
+                    </div>
+                    <div class="card-body">
+                        <% if (subadmins.length === 0) { %>
+                            <div class="text-center py-5">
+                                <i class="fas fa-users-slash fs-1 text-muted opacity-25 mb-3 d-block"></i>
+                                <p class="text-muted">No sub-admins found</p>
+                            </div>
+                        <% } else { %>
+                            <div class="row">
+                                <% subadmins.forEach((subadmin, index) => { %>
+                                    <div class="col-md-6 mb-3">
+                                        <div class="subadmin-item rounded">
+                                            <div class="d-flex align-items-center justify-content-between">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center me-3 fw-bold" style="width: 40px; height: 40px;">
+                                                        <%= subadmin.email.charAt(0).toUpperCase() %>
+                                                    </div>
+                                                    <div>
+                                                        <div class="fw-bold text-dark"><%= subadmin.email %></div>
+                                                        <div class="text-muted small">Sub-administrator</div>
+                                                    </div>
+                                                </div>
+                                                <div class="text-end">
+                                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-pill">
+                                                        Active
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }); %>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmLogout() {
+            return confirm("Are you sure you want to log out?");
+        }
+    </script>
+</body>
+</html>

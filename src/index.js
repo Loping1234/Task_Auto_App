@@ -3,6 +3,7 @@ const bcrypt = require("bcrypt");
 const session = require("express-session");
 const collection = require("./config");
 const Task = require("../models/task");
+const Team = require("../models/team");
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -49,13 +50,37 @@ const isAuthenticated = (req, res, next) => {
     res.redirect("/login");
 };
 
+const isAdmin = (req, res, next) => {
+    if (req.session.userEmail && req.session.userRole === "admin") {
+        return next();
+    }
+    res.status(403).send("Unauthorized: Admin access only");
+};
+
+const isSubadmin = (req, res, next) => {
+    if (req.session.userEmail && req.session.userRole === "subadmin") {
+        return next();
+    }
+    res.status(403).send("Unauthorized: Sub-admin access only");
+};
+
+const isEmployee = (req, res, next) => {
+    if (req.session.userEmail && req.session.userRole === "employee") {
+        return next();
+    }
+    res.status(403).send("Unauthorized: Employee access only");
+};
+
 // Middleware to check if user is already logged in (for login/signup pages)
 const isAlreadyAuthenticated = (req, res, next) => {
     if (req.session.userEmail) {
-        if (req.session.userRole === "admin") {
-            return res.redirect("/admin-dashboard");
+        if (req.session.userRole === "subadmin") {
+            return res.redirect("/subadmin-dashboard");
         } else if (req.session.userRole === "employee") {
             return res.redirect("/emp-dashboard");
+        }
+        else{
+            return res.redirect("/admin-dashboard");
         }
     }
     next();
@@ -84,7 +109,7 @@ app.post("/signup", async (req, res) => {
         const data = {
             email: req.body.email,
             password: hashedPassword,
-            role: domain === "admin.com" ? "admin" : "employee"
+            role: domain === "subadmin.com" ? "subadmin" : "employee"
         };
         const userdata = await collection.create(data);
         console.log(userdata);
@@ -124,6 +149,9 @@ app.post("/login", async (req, res) => {
                 if (domain === "emp.com"){
                     res.redirect("/emp-dashboard");
                 }
+                else if (domain === "subadmin.com"){
+                    res.redirect("/subadmin-dashboard");
+                }
                 else if (domain === "admin.com"){
                     res.redirect("/admin-dashboard");
                 }
@@ -142,37 +170,44 @@ app.post("/login", async (req, res) => {
     }
 });
 
-app.get("/admin-dashboard", isAuthenticated, async (req, res) =>{
+app.get("/subadmin-dashboard", isSubadmin, async (req, res) =>{
     try{
+        // Get teams assigned to this subadmin
+        const teams = await Team.find({ subadminEmail: req.session.userEmail });
+        const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+        
         const employees = await collection.find({
-            $or: [
-                { role: "employee" },
-                { email: { $regex: "@emp\\.com$" } }
-            ]
+            email: { $in: employeeEmails }
         });
         const options = employees.map(emp=> `<option value="${emp.email}">${emp.email}</option>`).join('');
-        const allTasks = await Task.find().sort({ createdAt: -1});
-        const emp = employees.length;
+        const allTasks = await Task.find({ assigneeEmail: { $in: employeeEmails } }).sort({ createdAt: -1});
+        const empCount = employees.length;
         const emp_names = employees.map(emp => emp.email);
         const taskCount = allTasks.length;
-        const task_names = allTasks.map(taskCount => taskCount.title)
-        res.render("admin", {options, tasks:allTasks, emp, employees, taskCount, task_names, emp_names});
+        const task_names = allTasks.map(task => task.title)
+        res.render("subadmin", {options, tasks:allTasks, emp: empCount, employees, taskCount, task_names, emp_names});
     }
     catch(err){
-        console.error("Error fetching employees", err)
-        res.status(500).send("Error loading admin dashboard");
+        console.error("Error fetching subadmin dashboard data", err)
+        res.status(500).send("Error loading subadmin dashboard");
     }
 })
 
 app.get("/view-emp", isAuthenticated, async (req, res) =>{
     try{
-        const employee = await collection.find({
-            $or: [
-                {role: "employee"},
-                {email: {$regex: "@emp\\.com$"}}
-            ]
-        })
-        res.render("viewemps", {employee});
+        let query = {};
+        if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            query = { email: { $in: employeeEmails } };
+        } else if (req.session.userRole === "admin") {
+            query = { role: "employee" };
+        } else {
+            return res.status(403).send("Unauthorized");
+        }
+
+        const employee = await collection.find(query);
+        res.render("viewemps", {employee, userRole: req.session.userRole});
         }
     catch(err){
         console.error("Error fetching employees", err);
@@ -180,13 +215,26 @@ app.get("/view-emp", isAuthenticated, async (req, res) =>{
     }
 })
 
-app.get("/assign", isAuthenticated, async (req, res) => {
+app.get("/viewsubadm", isAdmin, async (req, res) =>{
+    try{
+        const subadmins = await collection.find({
+            role: "subadmin"
+        })
+        res.render("viewsubadm", {subadmins});
+        }
+    catch(err){
+        console.error("Error fetching subadmins", err);
+        res.status(500).send("Error loading subadmins");
+    }
+})
+
+app.get("/assign", isSubadmin, async (req, res) => {
     try {
+        const teams = await Team.find({ subadminEmail: req.session.userEmail });
+        const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+        
         const employees = await collection.find({
-            $or: [
-                { role: "employee" },
-                { email: { $regex: "@emp\\.com$" } }
-            ]
+            email: { $in: employeeEmails }
         });
         const options = employees.map(emp=> `<option value="${emp.email}">${emp.email}</option>`).join('');
         res.render("assign", { options });
@@ -196,12 +244,21 @@ app.get("/assign", isAuthenticated, async (req, res) => {
     }
 });
 
-app.post("/assign", upload.single('image'), async (req, res) => {
+app.post("/assign", isSubadmin, upload.single('image'), async (req, res) => {
     try{
         const { title, description, startDate, endDate, status, assigneeEmail } = req.body;
         if (!title || !assigneeEmail) {
             return res.status(400).send("Title and assignee are required");
         }
+        
+        // Verify assignee is in one of the subadmin's teams
+        const teams = await Team.find({ subadminEmail: req.session.userEmail });
+        const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+        
+        if (!employeeEmails.includes(assigneeEmail)) {
+            return res.status(403).send("Unauthorized: Employee not in your teams");
+        }
+
         const assignee = await collection.findOne({ email: assigneeEmail, role: "employee" });
         if (!assignee) {
             return res.status(404).send("Assignee not found");
@@ -349,15 +406,22 @@ app.get('/emptaskComment/:id', async(req, res) => {
 
 app.get("/existingtasks", isAuthenticated, async (req, res) =>{
     try{
-        const employees = await collection.find({
-            $or: [
-                { role: "employee" },
-                { email: { $regex: "@emp\\.com$" } }
-            ]
-        });
+        let query = {};
+        let employees = [];
+        if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            query = { assigneeEmail: { $in: employeeEmails } };
+            employees = await collection.find({ email: { $in: employeeEmails } });
+        } else if (req.session.userRole === "admin") {
+            employees = await collection.find({ role: "employee" });
+        } else {
+            return res.status(403).send("Unauthorized");
+        }
+
         const options = employees.map(emp=> `<option value="${emp.email}">${emp.email}</option>`).join('');
-        const allTasks = await Task.find().sort({ createdAt: -1});
-        res.render("existingtasks", {options, tasks:allTasks, employees});        
+        const allTasks = await Task.find(query).sort({ createdAt: -1});
+        res.render("existingtasks", {options, tasks:allTasks, employees, userRole: req.session.userRole});        
     }
     catch (err){
         console.error("Error fetching tasks", err)
@@ -370,9 +434,12 @@ app.get("/taskDetails/:id", isAuthenticated, async (req, res) => {
         const taskId = req.params.id;
         
         let findQuery = { _id: taskId };
-        // Employee can only view tasks assigned to them
         if (req.session.userRole === "employee") {
             findQuery.assigneeEmail = req.session.userEmail;
+        } else if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            findQuery.assigneeEmail = { $in: employeeEmails };
         }
 
         const task = await Task.findOne(findQuery);
@@ -386,12 +453,14 @@ app.get("/taskDetails/:id", isAuthenticated, async (req, res) => {
             task.activityLog.sort((a, b) => new Date(b.changedAt) - new Date(a.changedAt));
         }
         
-        const employees = await collection.find({
-            $or: [
-                { role: "employee" },
-                { email: { $regex: "@emp\\.com$" } }
-            ]
-        });
+        let employees = [];
+        if (req.session.userRole === "admin") {
+            employees = await collection.find({ role: "employee" });
+        } else if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            employees = await collection.find({ email: { $in: employeeEmails } });
+        }
         
         res.render("taskDetails", { 
             task, 
@@ -420,9 +489,12 @@ app.get("/update-task/:id", isAuthenticated, async (req, res) => {
         const taskId = req.params.id;
         
         let findQuery = { _id: taskId };
-        // Employee can only view tasks assigned to them
         if (req.session.userRole === "employee") {
             findQuery.assigneeEmail = req.session.userEmail;
+        } else if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            findQuery.assigneeEmail = { $in: employeeEmails };
         }
 
         const task = await Task.findOne(findQuery);
@@ -431,12 +503,14 @@ app.get("/update-task/:id", isAuthenticated, async (req, res) => {
             return res.status(404).send("Task not found or unauthorized");
         }
 
-        const employees = await collection.find({
-            $or: [
-                { role: "employee" },
-                { email: { $regex: "@emp\\.com$" } }
-            ]
-        });
+        let employees = [];
+        if (req.session.userRole === "admin") {
+            employees = await collection.find({ role: "employee" });
+        } else if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            employees = await collection.find({ email: { $in: employeeEmails } });
+        }
         
         res.render("edit-task", { task, employees });
     } catch (err) {
@@ -445,7 +519,7 @@ app.get("/update-task/:id", isAuthenticated, async (req, res) => {
     }
 });
 
-app.post("/update-task/:id", upload.single('image'), async (req, res) => {
+app.post("/update-task/:id", isAuthenticated, upload.single('image'), async (req, res) => {
     try {
         const { title, description, startDate, endDate, status, assigneeEmail } = req.body;
         const taskId = req.params.id;
@@ -454,9 +528,27 @@ app.post("/update-task/:id", upload.single('image'), async (req, res) => {
             return res.status(400).send("Title and assignee are required");
         }
 
-        const oldTask = await Task.findById(taskId);
+        let findQuery = { _id: taskId };
+        if (req.session.userRole === "employee") {
+            findQuery.assigneeEmail = req.session.userEmail;
+        } else if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            findQuery.assigneeEmail = { $in: employeeEmails };
+        }
+
+        const oldTask = await Task.findOne(findQuery);
         if (!oldTask) {
-            return res.status(404).send("Task not found");
+            return res.status(404).send("Task not found or unauthorized");
+        }
+
+        // Check if new assignee is valid for this subadmin
+        if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            if (!employeeEmails.includes(assigneeEmail)) {
+                return res.status(403).send("Unauthorized: New assignee not in your teams");
+            }
         }
 
         const updateData = {
@@ -601,13 +693,22 @@ app.post("/update-task/:id", upload.single('image'), async (req, res) => {
     }
 });
 
-app.post("/delete-task/:id", async (req, res) => {
+app.post("/delete-task/:id", isAuthenticated, async (req, res) => {
     try {
         const taskId = req.params.id;
         
-        const task = await Task.findById(taskId);
+        let findQuery = { _id: taskId };
+        if (req.session.userRole === "subadmin") {
+            const teams = await Team.find({ subadminEmail: req.session.userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            findQuery.assigneeEmail = { $in: employeeEmails };
+        } else if (req.session.userRole !== "admin") {
+            return res.status(403).send("Unauthorized");
+        }
+
+        const task = await Task.findOne(findQuery);
         if (!task) {
-            return res.status(404).send("Task not found");
+            return res.status(404).send("Task not found or unauthorized");
         }
 
         // Delete image file if it exists
@@ -632,7 +733,7 @@ app.post("/delete-task/:id", async (req, res) => {
     }
 });
 
-app.get("/emp-dashboard", isAuthenticated, async (req, res) => {
+app.get("/emp-dashboard", isEmployee, async (req, res) => {
     try {
         const tasks = await Task.find({ assigneeEmail: req.session.userEmail });
         res.render("employee", { tasks, email: req.session.userEmail });
@@ -641,6 +742,161 @@ app.get("/emp-dashboard", isAuthenticated, async (req, res) => {
         res.status(500).send("Error loading employee dashboard");
     }
 });
+
+app.get("/admin-dashboard", isAdmin, async (req, res) => {
+    try {
+        const subadmins = await collection.find({ role: "subadmin" });
+        const employees = await collection.find({ role: "employee" });
+        const allTasks = await Task.find().sort({ createdAt: -1});
+        const teams = await Team.find(); 
+        
+        const subadminCount = subadmins.length;
+        const empCount = employees.length;
+        const taskCount = allTasks.length;
+        const teamCount = teams.length;
+        
+        res.render("admin-dashboard", { 
+            subadmins, 
+            employees,
+            subadminCount, 
+            empCount, 
+            taskCount,
+            teamCount
+        });
+    } catch (err) {
+        console.error("Error fetching admin data", err);
+        res.status(500).send("Error loading admin dashboard");
+    }
+})
+
+// Team Management Routes
+app.get("/view-teammgmt", isAdmin, async (req, res) => {
+    try {
+        const subadmins = await collection.find({ role: "subadmin" });
+        const employees = await collection.find({ role: "employee" });
+        const teams = await Team.find();
+
+        res.render("view-teammgmt", { 
+            subadmins, 
+            employees,
+            teams
+        });
+    } catch (err) {
+        console.error("Error fetching team management data", err);
+        res.status(500).send("Error loading team management page");
+    }
+});
+
+app.post("/create-team", isAdmin, async (req, res) => {
+    try {
+        const { teamName, subadminEmail, employees } = req.body;
+        
+        // Check if team name already exists
+        const existingTeam = await Team.findOne({ teamName });
+        if (existingTeam) {
+            return res.status(400).send("Team name already exists");
+        }
+
+        // Validate subadmin exists
+        const subadmin = await collection.findOne({ email: subadminEmail, role: "subadmin" });
+        if (!subadmin) {
+            return res.status(404).send("Sub-admin not found");
+        }
+
+        // Validate employees exist
+        const employeeEmails = Array.isArray(employees) ? employees : [employees];
+        const validEmployees = await collection.find({ 
+            email: { $in: employeeEmails }, 
+            role: "employee" 
+        });
+        
+        if (validEmployees.length !== employeeEmails.length) {
+            return res.status(404).send("Some employees not found");
+        }
+
+        // Create team
+        const team = await Team.create({
+            teamName,
+            subadminEmail,
+            employees: employeeEmails
+        });
+
+        res.redirect("/view-teammgmt");
+    } catch (err) {
+        console.error("Error creating team", err);
+        res.status(500).send("Failed to create team");
+    }
+})
+
+app.get("/edit-team/:id", isAdmin, async (req, res) => {
+    try {
+        const teamId = req.params.id;
+        const team = await Team.findById(teamId);
+        const subadmins = await collection.find({ role: "subadmin" });
+        const employees = await collection.find({ role: "employee" });
+        
+        if (!team) {
+            return res.status(404).send("Team not found");
+        }
+
+        res.render("edit-team", { team, subadmins, employees });
+    } catch (err) {
+        console.error("Error fetching team for edit", err);
+        res.status(500).send("Error loading team");
+    }
+})
+
+app.post("/update-team/:id", isAdmin, async (req, res) => {
+    try {
+        const teamId = req.params.id;
+        const { teamName, subadminEmail, employees } = req.body;
+        
+        const team = await Team.findById(teamId);
+        if (!team) {
+            return res.status(404).send("Team not found");
+        }
+
+        // Validate subadmin exists
+        const subadmin = await collection.findOne({ email: subadminEmail, role: "subadmin" });
+        if (!subadmin) {
+            return res.status(404).send("Sub-admin not found");
+        }
+
+        // Validate employees exist
+        const employeeEmails = Array.isArray(employees) ? employees : [employees];
+        const validEmployees = await collection.find({ 
+            email: { $in: employeeEmails }, 
+            role: "employee" 
+        });
+        
+        if (validEmployees.length !== employeeEmails.length) {
+            return res.status(404).send("Some employees not found");
+        }
+
+        // Update team
+        await Team.findByIdAndUpdate(teamId, {
+            teamName,
+            subadminEmail,
+            employees: employeeEmails
+        });
+
+        res.redirect("/view-teammgmt");
+    } catch (err) {
+        console.error("Error updating team", err);
+        res.status(500).send("Failed to update team");
+    }
+})
+
+app.get("/delete-team/:id", isAdmin, async (req, res) => {
+    try {
+        const teamId = req.params.id;
+        await Team.findByIdAndDelete(teamId);
+        res.redirect("/view-teammgmt");
+    } catch (err) {
+        console.error("Error deleting team", err);
+        res.status(500).send("Failed to delete team");
+    }
+})
 
 app.get("/dashboard", (req, res) => {
     res.render("home");

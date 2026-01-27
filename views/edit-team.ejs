@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Team | TaskApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --primary-color: #4f46e5;
+            --secondary-color: #1e293b;
+        }
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 24px;
+            z-index: 1000;
+        }
+        .sidebar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .nav-link {
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 40px;
+        }
+        .logout-btn {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/admin-dashboard" class="sidebar-brand text-white">
+            <i class="fas fa-shield-alt text-primary"></i>
+            <span>Admin Panel</span>
+        </a>
+        <nav class="nav flex-column mt-4">
+            <a href="/admin-dashboard" class="nav-link">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="/view-teammgmt" class="nav-link active">
+                <i class="fas fa-users-line"></i> Team Management
+            </a>
+            <a href="/viewsubadm" class="nav-link">
+                <i class="fas fa-users-cog"></i> Sub-admin Management
+            </a>
+            <a href="/view-emp" class="nav-link">
+                <i class="fas fa-users"></i> Employees
+            </a>
+        </nav>
+        <div class="logout-btn">
+            <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <header class="mb-5 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Edit Team</h1>
+                <p class="text-muted mb-0">Update team details and assignments</p>
+            </div>
+            <div class="d-flex gap-3">
+                <a href="/view-teammgmt" class="btn btn-secondary px-4 py-2 rounded-pill shadow-sm">
+                    <i class="fas fa-arrow-left me-2"></i> Back to Team Management
+                </a>
+            </div>
+        </header>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h5 class="mb-0 fw-bold">Team Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="/update-team/<%= team._id %>" method="POST">
+                            <div class="mb-3">
+                                <label for="teamName" class="form-label fw-bold">Team Name</label>
+                                <input type="text" class="form-control" id="teamName" name="teamName" value="<%= team.teamName %>" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="subadminEmail" class="form-label fw-bold">Assign to Sub-admin</label>
+                                <select class="form-select" id="subadminEmail" name="subadminEmail" required>
+                                    <option value="">Select Sub-admin</option>
+                                    <% subadmins.forEach((subadmin) => { %>
+                                        <option value="<%= subadmin.email %>" <%= subadmin.email === team.subadminEmail ? 'selected' : '' %>><%= subadmin.email %></option>
+                                    <% }); %>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="employees" class="form-label fw-bold">Select Employees</label>
+                                <select class="form-select" id="employees" name="employees" multiple required>
+                                    <% employees.forEach((employee) => { %>
+                                        <option value="<%= employee.email %>" <%= team.employees.includes(employee.email) ? 'selected' : '' %>><%= employee.email %></option>
+                                    <% }); %>
+                                </select>
+                                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple employees.</small>
+                            </div>
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+                                    <i class="fas fa-save me-2"></i> Update Team
+                                </button>
+                                <a href="/view-teammgmt" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
+                                    <i class="fas fa-times me-2"></i> Cancel
+                                </a>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-white border-0">
+                        <h6 class="mb-0 fw-bold">Current Team Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Team Name</label>
+                            <p class="form-control-plaintext"><%= team.teamName %></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Sub-admin</label>
+                            <p class="form-control-plaintext"><%= team.subadminEmail %></p>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Employees</label>
+                            <ul class="list-group">
+                                <% team.employees.forEach((employeeEmail) => { %>
+                                    <li class="list-group-item border-0 p-0">
+                                        <i class="fas fa-user text-muted me-2"></i>
+                                        <%= employeeEmail %>
+                                    </li>
+                                <% }); %>
+                            </ul>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Created</label>
+                            <p class="form-control-plaintext"><%= new Date(team.createdAt).toLocaleDateString() %></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmLogout() {
+            return confirm("Are you sure you want to log out?");
+        }
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

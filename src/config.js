@@ -19,7 +19,7 @@ const LoginSchema = new mongoose.Schema({
     },
     role:{
       type: String,
-      enum: ["admin", "employee"],
+      enum: ["admin" ,"subadmin", "employee"],
       default: "employee"
     },
     assignedTasks:[{

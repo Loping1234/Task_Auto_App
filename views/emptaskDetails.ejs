@@ -325,7 +325,7 @@
                             <% if (userRole === 'employee' && userEmail === task.assigneeEmail) { %>
                                 <div class="col-lg-5">
                                     <div class="card detail-card p-4 shadow-sm border-0 bg-white">
-                                        <h6 class="fw-bold mb-3 text-dark">Send an Update to Admin</h6>
+                                        <h6 class="fw-bold mb-3 text-dark">Send an Update to Sub-admin</h6>
                                         <form action="/task/<%= task._id %>/comment" method="POST" enctype="multipart/form-data">
                                             <div class="mb-3">
                                                 <textarea name="text" class="form-control bg-light border-0" rows="4" placeholder="Ask a question or provide an update about this task..." required></textarea>
@@ -335,12 +335,12 @@
                                                 <input type="file" name="image" accept="image/*" class="form-control form-control-sm">
                                             </div>
                                             <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm">
-                                                <i class="fas fa-paper-plane me-2"></i> Send to Admin
+                                                <i class="fas fa-paper-plane me-2"></i> Send to subadmin
                                             </button>
                                         </form>
                                     </div>
                                 </div>
-                            <% } else if (userRole === 'admin') { %>
+                            <% } else if (userRole === 'subadmin') { %>
                                 <div class="col-lg-5">
                                     <div class="card detail-card p-4 border-0 bg-light-subtle shadow-sm">
                                         <div class="text-center py-3">
@@ -353,7 +353,7 @@
                             <% } %>
                             
                             <!-- Comment List (Visible to both) -->
-                            <div class="<%= (userRole === 'employee' && userEmail === task.assigneeEmail) || userRole === 'admin' ? 'col-lg-7' : 'col-12' %>">
+                            <div class="<%= (userRole === 'employee' && userEmail === task.assigneeEmail) || userRole === 'sub-admin' ? 'col-lg-7' : 'col-12' %>">
                                 <div class="d-flex flex-column gap-3">
                                     <% if (task.comments && task.comments.length > 0) { %>
                                         <% task.comments.slice().reverse().forEach(function(comment) { %>

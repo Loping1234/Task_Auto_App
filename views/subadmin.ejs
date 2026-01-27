@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | TaskApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --sidebar-width: 260px;
+            --primary-color: #4f46e5;
+            --secondary-color: #1e293b;
+        }
+        body {
+            background-color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 24px;
+            z-index: 1000;
+        }
+        .sidebar-brand {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 32px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: #fff;
+            text-decoration: none;
+        }
+        .nav-link {
+            color: #cbd5e1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.3s;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .nav-link i {
+            width: 20px;
+            text-align: center;
+        }
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 40px;
+        }
+        .stat-card {
+            border: none;
+            border-radius: 16px;
+            padding: 24px;
+            transition: transform 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        .icon-box {
+            width: 56px;
+            height: 56px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        .logout-btn {
+            position: absolute;
+            bottom: 24px;
+            left: 24px;
+            right: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <a href="/subadmin-dashboard" class="sidebar-brand text-white">
+            <i class="fas fa-check-double text-primary"></i>
+            <span>TaskApp</span>
+        </a>
+        <nav class="nav flex-column mt-4">
+            <a href="/subadmin-dashboard" class="nav-link active">
+                <i class="fas fa-home"></i> Dashboard
+            </a>
+            <a href="/existingtasks" class="nav-link">
+                <i class="fas fa-tasks"></i> All Tasks
+            </a>
+            <a href="/assign" class="nav-link">
+                <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+            <a href="/view-emp" class="nav-link">
+                <i class="fas fa-users"></i> Employees
+            </a>
+        </nav>
+        <div class="logout-btn">
+            <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <main class="main-content">
+        <header class="mb-5 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h3 fw-bold mb-1">Sub-admin Dashboard</h1>
+                <p class="text-muted mb-0">Welcome back, Sub-administrator</p>
+            </div>
+            <div class="d-flex gap-3">
+                <a href="/assign" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+                    <i class="fas fa-plus me-2"></i> New Task
+                </a>
+            </div>
+        </header>
+
+        <div class="row g-4 mb-5">
+            <div class="col-md-6">
+                <div class="card stat-card bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 fw-medium">Total Employees</p>
+                            <h2 class="fw-bold mb-0"><%= emp %></h2>
+                        </div>
+                        <div class="icon-box bg-primary-subtle text-primary">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
+                    </div>
+                    <a href="/view-emp" class="stretched-link"></a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card stat-card bg-white shadow-sm">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1 fw-medium">Active Tasks</p>
+                            <h2 class="fw-bold mb-0"><%= taskCount %></h2>
+                        </div>
+                        <div class="icon-box bg-success-subtle text-success">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                    </div>
+                    <a href="/existingtasks" class="stretched-link"></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold">Recent Tasks</h5>
+                <a href="/existingtasks" class="btn btn-sm btn-outline-primary rounded-pill">View All</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-muted small text-uppercase">
+                        <tr>
+                            <th class="ps-4 py-3">Task Title</th>
+                            <th class="py-3">Status</th>
+                            <th class="py-3">Assignee</th>
+                            <th class="pe-4 py-3 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% tasks.slice(0, 5).forEach(task => { %>
+                        <tr>
+                            <td class="ps-4 py-3">
+                                <span class="fw-medium"><%= task.title %></span>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge rounded-pill 
+                                    <%= task.status === 'completed' ? 'bg-success-subtle text-success border border-success-subtle' : 
+                                       task.status === 'inprogress' ? 'bg-primary-subtle text-primary border border-primary-subtle' : 
+                                       'bg-warning-subtle text-warning border border-warning-subtle' %>">
+                                    <%= task.status %>
+                                </span>
+                            </td>
+                            <td class="py-3 text-muted small">
+                                <%= task.assigneeEmail %>
+                            </td>
+                            <td class="pe-4 py-3 text-end">
+                                <a href="/taskDetails/<%= task._id %>" class="btn btn-sm btn-light border rounded-pill">
+                                    View Details
+                                </a>
+                            </td>
+                        </tr>
+                        <% }); %>
+                        <% if (tasks.length === 0) { %>
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fas fa-inbox fs-1 mb-3 d-block opacity-25"></i>
+                                No tasks found
+                            </td>
+                        </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function confirmLogout() {
+            return confirm("Are you sure you want to log out?");
+        }
+        // Prevent bfcache issues (back button showing dashboard after logout)
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
