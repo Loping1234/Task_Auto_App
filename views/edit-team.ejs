@@ -55,6 +55,12 @@
             margin-left: var(--sidebar-width);
             padding: 40px;
         }
+        .list-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: white;
+        }
         .logout-btn {
             position: absolute;
             bottom: 24px;
@@ -74,10 +80,10 @@
                 <i class="fas fa-home"></i> Dashboard
             </a>
             <a href="/admin/team/manage" class="nav-link active">
-                <i class="fas fa-users-line"></i> Team Management
+                <i class="fas fa-users-cog"></i> Team Management
             </a>
             <a href="/viewsubadm" class="nav-link">
-                <i class="fas fa-users-cog"></i> Sub-admin Management
+                <i class="fas fa-user-shield"></i> Sub-admin Management
             </a>
             <a href="/view-emp" class="nav-link">
                 <i class="fas fa-users"></i> Employees
@@ -96,94 +102,67 @@
     <main class="main-content">
         <header class="mb-5 d-flex justify-content-between align-items-center">
             <div>
-                <h1 class="h3 fw-bold mb-1">Edit Team</h1>
-                <p class="text-muted mb-0">Update team details and assignments</p>
+                <h1 class="h3 fw-bold mb-1">Edit Team: <%= team.teamName %></h1>
+                <p class="text-muted mb-0">Update team details and coordinate members</p>
             </div>
-            <div class="d-flex gap-3">
-                <a href="/admin/team/manage" class="btn btn-secondary px-4 py-2 rounded-pill shadow-sm">
-                    <i class="fas fa-arrow-left me-2"></i> Back to Team Management
-                </a>
-            </div>
+            <a href="/admin/team/manage" class="btn btn-secondary px-4 py-2 rounded-pill shadow-sm">
+                <i class="fas fa-arrow-left me-2"></i> Back
+            </a>
         </header>
 
-        <div class="row">
+        <div class="row g-4">
             <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white border-0">
-                        <h5 class="mb-0 fw-bold">Team Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="/admin/team/update/<%= team.teamName %>" method="POST">
-                            <div class="mb-3">
-                                <label for="teamName" class="form-label fw-bold">Team Name</label>
-                                <input type="text" class="form-control" id="teamName" name="newTeamName" value="<%= team.teamName %>" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="subadminEmail" class="form-label fw-bold">Assign to Sub-admin</label>
-                                <select class="form-select" id="subadminEmail" name="subadminEmail" required>
-                                    <option value="">Select Sub-admin</option>
-                                    <% subadmins.forEach((subadmin) => { %>
-                                        <option value="<%= subadmin.email %>" <%= subadmin.email === team.subadminEmail ? 'selected' : '' %>><%= subadmin.email %></option>
-                                    <% }); %>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="employees" class="form-label fw-bold">Select Employees</label>
-                                <select class="form-select" id="employees" name="employees" multiple size="8">
-                                    <% employees.forEach((employee) => { %>
-                                        <% const inCurrentTeam = team.employees.includes(employee.email); %>
-                                        <% const inOtherTeam = employee.teamName && employee.teamName !== team.teamName; %>
-                                        <option value="<%= employee.email %>" 
-                                                <%= inCurrentTeam ? 'selected' : '' %>
-                                                <%= inOtherTeam ? 'disabled' : '' %>
-                                        >
-                                            <%= employee.email %> <%= inOtherTeam ? `(In: ${employee.teamName})` : '' %>
-                                        </option>
-                                    <% }); %>
-                                </select>
-                                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple. Disabled employees are currently in a different team.</small>
-                            </div>
-                            <div class="d-flex gap-3">
-                                <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
-                                    <i class="fas fa-save me-2"></i> Update Team
-                                </button>
-                                <a href="/admin/team/manage" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
-                                    <i class="fas fa-times me-2"></i> Cancel
-                                </a>
-                            </div>
-                        </form>
-                    </div>
+                <div class="card list-card p-4">
+                    <h5 class="fw-bold mb-4">Update Team Information</h5>
+                    <form action="/admin/team/update/<%= team.teamName %>" method="POST">
+                        <div class="mb-4">
+                            <label for="teamName" class="form-label small fw-bold text-muted text-uppercase">Team Name</label>
+                            <input type="text" class="form-control border-0 bg-light" id="teamName" name="newTeamName" value="<%= team.teamName %>" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="subadminEmail" class="form-label small fw-bold text-muted text-uppercase">Sub-Admin Coordinator</label>
+                            <select class="form-select border-0 bg-light" id="subadminEmail" name="subadminEmail" required>
+                                <option value="">Select Sub-admin</option>
+                                <% subadmins.forEach((subadmin) => { %>
+                                    <option value="<%= subadmin.email %>" <%= subadmin.email === team.subadminEmail ? 'selected' : '' %>><%= subadmin.email %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="mb-4">
+                            <label for="employees" class="form-label small fw-bold text-muted text-uppercase">Team Members</label>
+                            <select class="form-select border-0 bg-light" id="employees" name="employees" multiple size="10">
+                                <% employees.forEach((employee) => { %>
+                                    <% const inCurrentTeam = team.employees.includes(employee.email); %>
+                                    <option value="<%= employee.email %>" <%= inCurrentTeam ? 'selected' : '' %>>
+                                        <%= employee.email %> <%= (!inCurrentTeam && employee.teams && employee.teams.length > 0) ? '(' + employee.teams.join(', ') + ')' : '' %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <div class="form-text xsmall">Hold Ctrl/Cmd to toggle member selection.</div>
+                        </div>
+                        <div class="d-flex gap-3">
+                            <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+                                <i class="fas fa-save me-2"></i> Save Changes
+                            </button>
+                            <a href="/admin/team/manage" class="btn btn-light border px-4 py-2 rounded-pill">Cancel</a>
+                        </div>
+                    </form>
                 </div>
             </div>
             <div class="col-lg-4">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-white border-0">
-                        <h6 class="mb-0 fw-bold">Current Team Details</h6>
+                <div class="card list-card p-4">
+                    <h6 class="fw-bold mb-3">Quick Summary</h6>
+                    <div class="mb-3">
+                        <label class="small text-muted text-uppercase d-block mb-1">Current Size</label>
+                        <span class="h5 fw-bold"><%= team.employees.length %> Members</span>
                     </div>
-                    <div class="card-body">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Team Name</label>
-                            <p class="form-control-plaintext"><%= team.teamName %></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Sub-admin</label>
-                            <p class="form-control-plaintext"><%= team.subadminEmail %></p>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Employees</label>
-                            <ul class="list-group">
-                                <% team.employees.forEach((employeeEmail) => { %>
-                                    <li class="list-group-item border-0 p-0">
-                                        <i class="fas fa-user text-muted me-2"></i>
-                                        <%= employeeEmail %>
-                                    </li>
-                                <% }); %>
-                            </ul>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Created</label>
-                            <p class="form-control-plaintext"><%= new Date(team.createdAt).toLocaleDateString() %></p>
-                        </div>
+                    <div class="mb-3">
+                        <label class="small text-muted text-uppercase d-block mb-1">Created Date</label>
+                        <span class="small"><%= new Date(team.createdAt).toLocaleDateString() %></span>
+                    </div>
+                    <hr>
+                    <div class="alert alert-info border-0 shadow-sm small py-2 mb-0">
+                        <i class="fas fa-info-circle me-1"></i> Changing the team name will automatically update all associated tasks.
                     </div>
                 </div>
             </div>
@@ -195,11 +174,6 @@
         function confirmLogout() {
             return confirm("Are you sure you want to log out?");
         }
-        window.addEventListener('pageshow', function(event) {
-            if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-                window.location.reload();
-            }
-        });
     </script>
 </body>
 </html>

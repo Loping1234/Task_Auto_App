@@ -248,6 +248,80 @@ app.get("/view-emp", isAuthenticated, async (req, res) =>{
     }
 })
 
+app.get("/view-teams", isAuthenticated, async (req, res) => {
+    try {
+        let query = {};
+        if (req.session.userRole === "subadmin") {
+            query = { subadminEmail: req.session.userEmail };
+        } else if (req.session.userRole === "admin") {
+            query = {};
+        } else {
+            return res.status(403).send("Unauthorized");
+        }
+
+        const teams = await Team.find(query);
+        res.render("view-teams", { teams, userRole: req.session.userRole });
+    } catch (err) {
+        console.error("Error fetching teams", err);
+        res.status(500).send("Error loading teams");
+    }
+});
+
+// ADMIN TASK ASSIGNMENT ROUTES
+app.get("/admin/assign", isAdmin, async (req, res) => {
+    try {
+        const teams = await Team.find({});
+        const employees = await collection.find({ role: "employee" });
+        
+        const options = employees.map(emp=> `<option value="${emp.email}">Employee: ${emp.email}</option>`).join('');
+        const teamOptions = teams.map(team => `<option value="${team.teamName}">Team: ${team.teamName}</option>`).join('');
+        
+        res.render("admin-assign", { options, teamOptions });
+    } catch (err) {
+        console.error("Error loading admin assign page", err);
+        res.status(500).send("Error loading assignment page");
+    }
+});
+
+app.post("/admin/assign", isAdmin, upload.single('image'), async (req, res) => {
+    try{
+        const { title, description, startDate, endDate, status, assigneeEmail, teamName } = req.body;
+        
+        if (!title || (!assigneeEmail && !teamName)) {
+            return res.status(400).send("Title and either an assignee or a team are required");
+        }
+        
+        const taskData = {
+            title,
+            description,
+            image: req.file ? req.file.filename : null,
+            imageContentType: req.file ? req.file.mimetype : null,
+            startDate: startDate ? new Date(startDate) : undefined,
+            endDate: endDate ? new Date(endDate) : undefined,
+            status: status || "Pending",
+            assigneeEmail: assigneeEmail || null,
+            teamName: teamName || null
+        };
+
+        const task = await Task.create(taskData);
+
+        if (assigneeEmail) {
+            const assignee = await collection.findOne({ email: assigneeEmail, role: "employee" });
+            if (assignee) {
+                assignee.assignedTasks = Array.isArray(assignee.assignedTasks) ? assignee.assignedTasks : [];
+                assignee.assignedTasks.push(task._id);
+                await assignee.save();
+            }
+        }
+
+        res.redirect("/existingtasks");
+    }
+    catch(err){
+        console.error("Error assigning tasks as admin", err)
+        res.status(500).send("Assignment failed");
+    }
+})
+
 app.get("/viewsubadm", isAdmin, async (req, res) =>{
     try{
         const subadmins = await collection.find({
@@ -442,6 +516,61 @@ app.post("/admin/team/delete/:teamName", isAdmin, async (req, res) => {
     } catch (err) {
         console.error("Error deleting team", err);
         res.status(500).send("Team deletion failed.");
+    }
+});
+
+// ADMIN TASK ASSIGNMENT ROUTES
+app.get("/admin/assign", isAdmin, async (req, res) => {
+    try {
+        const employees = await collection.find({ role: "employee" });
+        const teams = await Team.find({});
+        
+        const options = employees.map(emp=> `<option value="${emp.email}">Employee: ${emp.email}</option>`).join('');
+        const teamOptions = teams.map(team => `<option value="${team.teamName}">Team: ${team.teamName}</option>`).join('');
+        
+        res.render("admin-assign", { options, teamOptions });
+    } catch (err) {
+        console.error("Error loading admin assign page", err);
+        res.status(500).send("Error loading assignment page");
+    }
+});
+
+app.post("/admin/assign", isAdmin, upload.single('image'), async (req, res) => {
+    try{
+        const { title, description, startDate, endDate, status, assigneeEmail, teamName } = req.body;
+        
+        if (!title || (!assigneeEmail && !teamName)) {
+            return res.status(400).send("Title and either an assignee or a team are required");
+        }
+        
+        const taskData = {
+            title,
+            description,
+            image: req.file ? req.file.filename : null,
+            imageContentType: req.file ? req.file.mimetype : null,
+            startDate: startDate ? new Date(startDate) : undefined,
+            endDate: endDate ? new Date(endDate) : undefined,
+            status: status || "Pending",
+            assigneeEmail: assigneeEmail || null,
+            teamName: teamName || null
+        };
+
+        const task = await Task.create(taskData);
+
+        if (assigneeEmail) {
+            const assignee = await collection.findOne({ email: assigneeEmail, role: "employee" });
+            if (assignee) {
+                assignee.assignedTasks = Array.isArray(assignee.assignedTasks) ? assignee.assignedTasks : [];
+                assignee.assignedTasks.push(task._id);
+                await assignee.save();
+            }
+        }
+
+        res.redirect("/existingtasks");
+    }
+    catch(err){
+        console.error("Error assigning tasks by admin", err)
+        res.status(500).send("Assigning failed");
     }
 });
 

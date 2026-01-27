@@ -55,23 +55,11 @@
             margin-left: var(--sidebar-width);
             padding: 40px;
         }
-        .stat-card {
+        .list-card {
             border: none;
             border-radius: 16px;
-            padding: 24px;
-            transition: transform 0.3s;
-        }
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
-        .icon-box {
-            width: 56px;
-            height: 56px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            background: white;
         }
         .logout-btn {
             position: absolute;
@@ -79,25 +67,12 @@
             left: 24px;
             right: 24px;
         }
-        .team-list-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            padding: 20px;
-        }
-        .team-table th, .team-table td {
-            vertical-align: middle;
-        }
-        .team-table th {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        .team-table tbody tr:hover {
-            background-color: #f1f5f9;
-        }
-        .employee-emails {
-            white-space: pre-wrap;
+        .employee-list-select {
             font-size: 0.9em;
+        }
+        .badge-member {
+            font-size: 0.75em;
+            margin-right: 4px;
         }
     </style>
 </head>
@@ -113,10 +88,16 @@
                 <i class="fas fa-home"></i> Dashboard
             </a>
             <a href="/admin/team/manage" class="nav-link active">
-                <i class="fas fa-users"></i> Team Management
+                <i class="fas fa-users-cog"></i> Team Management
+            </a>
+            <a href="/admin/assign" class="nav-link">
+                <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+            <a href="/view-teams" class="nav-link">
+                <i class="fas fa-users"></i> Teams
             </a>
             <a href="/viewsubadm" class="nav-link">
-                <i class="fas fa-users-cog"></i> Sub-admin Management
+                <i class="fas fa-user-shield"></i> Sub-admin Management
             </a>
             <a href="/view-emp" class="nav-link">
                 <i class="fas fa-users"></i> Employees
@@ -131,89 +112,47 @@
             </a>
         </div>
     </div>
+
     <main class="main-content">
-        <div class="row">
-            <div class="col-12">
-                <h2 class="mb-4">Team Management</h2>
-            </div>
-            <div class="col-lg-4 mb-4">
-                <div class="card team-list-card">
-                    <div class="card-header bg-white border-0 pb-0">
-                        <h5 class="mb-0 fw-bold">Create New Team</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="/admin/team/create" method="POST">
-                            <div class="mb-3">
-                                <label for="teamName" class="form-label fw-bold">Team Name</label>
-                                <input type="text" class="form-control" id="teamName" name="teamName" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="subadminEmail" class="form-label fw-bold">Assign to Sub-admin</label>
-                                <select class="form-select" id="subadminEmail" name="subadminEmail" required>
-                                    <option value="">Select Sub-admin</option>
-                                    <% subadmins.forEach((subadmin) => { %>
-                                        <option value="<%= subadmin.email %>"><%= subadmin.email %></option>
-                                    <% }); %>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="employees" class="form-label fw-bold">Select Employees (Current Team: -)</label>
-                                <select class="form-select" id="employees" name="employees" multiple size="8">
-                                    <% employees.forEach((employee) => { %>
-                                        <option value="<%= employee.email %>" <%= employee.teamName ? 'disabled' : '' %>><%= employee.email %> <%= employee.teamName ? `(In: ${employee.teamName})` : '' %></option>
-                                    <% }); %>
-                                </select>
-                                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple. Disabled employees are currently in a team.</small>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Create Team</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-8 mb-4">
-                <div class="card team-list-card">
-                    <div class="card-header bg-white border-0 pb-0">
-                        <h5 class="mb-0 fw-bold">Existing Teams</h5>
-                    </div>
-                    <div class="card-body">
-                        <% if (teams.length === 0) { %>
-                            <div class="text-center py-5">
-                                <p class="text-muted">No teams created yet.</p>
-                            </div>
-                        <% } else { %>
-                            <div class="table-responsive">
-                                <table class="table team-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Team Name</th>
-                                            <th>Sub-Admin</th>
-                                            <th>Members</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <% teams.forEach((team) => { %>
-                                            <tr>
-                                                <td><%= team.teamName %></td>
-                                                <td><%= team.subadminEmail %></td>
-                                                <td>
-                                                    <span class="employee-emails">
-                                                        <%= team.employees && team.employees.length > 0 ? team.employees.join(', ') : 'No members' %>
-                                                    </span>
-                                                </td>
-                                                <td class="d-flex gap-2">
-                                                    <a href="/admin/team/edit/<%= team.teamName %>" class="btn btn-sm btn-warning"><i class="fas fa-edit"></i> Edit</a>
-                                                    <form action="/admin/team/delete/<%= team.teamName %>" method="POST" onsubmit="return confirm('Are you sure you want to delete <%= team.teamName %>? This will unassign all employees and remove any team-assigned tasks.')">
-                                                        <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash-alt"></i> Delete</button>
-                                                    </form>
-                                                </td>
-                                            </tr>
-                                        <% }); %>
-                                    </tbody>
-                                </table>
-                            </div>
-                        <% } %>
-                    </div>
+        <header class="mb-5">
+            <h1 class="h3 fw-bold mb-1">Team Management</h1>
+            <p class="text-muted mb-0">Organize employees into teams and assign sub-admin coordinators</p>
+        </header>
+
+        <div class="row g-4">
+            <!-- Create Team Column -->
+            <div class="col-lg-4">
+                <div class="card list-card p-4">
+                    <h5 class="fw-bold mb-4">Create New Team</h5>
+                    <form action="/admin/team/create" method="POST">
+                        <div class="mb-3">
+                            <label for="teamName" class="form-label small fw-bold text-muted text-uppercase">Team Name</label>
+                            <input type="text" class="form-control border-0 bg-light" id="teamName" name="teamName" placeholder="Enter team name" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="subadminEmail" class="form-label small fw-bold text-muted text-uppercase">Assign Sub-Admin</label>
+                            <select class="form-select border-0 bg-light" id="subadminEmail" name="subadminEmail" required>
+                                <option value="">Select Sub-admin</option>
+                                <% subadmins.forEach((subadmin) => { %>
+                                    <option value="<%= subadmin.email %>"><%= subadmin.email %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="employees" class="form-label small fw-bold text-muted text-uppercase">Select Members</label>
+                            <select class="form-select border-0 bg-light employee-list-select" id="employees" name="employees" multiple size="10">
+                                <% employees.forEach((employee) => { %>
+                                    <option value="<%= employee.email %>">
+                                        <%= employee.email %> <%= (employee.teams && employee.teams.length > 0) ? '(' + employee.teams.join(', ') + ')' : '' %>
+                                    </option>
+                                <% }); %>
+                            </select>
+                            <div class="form-text xsmall">Hold Ctrl/Cmd to select multiple members.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill mt-3 shadow-sm">
+                            <i class="fas fa-plus me-1"></i> Create Team
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>

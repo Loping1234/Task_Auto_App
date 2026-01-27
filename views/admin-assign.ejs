@@ -3,13 +3,14 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assign Task | TaskApp</title>
+    <title>Admin: Assign Task | TaskApp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
     <style>
         :root {
             --sidebar-width: 260px;
+            --primary-color: #4f46e5;
             --secondary-color: #1e293b;
         }
         body {
@@ -71,8 +72,8 @@
             background: #f8fafc;
         }
         #descriptionEditor {
-            min-height: 80px;
-            margin-bottom: 50px;
+            min-height: 200px;
+            margin-bottom: 40px;
         }
         .required-star {
             color: #ef4444;
@@ -83,27 +84,35 @@
             left: 24px;
             right: 24px;
         }
-        
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <a href="/subadmin-dashboard" class="sidebar-brand text-white">
-            <i class="fas fa-check-double text-primary"></i>
-            <span>TaskApp</span>
+        <a href="/admin-dashboard" class="sidebar-brand text-white">
+            <i class="fas fa-shield-alt text-primary"></i>
+            <span>Admin Panel</span>
         </a>
         <nav class="nav flex-column mt-4">
-            <a href="/subadmin-dashboard" class="nav-link">
+            <a href="/admin-dashboard" class="nav-link">
                 <i class="fas fa-home"></i> Dashboard
             </a>
-            <a href="/existingtasks" class="nav-link">
-                <i class="fas fa-tasks"></i> All Tasks
+            <a href="/admin/team/manage" class="nav-link">
+                <i class="fas fa-users-cog"></i> Team Management
             </a>
-            <a href="/assign" class="nav-link active">
+            <a href="/admin/assign" class="nav-link active">
                 <i class="fas fa-plus-circle"></i> Assign Task
+            </a>
+            <a href="/view-teams" class="nav-link">
+                <i class="fas fa-users"></i> Teams
+            </a>
+            <a href="/viewsubadm" class="nav-link">
+                <i class="fas fa-user-shield"></i> Sub-admins
             </a>
             <a href="/view-emp" class="nav-link">
                 <i class="fas fa-users"></i> Employees
+            </a>
+            <a href="/admin-subadmin-chat" class="nav-link">
+                <i class="fas fa-comments"></i> Chat
             </a>
         </nav>
         <div class="logout-btn">
@@ -115,21 +124,21 @@
 
     <main class="main-content">
         <header class="mb-5">
-            <h1 class="h3 fw-bold mb-1">Assign New Task</h1>
-            <p class="text-muted mb-0">Fill in the details to delegate a task to an employee</p>
+            <h1 class="h3 fw-bold mb-1">Assign New Task (Admin)</h1>
+            <p class="text-muted mb-0">Create and delegate a task to any employee or team</p>
         </header>
 
         <div class="card form-card bg-white p-4">
-            <form method="POST" action="/assign" enctype="multipart/form-data" class="needs-validation" novalidate>
+            <form method="POST" action="/admin/assign" enctype="multipart/form-data" class="needs-validation" novalidate>
                 <div class="row g-4">
                     <!-- Title -->
                     <div class="col-12">
                         <label for="title" class="form-label fw-semibold">Task Title <span class="required-star">*</span></label>
-                        <input type="text" class="form-control px-3 py-2" id="title" name="title" placeholder="What needs to be done?" required>
+                        <input type="text" class="form-control px-3 py-2" id="title" name="title" placeholder="Enter task title" required>
                     </div>
 
                     <!-- Description -->
-                    <div class="col-12 mb-5">
+                    <div class="col-12 mb-3">
                         <label class="form-label fw-semibold">Description</label>
                         <div id="descriptionEditor"></div>
                         <textarea id="description" name="description" class="d-none"></textarea>
@@ -141,7 +150,7 @@
                         <input type="date" class="form-control px-3 py-2" id="startDate" name="startDate">
                     </div>
                     <div class="col-md-6">
-                        <label for="endDate" class="form-label fw-semibold">End Date (Deadline)</label>
+                        <label for="endDate" class="form-label fw-semibold">Deadline</label>
                         <input type="date" class="form-control px-3 py-2" id="endDate" name="endDate">
                     </div>
                     <!-- Status & Assignee -->
@@ -171,15 +180,14 @@
                     <div class="col-12">
                         <label for="image" class="form-label fw-semibold">Attachment (Optional)</label>
                         <input type="file" class="form-control px-3 py-2" id="image" name="image" accept="image/*">
-                        <div class="form-text small">Upload an image or document relevant to the task.</div>
                     </div>
                     <!-- Actions -->
                     <div class="col-12 mt-5">
                         <div class="d-flex gap-3">
-                            <button type="submit" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+                            <button type="submit" class="btn btn-primary px-5 py-2 rounded-pill shadow-sm">
                                 <i class="fas fa-paper-plane me-2"></i> Assign Task
                             </button>
-                            <a href="/subadmin-dashboard" class="btn btn-light border px-4 py-2 rounded-pill">
+                            <a href="/admin-dashboard" class="btn btn-light border px-4 py-2 rounded-pill">
                                 Cancel
                             </a>
                         </div>
@@ -204,19 +212,16 @@
                     ['clean']
                 ]
             },
-            placeholder: 'Provide more context and instructions here...'
+            placeholder: 'Provide instructions...'
         });
         const form = document.querySelector('form');
         form.addEventListener('submit', function(e) {
             const descHTML = descriptionQuill.root.innerHTML;
             document.getElementById('description').value = descHTML;
-            
-            // Re-validate and set hidden fields before submission
             updateAssigneeFields();
-            
             if (!document.getElementById('assigneeEmail').value && !document.getElementById('teamName').value) {
                 e.preventDefault();
-                alert('Please select an employee or a team to assign the task.');
+                alert('Please select an employee or a team.');
                 return false;
             }
         });
@@ -224,13 +229,10 @@
         function updateAssigneeFields() {
             const assigneeSelect = document.getElementById('assignee');
             const selectedOption = assigneeSelect.options[assigneeSelect.selectedIndex];
-            
             document.getElementById('assigneeEmail').value = '';
             document.getElementById('teamName').value = '';
-            
             if (selectedOption.value) {
                 const groupLabel = selectedOption.parentElement.label;
-                
                 if (groupLabel.includes('Individual Employees')) {
                     document.getElementById('assigneeEmail').value = selectedOption.value;
                 } else if (groupLabel.includes('Teams')) {
