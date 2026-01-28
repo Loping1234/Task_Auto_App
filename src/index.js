@@ -1525,32 +1525,7 @@ app.post("/admin-subadmin-chat", isAuthenticated, async (req, res) => {
         res.status(500).send("Failed to send message.");
     }
 });
-//
-//app.get("/admin-dashboard", isAdmin, async (req, res) => {
-//    try {
-//        const subadmins = await collection.find({ role: "subadmin" });
-//        const employees = await collection.find({ role: "employee" });
-//        const allTasks = await Task.find().sort({ createdAt: -1 });
-//        const teams = await Team.find();
-//
-//        const subadminCount = subadmins.length;
-//        const empCount = employees.length;
-//        const taskCount = allTasks.length;
-//        const teamCount = teams.length;
-//
-//        res.render("admin-dashboard", {
-//            subadmins,
-//            employees,
-//            subadminCount,
-//            empCount,
-//            taskCount,
-//            teamCount
-//        });
-//    } catch (err) {
-//        console.error("Error fetching admin data", err);
-//        res.status(500).send("Error loading admin dashboard");
-//    }
-//})
+
 
 // Team Management Routes
 app.get("/view-teammgmt", isAdmin, async (req, res) => {
