@@ -71,30 +71,25 @@
 </head>
 <body>
     <div class="sidebar">
-        <a href="/<%= userRole %>-dashboard" class="sidebar-brand text-white">
+        <a href="/dashboard" class="sidebar-brand text-white">
             <i class="fas fa-check-double text-primary"></i>
             <span>TaskApp</span>
         </a>
         <nav class="nav flex-column mt-4">
-            <a href="/<%= userRole %>-dashboard" class="nav-link">
+            <a href="/dashboard" class="nav-link">
                 <i class="fas fa-home"></i> Dashboard
             </a>
-            <% if (userRole === "admin") { %>
-                <a href="/admin/team/manage" class="nav-link">
-                    <i class="fas fa-users-cog"></i> Team Management
-                </a>
-                <a href="/admin/assign" class="nav-link">
-                    <i class="fas fa-plus-circle"></i> Assign Task
-                </a>
-            <% } %>
+            <a href="/existingtasks" class="nav-link">
+                <i class="fas fa-tasks"></i> All Tasks
+            </a>
             <a href="/view-teams" class="nav-link active">
                 <i class="fas fa-users"></i> Teams
             </a>
-            <a href="/viewsubadm" class="nav-link" <% if (userRole !== "admin") { %>style="display:none;"<% } %>>
-                <i class="fas fa-user-shield"></i> Sub-admins
+            <a href="/assign" class="nav-link">
+                <i class="fas fa-plus-circle"></i> Assign Task
             </a>
             <a href="/view-emp" class="nav-link">
-                <i class="fas fa-users"></i> Employees
+                <i class="fas fa-users-cog"></i> Employees
             </a>
             <a href="/admin-subadmin-chat" class="nav-link">
                 <i class="fas fa-comments"></i> Chat

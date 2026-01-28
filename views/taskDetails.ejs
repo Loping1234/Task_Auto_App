@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= task.title %> | Task Details</title>
+    <title>
+        <%= task.title %> | Task Details
+    </title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
@@ -12,10 +14,12 @@
             --sidebar-width: 260px;
             --secondary-color: #1e293b;
         }
+
         body {
             background-color: #f8fafc;
             font-family: 'Inter', sans-serif;
         }
+
         .sidebar {
             width: var(--sidebar-width);
             height: 100vh;
@@ -27,6 +31,7 @@
             padding: 24px;
             z-index: 1000;
         }
+
         .sidebar-brand {
             font-size: 24px;
             font-weight: 700;
@@ -37,6 +42,7 @@
             color: #fff;
             text-decoration: none;
         }
+
         .nav-link {
             color: #cbd5e1;
             padding: 12px 16px;
@@ -47,44 +53,61 @@
             gap: 12px;
             transition: all 0.3s;
         }
+
         .nav-link:hover {
             background-color: rgba(255, 255, 255, 0.1);
             color: white;
         }
+
         .main-content {
             margin-left: var(--sidebar-width);
             padding: 40px;
         }
+
         .detail-card {
             border: none;
             border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
             background: white;
         }
+
         .task-image {
             max-width: 100%;
             border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
+
         .ql-container {
             border-bottom-left-radius: 8px;
             border-bottom-right-radius: 8px;
             background: #fff;
         }
+
         .ql-toolbar {
             border-top-left-radius: 8px;
             border-top-right-radius: 8px;
             background: #f8fafc;
         }
-        .edit-field { display: none; }
-        .editing .edit-field { display: block; }
-        .editing .view-field { display: none; }
+
+        .edit-field {
+            display: none;
+        }
+
+        .editing .edit-field {
+            display: block;
+        }
+
+        .editing .view-field {
+            display: none;
+        }
+
         .logout-btn {
             position: absolute;
             bottom: 24px;
             left: 24px;
             right: 24px;
         }
+
         .nav-tabs .nav-link {
             border: none;
             color: #64748b;
@@ -92,11 +115,13 @@
             padding: 12px 20px;
             border-bottom: 2px solid transparent;
         }
+
         .nav-tabs .nav-link.active {
             color: #4f46e5;
             background: transparent;
             border-bottom-color: #4f46e5;
         }
+
         .comment-avatar {
             width: 36px;
             height: 36px;
@@ -109,6 +134,7 @@
             font-weight: 700;
             font-size: 14px;
         }
+
         .comment-bubble {
             background: #f8fafc;
             border-radius: 12px;
@@ -117,24 +143,31 @@
         }
     </style>
 </head>
+
 <body>
     <div class="sidebar">
-        <a href="/subadmin-dashboard" class="sidebar-brand text-white">
+        <a href="/dashboard" class="sidebar-brand text-white">
             <i class="fas fa-check-double text-primary"></i>
             <span>TaskApp</span>
         </a>
         <nav class="nav flex-column mt-4">
-            <a href="/subadmin-dashboard" class="nav-link">
+            <a href="/dashboard" class="nav-link">
                 <i class="fas fa-home"></i> Dashboard
             </a>
             <a href="/existingtasks" class="nav-link">
                 <i class="fas fa-tasks"></i> All Tasks
             </a>
+            <a href="/view-teams" class="nav-link">
+                <i class="fas fa-users"></i> Teams
+            </a>
             <a href="/assign" class="nav-link">
                 <i class="fas fa-plus-circle"></i> Assign Task
             </a>
             <a href="/view-emp" class="nav-link">
-                <i class="fas fa-users"></i> Employees
+                <i class="fas fa-users-cog"></i> Employees
+            </a>
+            <a href="/admin-subadmin-chat" class="nav-link">
+                <i class="fas fa-comments"></i> Chat
             </a>
         </nav>
         <div class="logout-btn">
@@ -149,29 +182,36 @@
             <form id="inlineEditForm" enctype="multipart/form-data">
                 <header class="mb-4 d-flex justify-content-between align-items-start">
                     <div class="flex-grow-1 me-4">
-                        <div id="successMessage" class="alert alert-success py-2 px-3 small mb-3" style="display: none;">
+                        <div id="successMessage" class="alert alert-success py-2 px-3 small mb-3"
+                            style="display: none;">
                             <i class="fas fa-check-circle me-2"></i> Changes saved successfully.
                         </div>
-                        
+
                         <div class="view-field">
-                            <h1 class="h3 fw-bold mb-1 text-dark"><%= task.title %></h1>
-                            <p class="text-muted small mb-0">Task ID: <%= task._id %></p>
+                            <h1 class="h3 fw-bold mb-1 text-dark">
+                                <%= task.title %>
+                            </h1>
+                            <p class="text-muted small mb-0">Task ID: <%= task._id %>
+                            </p>
                         </div>
-                        
+
                         <div class="edit-field">
                             <label class="form-label small fw-bold text-muted">Task Title</label>
-                            <input type="text" id="titleInput" name="title" value="<%= task.title %>" class="form-control form-control-lg fw-bold">
+                            <input type="text" id="titleInput" name="title" value="<%= task.title %>"
+                                class="form-control form-control-lg fw-bold">
                         </div>
                     </div>
-                    
+
                     <div class="d-flex gap-2 pt-1">
                         <button type="button" class="btn btn-primary rounded-pill px-4" id="editBtn">
                             <i class="fas fa-edit me-2"></i> Edit
                         </button>
-                        <button type="submit" class="btn btn-success rounded-pill px-4" id="saveBtn" style="display: none;">
+                        <button type="submit" class="btn btn-success rounded-pill px-4" id="saveBtn"
+                            style="display: none;">
                             <i class="fas fa-save me-2"></i> Save
                         </button>
-                        <button type="button" class="btn btn-light border rounded-pill px-4 text-muted" id="cancelEditBtn" style="display: none;">
+                        <button type="button" class="btn btn-light border rounded-pill px-4 text-muted"
+                            id="cancelEditBtn" style="display: none;">
                             Cancel
                         </button>
                         <button type="button" class="btn btn-danger rounded-pill px-4" id="deleteBtn">
@@ -187,7 +227,8 @@
                                 <i class="fas fa-align-left text-primary small"></i> Description
                             </h5>
                             <div class="view-field text-secondary lh-lg">
-                                <%- task.description || '<span class="text-muted fst-italic">No description provided.</span>' %>
+                                <%- task.description
+                                    || '<span class="text-muted fst-italic">No description provided.</span>' %>
                             </div>
                             <div class="edit-field">
                                 <div id="descriptionEditor"></div>
@@ -201,13 +242,14 @@
                             </h5>
                             <div class="view-field">
                                 <% if (task.image) { %>
-                                    <img src="/task-img/<%= task._id %>" alt="<%= task.title %>" class="task-image mb-2">
-                                <% } else { %>
-                                    <div class="text-center py-4 bg-light rounded-3">
-                                        <i class="fas fa-file-upload fs-2 text-muted opacity-25 mb-2 d-block"></i>
-                                        <span class="text-muted small">No images attached</span>
-                                    </div>
-                                <% } %>
+                                    <img src="/task-img/<%= task._id %>" alt="<%= task.title %>"
+                                        class="task-image mb-2">
+                                    <% } else { %>
+                                        <div class="text-center py-4 bg-light rounded-3">
+                                            <i class="fas fa-file-upload fs-2 text-muted opacity-25 mb-2 d-block"></i>
+                                            <span class="text-muted small">No images attached</span>
+                                        </div>
+                                        <% } %>
                             </div>
                             <div class="edit-field">
                                 <input type="file" name="image" accept="image/*" class="form-control">
@@ -220,38 +262,49 @@
                             <h5 class="fw-bold mb-4">Attributes</h5>
                             <div class="mb-4">
                                 <label class="form-label small fw-bold text-muted text-uppercase mb-2">Status</label>
-                                <select id="statusDropdown" name="status" class="form-select border-0 bg-light fw-semibold">
-                                    <option value="Pending" <%= task.status === 'Pending' ? 'selected' : '' %>>Pending</option>
-                                    <option value="inprogress" <%= task.status === 'inprogress' ? 'selected' : '' %>>In Progress</option>
-                                    <option value="completed" <%= task.status === 'completed' ? 'selected' : '' %>>Completed</option>
+                                <select id="statusDropdown" name="status"
+                                    class="form-select border-0 bg-light fw-semibold">
+                                    <option value="Pending" <%=task.status==='Pending' ? 'selected' : '' %>>Pending
+                                    </option>
+                                    <option value="inprogress" <%=task.status==='inprogress' ? 'selected' : '' %>>In
+                                        Progress</option>
+                                    <option value="completed" <%=task.status==='completed' ? 'selected' : '' %>
+                                        >Completed</option>
                                 </select>
                                 <span id="savingStatus" class="small"></span>
                             </div>
 
                             <div class="mb-4">
-                                <label class="form-label small fw-bold text-muted text-uppercase mb-2">Assigned To</label>
-                                <select id="assigneeDropdown" name="assignee" class="form-select border-0 bg-light fw-semibold" style="max-width: 100%;">
-                                    <option value="">Select Employee or Team</option>
-                                    <optgroup label="Individual Employees">
-                                        <%- employeeOptions %>
-                                    </optgroup>
-                                    <optgroup label="Teams">
-                                        <%- teamOptions %>
-                                    </optgroup>
+                                <label class="form-label small fw-bold text-muted text-uppercase mb-2">Assigned
+                                    To</label>
+                                <select id="assigneeDropdown" name="assignee"
+                                    class="form-select border-0 bg-light fw-semibold" style="max-width: 100%;">
+                                    <option value="">Select Employee</option>
+                                    <%- employeeOptions %>
                                 </select>
                                 <span id="savingAssignee" class="small"></span>
                             </div>
 
                             <div class="row g-3">
                                 <div class="col-6">
-                                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">Start Date</label>
-                                    <div class="view-field p-2 bg-light rounded small text-center"><%= task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A' %></div>
-                                    <input type="date" name="startDate" value="<%= task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '' %>" class="form-control form-control-sm edit-field">
+                                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">Start
+                                        Date</label>
+                                    <div class="view-field p-2 bg-light rounded small text-center">
+                                        <%= task.startDate ? new Date(task.startDate).toLocaleDateString() : 'N/A' %>
+                                    </div>
+                                    <input type="date" name="startDate"
+                                        value="<%= task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '' %>"
+                                        class="form-control form-control-sm edit-field">
                                 </div>
                                 <div class="col-6">
-                                    <label class="form-label small fw-bold text-muted text-uppercase mb-2">Deadline</label>
-                                    <div class="view-field p-2 bg-light rounded small text-center"><%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'N/A' %></div>
-                                    <input type="date" name="endDate" value="<%= task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '' %>" class="form-control form-control-sm edit-field">
+                                    <label
+                                        class="form-label small fw-bold text-muted text-uppercase mb-2">Deadline</label>
+                                    <div class="view-field p-2 bg-light rounded small text-center">
+                                        <%= task.endDate ? new Date(task.endDate).toLocaleDateString() : 'N/A' %>
+                                    </div>
+                                    <input type="date" name="endDate"
+                                        value="<%= task.endDate ? new Date(task.endDate).toISOString().split('T')[0] : '' %>"
+                                        class="form-control form-control-sm edit-field">
                                 </div>
                             </div>
                         </div>
@@ -263,13 +316,16 @@
             <div class="mt-5">
                 <ul class="nav nav-tabs mb-4 border-0" id="taskTabs" role="tablist">
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="activity-tab" data-bs-toggle="tab" data-bs-target="#activity" type="button" role="tab">
+                        <button class="nav-link active" id="activity-tab" data-bs-toggle="tab"
+                            data-bs-target="#activity" type="button" role="tab">
                             <i class="fas fa-history me-2"></i> Activity Log
                         </button>
                     </li>
                     <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab">
-                            <i class="fas fa-comments me-2"></i> Comments (<%= task.comments ? task.comments.length : 0 %>)
+                        <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments"
+                            type="button" role="tab">
+                            <i class="fas fa-comments me-2"></i> Comments (<%= task.comments ? task.comments.length : 0
+                                %>)
                         </button>
                     </li>
                 </ul>
@@ -285,33 +341,51 @@
                                             <th class="ps-4 py-3 text-uppercase fw-bold text-muted small">Author</th>
                                             <th class="py-3 text-uppercase fw-bold text-muted small">Field</th>
                                             <th class="py-3 text-uppercase fw-bold text-muted small">Change</th>
-                                            <th class="pe-4 py-3 text-uppercase fw-bold text-muted small text-end">Timestamp</th>
+                                            <th class="pe-4 py-3 text-uppercase fw-bold text-muted small text-end">
+                                                Timestamp</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <% if (task.activityLog && task.activityLog.length > 0) { %>
+                                        <% if (task.activityLog && task.activityLog.length> 0) { %>
                                             <% task.activityLog.forEach(function(entry) { %>
                                                 <tr>
                                                     <td class="ps-4 py-3">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="comment-avatar me-2" style="width: 28px; height: 28px; font-size: 10px;"><%= entry.changedBy.charAt(0).toUpperCase() %></div>
-                                                            <span class="small fw-semibold"><%= entry.changedBy %></span>
+                                                            <div class="comment-avatar me-2"
+                                                                style="width: 28px; height: 28px; font-size: 10px;">
+                                                                <%= entry.changedBy.charAt(0).toUpperCase() %>
+                                                            </div>
+                                                            <span class="small fw-semibold">
+                                                                <%= entry.changedBy %>
+                                                            </span>
                                                         </div>
                                                     </td>
-                                                    <td class="py-3"><span class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-1 fw-medium" style="font-size: 10px;"><%= entry.field %></span></td>
+                                                    <td class="py-3"><span
+                                                            class="badge bg-primary-subtle text-primary border border-primary-subtle rounded-1 fw-medium"
+                                                            style="font-size: 10px;">
+                                                            <%= entry.field %>
+                                                        </span></td>
                                                     <td class="py-3 small">
                                                         <div class="d-flex align-items-center gap-2">
-                                                            <span class="text-danger text-decoration-line-through opacity-50"><%- entry.oldValue || 'None' %></span>
+                                                            <span
+                                                                class="text-danger text-decoration-line-through opacity-50"><%-
+                                                                    entry.oldValue || 'None' %></span>
                                                             <i class="fas fa-long-arrow-alt-right text-muted"></i>
-                                                            <span class="text-success fw-bold"><%- entry.newValue || 'None' %></span>
+                                                            <span class="text-success fw-bold"><%- entry.newValue
+                                                                    || 'None' %></span>
                                                         </div>
                                                     </td>
-                                                    <td class="pe-4 py-3 text-muted text-end small"><%= new Date(entry.changedAt).toLocaleString() %></td>
+                                                    <td class="pe-4 py-3 text-muted text-end small">
+                                                        <%= new Date(entry.changedAt).toLocaleString() %>
+                                                    </td>
                                                 </tr>
-                                            <% }); %>
-                                        <% } else { %>
-                                            <tr><td colspan="4" class="text-center py-4 text-muted small">No activity recorded yet</td></tr>
-                                        <% } %>
+                                                <% }); %>
+                                                    <% } else { %>
+                                                        <tr>
+                                                            <td colspan="4" class="text-center py-4 text-muted small">No
+                                                                activity recorded yet</td>
+                                                        </tr>
+                                                        <% } %>
                                     </tbody>
                                 </table>
                             </div>
@@ -322,67 +396,94 @@
                     <div class="tab-pane fade" id="comments" role="tabpanel">
                         <div class="row g-4">
                             <!-- Comment Form (Visible only to the assigned employee) -->
-                            <% if (userRole === 'employee' && userEmail === task.assigneeEmail) { %>
+                            <% if (userRole==='employee' && userEmail===task.assigneeEmail) { %>
                                 <div class="col-lg-5">
                                     <div class="card detail-card p-4 shadow-sm border-0 bg-white">
                                         <h6 class="fw-bold mb-3 text-dark">Send an Update to Sub-admin</h6>
-                                        <form action="/task/<%= task._id %>/comment" method="POST" enctype="multipart/form-data">
+                                        <form action="/task/<%= task._id %>/comment" method="POST"
+                                            enctype="multipart/form-data">
                                             <div class="mb-3">
-                                                <textarea name="text" class="form-control bg-light border-0" rows="4" placeholder="Ask a question or provide an update about this task..." required></textarea>
+                                                <textarea name="text" class="form-control bg-light border-0" rows="4"
+                                                    placeholder="Ask a question or provide an update about this task..."
+                                                    required></textarea>
                                             </div>
                                             <div class="mb-3">
-                                                <label class="form-label small fw-bold text-muted">Attach Screenshot (Optional)</label>
-                                                <input type="file" name="image" accept="image/*" class="form-control form-control-sm">
+                                                <label class="form-label small fw-bold text-muted">Attach Screenshot
+                                                    (Optional)</label>
+                                                <input type="file" name="image" accept="image/*"
+                                                    class="form-control form-control-sm">
                                             </div>
-                                            <button type="submit" class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm">
+                                            <button type="submit"
+                                                class="btn btn-primary rounded-pill w-100 fw-bold shadow-sm">
                                                 <i class="fas fa-paper-plane me-2"></i> Send to Sub-admin
                                             </button>
                                         </form>
                                     </div>
                                 </div>
-                            <% } else if (userRole === 'subadmin') { %>
-                                <div class="col-lg-5">
-                                    <div class="card detail-card p-4 border-0 bg-light-subtle shadow-sm">
-                                        <div class="text-center py-3">
-                                            <i class="fas fa-info-circle text-primary fs-3 mb-2"></i>
-                                            <h6 class="fw-bold text-dark">Employee Feedback Area</h6>
-                                            <p class="text-muted small mb-0">This area is for employees to provide updates or ask questions. You can view all their messages on the right.</p>
+                                <% } else if (userRole==='subadmin' ) { %>
+                                    <div class="col-lg-5">
+                                        <div class="card detail-card p-4 border-0 bg-light-subtle shadow-sm">
+                                            <div class="text-center py-3">
+                                                <i class="fas fa-info-circle text-primary fs-3 mb-2"></i>
+                                                <h6 class="fw-bold text-dark">Employee Feedback Area</h6>
+                                                <p class="text-muted small mb-0">This area is for employees to provide
+                                                    updates or ask questions. You can view all their messages on the
+                                                    right.</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            <% } %>
-                            
-                            <!-- Comment List (Visible to both) -->
-                            <div class="<%= (userRole === 'employee' && userEmail === task.assigneeEmail) || userRole === 'subadmin' ? 'col-lg-7' : 'col-12' %>">
-                                <div class="d-flex flex-column gap-3">
-                                    <% if (task.comments && task.comments.length > 0) { %>
-                                        <% task.comments.slice().reverse().forEach(function(comment) { %>
-                                            <div class="card detail-card p-3">
-                                                <div class="d-flex gap-3">
-                                                    <div class="comment-avatar"><%= comment.author.charAt(0).toUpperCase() %></div>
-                                                    <div class="flex-grow-1">
-                                                        <div class="d-flex justify-content-between align-items-center mb-1">
-                                                            <span class="fw-bold small"><%= comment.author %></span>
-                                                            <span class="text-muted" style="font-size: 11px;"><%= new Date(comment.createdAt).toLocaleString() %></span>
-                                                        </div>
-                                                        <div class="text-secondary small mb-2"><%= comment.text %></div>
-                                                        <% if (comment.image) { %>
-                                                            <a href="/comment-img/<%= task._id %>/<%= comment._id %>" target="_blank">
-                                                                <img src="/comment-img/<%= task._id %>/<%= comment._id %>" class="rounded border mt-1" style="max-width: 150px; cursor: zoom-in;">
-                                                            </a>
-                                                        <% } %>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <% }); %>
-                                    <% } else { %>
-                                        <div class="text-center py-5 bg-white rounded-4 shadow-sm">
-                                            <i class="fas fa-comment-slash fs-2 text-muted opacity-25 mb-2 d-block"></i>
-                                            <p class="text-muted small mb-0">No comments yet. Start the conversation!</p>
-                                        </div>
                                     <% } %>
-                                </div>
-                            </div>
+
+                                        <!-- Comment List (Visible to both) -->
+                                        <div
+                                            class="<%= (userRole === 'employee' && userEmail === task.assigneeEmail) || userRole === 'subadmin' ? 'col-lg-7' : 'col-12' %>">
+                                            <div class="d-flex flex-column gap-3">
+                                                <% if (task.comments && task.comments.length> 0) { %>
+                                                    <% task.comments.slice().reverse().forEach(function(comment) { %>
+                                                        <div class="card detail-card p-3">
+                                                            <div class="d-flex gap-3">
+                                                                <div class="comment-avatar">
+                                                                    <%= comment.author.charAt(0).toUpperCase() %>
+                                                                </div>
+                                                                <div class="flex-grow-1">
+                                                                    <div
+                                                                        class="d-flex justify-content-between align-items-center mb-1">
+                                                                        <span class="fw-bold small">
+                                                                            <%= comment.author %>
+                                                                        </span>
+                                                                        <span class="text-muted"
+                                                                            style="font-size: 11px;">
+                                                                            <%= new
+                                                                                Date(comment.createdAt).toLocaleString()
+                                                                                %>
+                                                                        </span>
+                                                                    </div>
+                                                                    <div class="text-secondary small mb-2">
+                                                                        <%= comment.text %>
+                                                                    </div>
+                                                                    <% if (comment.image) { %>
+                                                                        <a href="/comment-img/<%= task._id %>/<%= comment._id %>"
+                                                                            target="_blank">
+                                                                            <img src="/comment-img/<%= task._id %>/<%= comment._id %>"
+                                                                                class="rounded border mt-1"
+                                                                                style="max-width: 150px; cursor: zoom-in;">
+                                                                        </a>
+                                                                        <% } %>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <% }); %>
+                                                            <% } else { %>
+                                                                <div
+                                                                    class="text-center py-5 bg-white rounded-4 shadow-sm">
+                                                                    <i
+                                                                        class="fas fa-comment-slash fs-2 text-muted opacity-25 mb-2 d-block"></i>
+                                                                    <p class="text-muted small mb-0">No comments yet.
+                                                                        Start the conversation!</p>
+                                                                </div>
+                                                                <% } %>
+                                            </div>
+                                        </div>
                         </div>
                     </div>
                 </div>
@@ -409,7 +510,7 @@
             placeholder: 'Edit description'
         });
 
-        const initialDescription = <%- JSON.stringify(task.description || "") %>;
+        const initialDescription = <% - JSON.stringify(task.description || "") %>;
         descriptionQuill.root.innerHTML = initialDescription;
         descriptionInput.value = initialDescription;
 
@@ -430,7 +531,7 @@
         editBtn.addEventListener('click', () => setEditing(true));
         cancelEditBtn.addEventListener('click', () => location.reload());
 
-        statusDropdown.addEventListener('change', async function() {
+        statusDropdown.addEventListener('change', async function () {
             const taskId = '<%= task._id %>';
             const savingSpan = document.getElementById('savingStatus');
             savingSpan.innerHTML = '<i class="fas fa-spinner fa-spin text-muted"></i>';
@@ -460,7 +561,7 @@
                 }
             });
 
-            assigneeDropdown.addEventListener('change', async function() {
+            assigneeDropdown.addEventListener('change', async function () {
                 const taskId = '<%= task._id %>';
                 const savingSpan = document.getElementById('savingAssignee');
                 savingSpan.innerHTML = '<i class="fas fa-spinner fa-spin text-muted"></i>';
@@ -478,7 +579,7 @@
             });
         }
 
-        form.addEventListener('submit', async function(e) {
+        form.addEventListener('submit', async function (e) {
             e.preventDefault();
             descriptionInput.value = descriptionQuill.root.innerHTML;
             const formData = new FormData(form);
@@ -494,7 +595,7 @@
             } catch (error) { alert('Error updating task.'); }
         });
 
-        document.getElementById('deleteBtn').addEventListener('click', async function() {
+        document.getElementById('deleteBtn').addEventListener('click', async function () {
             if (!confirm('Are you sure you want to delete this task?')) return;
             const deleteForm = document.createElement('form');
             deleteForm.method = 'POST';
@@ -508,4 +609,5 @@
         }
     </script>
 </body>
+
 </html>
