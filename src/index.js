@@ -60,18 +60,18 @@ app.use(session({
 }));
 
 // Explicitly set a Content-Security-Policy to allow CDNs and development tools
-app.use((req, res, next) => {
-    res.setHeader(
-        'Content-Security-Policy',
-        "default-src 'self'; " +
-        "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " +
-        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; " +
-        "font-src 'self' https://cdnjs.cloudflare.com; " +
-        "img-src 'self' data:; " +
-        "connect-src 'self' ws://localhost:* http://localhost:*"
-    );
-    next();
-});
+//app.use((req, res, next) => {
+//    res.setHeader(
+//        'Content-Security-Policy',
+//        "default-src 'self'; " +
+//        "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " +
+//        "script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; " +
+//        "font-src 'self' https://cdnjs.cloudflare.com; " +
+//        "img-src 'self' data:; " +
+//        "connect-src 'self' ws://localhost:* http://localhost:*"
+//    );
+//    next();
+//});
 
 // Prevent caching for all routes to handle back button after logout
 app.use((req, res, next) => {
@@ -113,7 +113,7 @@ const isEmployee = (req, res, next) => {
 // Middleware to check if user is already logged in (for login/signup pages)
 const isAlreadyAuthenticated = (req, res, next) => {
     if (req.session.userEmail) {
-        if (["admin", "subadmin", "employee"].includes(domain)) {
+        if (["admin", "subadmin", "employee"].includes(req.session.userRole)) {
             return res.redirect("/dashboard");
         }
         else {
@@ -143,10 +143,17 @@ app.post("/signup", async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(req.body.password, 10);
         const domain = req.body.email.split("@")[1];
+        let role = "employee";
+        if (domain === "admin.com") {
+            role = "admin";
+        } else if (domain === "subadmin.com") {
+            role = "subadmin";
+        }
+
         const data = {
             email: req.body.email,
             password: hashedPassword,
-            role: domain === "subadmin.com" ? "subadmin" : "employee"
+            role: role
         };
         const userdata = await collection.create(data);
 
@@ -273,12 +280,19 @@ app.get("/dashboard", isAuthenticated, async (req, res) => {
                 employeeTeams.push(employee.teamName);
             }
             const individualTasks = await Task.find({ assigneeEmail: req.session.userEmail });
+
+            // Get teammate tasks based on current team membership
             let teammateTasks = [];
             if (employeeTeams.length > 0) {
-                teammateTasks = await Task.find({
-                    teamName: { $in: employeeTeams },
-                    assigneeEmail: { $ne: req.session.userEmail }
-                });
+                const teams = await Team.find({ teamName: { $in: employeeTeams } });
+                const allTeamMembers = teams.flatMap(team => team.employees);
+                const teamMemberEmails = [...new Set(allTeamMembers)].filter(email => email !== req.session.userEmail);
+
+                if (teamMemberEmails.length > 0) {
+                    teammateTasks = await Task.find({
+                        assigneeEmail: { $in: teamMemberEmails }
+                    });
+                }
             }
             res.render("dashboard", {
                 email: req.session.userEmail,
@@ -892,6 +906,63 @@ app.get("/existingtasks", isAuthenticated, async (req, res) => {
     }
 })
 
+// Task Board - Kanban View
+app.get("/taskboard", isAuthenticated, async (req, res) => {
+    try {
+        let tasks = [];
+        const userRole = req.session.userRole;
+        const userEmail = req.session.userEmail;
+
+        if (userRole === "admin") {
+            // Admin sees all tasks
+            tasks = await Task.find({}).sort({ createdAt: -1 });
+        } else if (userRole === "subadmin") {
+            // Subadmin sees tasks from their teams
+            const teams = await Team.find({ subadminEmail: userEmail });
+            const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
+            const teamNames = teams.map(t => t.teamName);
+            tasks = await Task.find({
+                $or: [
+                    { assigneeEmail: { $in: employeeEmails } },
+                    { teamName: { $in: teamNames } }
+                ]
+            }).sort({ createdAt: -1 });
+        } else if (userRole === "employee") {
+            // Employee sees their own tasks and team tasks
+            const employee = await Employee.findOne({ email: userEmail });
+            const employeeTeams = employee ? (employee.teams || []) : [];
+
+            if (employeeTeams.length > 0) {
+                tasks = await Task.find({
+                    $or: [
+                        { assigneeEmail: userEmail },
+                        { teamName: { $in: employeeTeams } }
+                    ]
+                }).sort({ createdAt: -1 });
+            } else {
+                tasks = await Task.find({ assigneeEmail: userEmail }).sort({ createdAt: -1 });
+            }
+        } else {
+            return res.status(403).send("Unauthorized");
+        }
+
+        // Group tasks by status
+        const pendingTasks = tasks.filter(t => t.status === "Pending");
+        const inProgressTasks = tasks.filter(t => t.status === "inprogress" || t.status === "In Progress");
+        const completedTasks = tasks.filter(t => t.status === "completed" || t.status === "Completed");
+
+        res.render("taskboard", {
+            pendingTasks,
+            inProgressTasks,
+            completedTasks,
+            user: { role: userRole, email: userEmail }
+        });
+    } catch (err) {
+        console.error("Error loading task board", err);
+        res.status(500).send("Error loading task board");
+    }
+});
+
 app.get("/taskDetails/:id", isAuthenticated, async (req, res) => {
     try {
         const taskId = req.params.id;
@@ -1106,12 +1177,11 @@ app.post("/update-task/:id", isAuthenticated, upload.single('image'), async (req
     try {
         const { title, description, startDate, endDate, status, assigneeEmail } = req.body;
         const taskId = req.params.id;
-
+        let findQuery = { _id: taskId };
         if (!title) {
             return res.status(400).send("Title is required");
         }
 
-        let findQuery = { _id: taskId };
         if (req.session.userRole === "employee") {
             findQuery.assigneeEmail = req.session.userEmail;
         } else if (req.session.userRole === "subadmin") {
@@ -1278,10 +1348,10 @@ app.post("/update-task/:id", isAuthenticated, upload.single('image'), async (req
             );
         }
 
-        res.redirect("/existingtasks");
+        res.json({ success: true, message: "Task updated successfully" });
     } catch (err) {
         console.error("Error updating task", err);
-        res.status(500).send("Update failed");
+        res.status(500).json({ success: false, message: "Update failed", error: err.message });
     }
 });
 
@@ -1294,6 +1364,7 @@ app.post("/delete-task/:id", isAuthenticated, async (req, res) => {
             const teams = await Team.find({ subadminEmail: req.session.userEmail });
             const employeeEmails = [...new Set(teams.flatMap(team => team.employees))];
             const teamNames = teams.map(t => t.teamName);
+
             findQuery.$or = [
                 { assigneeEmail: { $in: employeeEmails } },
                 { teamName: { $in: teamNames } }
@@ -1322,10 +1393,10 @@ app.post("/delete-task/:id", isAuthenticated, async (req, res) => {
 
         await Task.findByIdAndDelete(taskId);
 
-        res.redirect("/existingtasks");
+        res.json({ success: true, message: "Task deleted successfully" });
     } catch (err) {
         console.error("Error deleting task", err);
-        res.status(500).send("Delete failed");
+        res.status(500).json({ success: false, message: "Delete failed", error: err.message });
     }
 });
 
@@ -1334,12 +1405,22 @@ app.get("/team-tasks", isEmployee, async (req, res) => {
         const employee = await Employee.findOne({ email: req.session.userEmail });
         const employeeTeams = employee ? (employee.teams || []) : [];
 
-        // Team member tasks: assigned to teammates (same team, different assignee)
-        let teamTasks = [];
+        // Get all team members from the employee's current teams
+        let teamMemberEmails = [];
         if (employeeTeams.length > 0) {
+            const teams = await Team.find({ teamName: { $in: employeeTeams } });
+            // Collect all unique employee emails from all teams
+            const allTeamMembers = teams.flatMap(team => team.employees);
+            teamMemberEmails = [...new Set(allTeamMembers)];
+            // Remove current user from the list
+            teamMemberEmails = teamMemberEmails.filter(email => email !== req.session.userEmail);
+        }
+
+        // Team member tasks: assigned to any current teammate
+        let teamTasks = [];
+        if (teamMemberEmails.length > 0) {
             teamTasks = await Task.find({
-                teamName: { $in: employeeTeams },
-                assigneeEmail: { $ne: req.session.userEmail }
+                assigneeEmail: { $in: teamMemberEmails }
             }).sort({ createdAt: -1 });
         }
 

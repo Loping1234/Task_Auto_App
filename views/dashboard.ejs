@@ -7,294 +7,295 @@
     <title>Admin Dashboard | TaskApp</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <% if (user.role === 'admin') { %>
-    <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #4f46e5;
-            --secondary-color: #1e293b;
-        }
+    <link rel="stylesheet" href="/css/dark-theme.css">
 
-        body {
-            background-color: #f8fafc;
-            font-family: 'Inter', sans-serif;
-        }
+    <% if (user.role==='admin' ) { %>
+        <style>
+            :root {
+                --sidebar-width: 260px;
+                --primary-color: #4f46e5;
+                --secondary-color: #1e293b;
+            }
 
-        .subadmin-list {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            padding: 20px;
-        }
+            body {
+                background-color: #f8fafc;
+                font-family: 'Inter', sans-serif;
+            }
 
-        .subadmin-item {
-            border-bottom: 1px solid #eee;
-            padding: 15px 0;
-            transition: all 0.3s;
-        }
+            .subadmin-list {
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                padding: 20px;
+            }
 
-        .subadmin-item:hover {
-            background-color: #f8f9fa;
-            border-radius: 8px;
-        }
+            .subadmin-item {
+                border-bottom: 1px solid #eee;
+                padding: 15px 0;
+                transition: all 0.3s;
+            }
 
-        .subadmin-item:last-child {
-            border-bottom: none;
-        }
+            .subadmin-item:hover {
+                background-color: #f8f9fa;
+                border-radius: 8px;
+            }
 
-        .stat-card {
-            border: none;
-            border-radius: 16px;
-            padding: 24px;
-            background: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-        }
+            .subadmin-item:last-child {
+                border-bottom: none;
+            }
 
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 24px;
-            z-index: 1000;
-        }
+            .stat-card {
+                border: none;
+                border-radius: 16px;
+                padding: 24px;
+                background: white;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                transition: transform 0.2s;
+            }
 
-        .sidebar-brand {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 32px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #fff;
-            text-decoration: none;
-        }
+            .sidebar {
+                width: var(--sidebar-width);
+                height: 100vh;
+                position: fixed;
+                left: 0;
+                top: 0;
+                background-color: var(--secondary-color);
+                color: white;
+                padding: 24px;
+                z-index: 1000;
+            }
 
-        .nav-link {
-            color: #cbd5e1;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-        }
+            .sidebar-brand {
+                font-size: 24px;
+                font-weight: 700;
+                margin-bottom: 32px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                color: #fff;
+                text-decoration: none;
+            }
 
-        .nav-link:hover,
-        .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+            .nav-link {
+                color: #cbd5e1;
+                padding: 12px 16px;
+                border-radius: 8px;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                transition: all 0.3s;
+            }
 
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 40px;
-        }
+            .nav-link:hover,
+            .nav-link.active {
+                background-color: rgba(255, 255, 255, 0.1);
+                color: white;
+            }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
+            .main-content {
+                margin-left: var(--sidebar-width);
+                padding: 40px;
+            }
 
-        .icon-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
 
-        .logout-btn {
-            position: absolute;
-            bottom: 24px;
-            left: 24px;
-            right: 24px;
-        }
-    </style>
-    <% } else if (user.role === 'employee') { %>
-    <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #4f46e5;
-            --secondary-color: #1e293b;
-        }
+            .icon-box {
+                width: 48px;
+                height: 48px;
+                border-radius: 12px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 20px;
+            }
 
-        body {
-            background-color: #f0f2f5;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+            .logout-btn {
+                position: absolute;
+                bottom: 24px;
+                left: 24px;
+                right: 24px;
+            }
+        </style>
+        <% } else if (user.role==='employee' ) { %>
+            <style>
+                :root {
+                    --sidebar-width: 260px;
+                    --primary-color: #4f46e5;
+                    --secondary-color: #1e293b;
+                }
 
-        .stat-card {
-            border: none;
-            border-radius: 16px;
-            padding: 24px;
-            background: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-        }
+                body {
+                    background-color: #f0f2f5;
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                }
 
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 24px;
-            z-index: 1000;
-        }
+                .stat-card {
+                    border: none;
+                    border-radius: 16px;
+                    padding: 24px;
+                    background: white;
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                    transition: transform 0.2s;
+                }
 
-        .sidebar-brand {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 32px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #fff;
-            text-decoration: none;
-        }
+                .sidebar {
+                    width: var(--sidebar-width);
+                    height: 100vh;
+                    position: fixed;
+                    left: 0;
+                    top: 0;
+                    background-color: var(--secondary-color);
+                    color: white;
+                    padding: 24px;
+                    z-index: 1000;
+                }
 
-        .nav-link {
-            color: #cbd5e1;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-        }
+                .sidebar-brand {
+                    font-size: 24px;
+                    font-weight: 700;
+                    margin-bottom: 32px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    color: #fff;
+                    text-decoration: none;
+                }
 
-        .nav-link:hover,
-        .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+                .nav-link {
+                    color: #cbd5e1;
+                    padding: 12px 16px;
+                    border-radius: 8px;
+                    margin-bottom: 8px;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    transition: all 0.1s;
+                }
 
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 40px;
-        }
+                .nav-link:hover,
+                .nav-link.active {
+                    background-color: rgba(255, 255, 255, 0.1);
+                    color: white;
+                }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
+                .main-content {
+                    margin-left: var(--sidebar-width);
+                    padding: 40px;
+                }
 
-        .icon-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
+                .stat-card:hover {
+                    transform: translateY(-5px);
+                }
 
-        .logout-btn {
-            position: absolute;
-            bottom: 24px;
-            left: 24px;
-            right: 24px;
-        }
-    </style>
-    <% } else if (user.role === 'subadmin') { %>
-    <style>
-        :root {
-            --sidebar-width: 260px;
-            --primary-color: #4f46e5;
-            --secondary-color: #1e293b;
-        }
+                .icon-box {
+                    width: 48px;
+                    height: 48px;
+                    border-radius: 12px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font-size: 20px;
+                }
 
-        body {
-            background-color: #f8fafc;
-            font-family: 'Inter', sans-serif;
-        }
+                .logout-btn {
+                    position: absolute;
+                    bottom: 24px;
+                    left: 24px;
+                    right: 24px;
+                }
+            </style>
+            <% } else if (user.role==='subadmin' ) { %>
+                <style>
+                    :root {
+                        --sidebar-width: 260px;
+                        --primary-color: #4f46e5;
+                        --secondary-color: #1e293b;
+                    }
 
-        .stat-card {
-            border: none;
-            border-radius: 16px;
-            padding: 24px;
-            background: white;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s;
-        }
+                    body {
+                        background-color: #f8fafc;
+                        font-family: 'Inter', sans-serif;
+                    }
 
-        .sidebar {
-            width: var(--sidebar-width);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 24px;
-            z-index: 1000;
-        }
+                    .stat-card {
+                        border: none;
+                        border-radius: 16px;
+                        padding: 24px;
+                        background: white;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+                        transition: transform 0.3s;
+                    }
 
-        .sidebar-brand {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 32px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #fff;
-            text-decoration: none;
-        }
+                    .sidebar {
+                        width: var(--sidebar-width);
+                        height: 100vh;
+                        position: fixed;
+                        left: 0;
+                        top: 0;
+                        background-color: var(--secondary-color);
+                        color: white;
+                        padding: 24px;
+                        z-index: 1000;
+                    }
 
-        .nav-link {
-            color: #cbd5e1;
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s;
-        }
+                    .sidebar-brand {
+                        font-size: 24px;
+                        font-weight: 700;
+                        margin-bottom: 32px;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        color: #fff;
+                        text-decoration: none;
+                    }
 
-        .nav-link:hover,
-        .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
+                    .nav-link {
+                        color: #cbd5e1;
+                        padding: 12px 16px;
+                        border-radius: 8px;
+                        margin-bottom: 8px;
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        transition: all 0.3s;
+                    }
 
-        .main-content {
-            margin-left: var(--sidebar-width);
-            padding: 40px;
-        }
+                    .nav-link:hover,
+                    .nav-link.active {
+                        background-color: rgba(255, 255, 255, 0.1);
+                        color: white;
+                    }
 
-        .stat-card:hover {
-            transform: translateY(-5px);
-        }
+                    .main-content {
+                        margin-left: var(--sidebar-width);
+                        padding: 40px;
+                    }
 
-        .icon-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-        }
+                    .stat-card:hover {
+                        transform: translateY(-5px);
+                    }
 
-        .logout-btn {
-            position: absolute;
-            bottom: 24px;
-            left: 24px;
-            right: 24px;
-        }
-    </style>
-    <% } %>
+                    .icon-box {
+                        width: 48px;
+                        height: 48px;
+                        border-radius: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 20px;
+                    }
+
+                    .logout-btn {
+                        position: absolute;
+                        bottom: 24px;
+                        left: 24px;
+                        right: 24px;
+                    }
+                </style>
+                <% } %>
 </head>
 <% if (user.role==='admin' ) { %>
 
@@ -320,6 +321,9 @@
                 <a href="/view-emp" class="nav-link">
                     <i class="fas fa-users"></i> Employees
                 </a>
+                <a href="/taskboard" class="nav-link">
+                    <i class="fas fa-columns"></i> Task Board
+                </a>
                 <a href="/admin-subadmin-chat" class="nav-link">
                     <i class="fas fa-comments"></i> Chat
                 </a>
@@ -336,6 +340,14 @@
                 <div>
                     <h1 class="h3 fw-bold mb-1">Admin Dashboard</h1>
                     <p class="text-muted mb-0">Welcome back, Administrator</p>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <button id="themeToggle" class="btn btn-link nav-link p-0" title="Toggle Dark Mode">
+                        <i class="fas fa-moon fs-5"></i>
+                    </button>
+                    <div class="d-flex gap-3">
+                        <!-- Any other buttons -->
+                    </div>
                 </div>
             </header>
 
@@ -420,6 +432,7 @@
         </main>
 
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="/js/dark-theme.js"></script>
         <script>
             function confirmLogout() {
                 return confirm("Are you sure you want to log out?");
@@ -432,10 +445,10 @@
         </script>
     </body>
     <% } %>
-    <% if (user.role==='employee' ) { %>
+        <% if (user.role==='employee' ) { %>
 
-        <body>
-            <div class="sidebar">
+            <body>
+                <div class="sidebar">
                     <a href="/dashboard" class="sidebar-brand text-white">
                         <i class="fas fa-users me-1 text-primary"></i>
                         <span>TaskApp</span>
@@ -453,111 +466,8 @@
                         <a href="/team-tasks" class="nav-link">
                             <i class="fas fa-users"></i> Team Tasks
                         </a>
-                    </nav>
-                    <div class="logout-btn">
-                        <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
-                            <i class="fas fa-sign-out-alt"></i> Logout
-                        </a>
-                    </div>
-            </div>
-
-            <main class="main-content">
-                <div class="container-fluid p-0">
-                    <div class="row mb-4 align-items-center">
-                        <div class="col">
-                            <h1 class="h3 fw-bold mb-1">My Dashboard</h1>
-                            <p class="text-muted small">Welcome back! Here is your task overview.</p>
-                        </div>
-                        <div class="col-auto">
-                            <span class="small text-muted"><i class="fas fa-user-circle me-1"></i>
-                                <%= email %>
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Stats Overview -->
-                    <div class="row g-4 mb-5">
-                        <div class="col-md-6">
-                            <div class="card stat-card">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <p class="text-muted mb-1 fw-medium small text-uppercase">Individual Tasks</p>
-                                        <h2 class="fw-bold mb-0">
-                                            <%= individualTaskCount %>
-                                        </h2>
-                                    </div>
-                                    <div class="icon-box bg-primary-subtle text-primary">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                </div>
-                                <a href="/existingtasks" class="stretched-link"></a>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="card stat-card">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <p class="text-muted mb-1 fw-medium small text-uppercase">Team Member Tasks</p>
-                                        <h2 class="fw-bold mb-0">
-                                            <%= teamTaskCount %>
-                                        </h2>
-                                        <p class="text-muted small mb-0">Assigned to your teammates</p>
-                                    </div>
-                                    <div class="icon-box bg-info-subtle text-info">
-                                        <i class="fas fa-users"></i>
-                                    </div>
-                                </div>
-                                <a href="/existingtasks" class="stretched-link"></a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-            <script>
-                function confirmLogout() {
-                    return confirm("Are you sure you want to log out?");
-                }
-                window.addEventListener('pageshow', function (event) {
-                    if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
-                        window.location.reload();
-                    }
-                });
-            </script>
-        </body>
-        <% } %>
-
-
-
-
-
-        <% if (user.role==='subadmin' ) { %>
-
-            <body>
-                <div class="sidebar">
-                    <a href="/dashboard" class="sidebar-brand text-white">
-                        <i class="fas fa-check-double text-primary"></i>
-                        <span>TaskApp</span>
-                    </a>
-                    <nav class="nav flex-column mt-4">
-                        <a href="/dashboard" class="nav-link active">
-                            <i class="fas fa-home"></i> Dashboard
-                        </a>
-                        <a href="/existingtasks" class="nav-link">
-                            <i class="fas fa-tasks"></i> All Tasks
-                        </a>
-                        <a href="/view-teams" class="nav-link">
-                            <i class="fas fa-users"></i> Teams
-                        </a>
-                        <a href="/assign" class="nav-link">
-                            <i class="fas fa-plus-circle"></i> Assign Task
-                        </a>
-                        <a href="/view-emp" class="nav-link">
-                            <i class="fas fa-users-cog"></i> Employees
-                        </a>
-                        <a href="/admin-subadmin-chat" class="nav-link">
-                            <i class="fas fa-comments"></i> Chat
+                        <a href="/taskboard" class="nav-link">
+                            <i class="fas fa-columns"></i> Task Board
                         </a>
                     </nav>
                     <div class="logout-btn">
@@ -568,113 +478,69 @@
                 </div>
 
                 <main class="main-content">
-                    <header class="mb-5 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h1 class="h3 fw-bold mb-1">Sub-admin Dashboard</h1>
-                            <p class="text-muted mb-0">Welcome back, Sub-administrator</p>
-                        </div>
-                        <div class="d-flex gap-3">
-                            <a href="/assign" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
-                                <i class="fas fa-plus me-2"></i> New Task
-                            </a>
-                        </div>
-                    </header>
-
-                    <div class="row g-4 mb-5">
-                        <div class="col-md-6">
-                            <div class="card stat-card bg-white shadow-sm">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <p class="text-muted mb-1 fw-medium">Total Employees</p>
-                                        <h2 class="fw-bold mb-0">
-                                            <%= emp %>
-                                        </h2>
-                                    </div>
-                                    <div class="icon-box bg-primary-subtle text-primary">
-                                        <i class="fas fa-users-cog"></i>
-                                    </div>
-                                </div>
-                                <a href="/view-emp" class="stretched-link"></a>
+                    <div class="container-fluid p-0">
+                        <div class="row mb-4 align-items-center">
+                            <div class="col">
+                                <h1 class="h3 fw-bold mb-1">My Dashboard</h1>
+                                <p class="text-muted small">Welcome back! Here is your task overview.</p>
+                            </div>
+                            <div class="col-auto d-flex align-items-center gap-3">
+                                <button id="themeToggle" class="btn p-0 text-muted" title="Toggle Dark Mode">
+                                    <i class="fas fa-moon fs-5"></i>
+                                </button>
+                                <span class="small text-muted border-start ps-3"><i class="fas fa-user-circle me-1"></i>
+                                    <%= email %>
+                                </span>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <div class="card stat-card bg-white shadow-sm">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <p class="text-muted mb-1 fw-medium">Active Tasks</p>
-                                        <h2 class="fw-bold mb-0">
-                                            <%= taskCount %>
-                                        </h2>
-                                    </div>
-                                    <div class="icon-box bg-success-subtle text-success">
-                                        <i class="fas fa-clipboard-list"></i>
-                                    </div>
-                                </div>
-                                <a href="/existingtasks" class="stretched-link"></a>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <div
-                            class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-bold">Managed Teams</h5>
-                            <a href="/admin/team/manage" class="btn btn-sm btn-outline-primary rounded-pill">Manage
-                                All</a>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead class="bg-light text-muted small text-uppercase">
-                                    <tr>
-                                        <th class="ps-4 py-3">Team Name</th>
-                                        <th class="py-3">Team Members</th>
-                                        <th class="py-3">Team Tasks</th>
-                                        <th class="pe-4 py-3 text-end">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <% teams.forEach(team=> { %>
-                                        <tr>
-                                            <td class="ps-4 py-3">
-                                                <span class="fw-medium">
-                                                    <%= team.teamName %>
-                                                </span>
-                                            </td>
-                                            <td class="py-3 text-muted small">
-                                                <%= team.employees && team.employees.length > 0 ? team.employees.join(',') : 'No members' %>
-                                            </td>
-                                            <td class="py-3 text-muted small">
-                                                <% const teamTasks=tasks.filter(t=> t.teamName === team.teamName); %>
-                                                    <%= teamTasks.length %> Active Tasks
-                                            </td>
-                                            <td class="pe-4 py-3 text-end">
-                                                <a href="/existingtasks?teamName=<%= team.teamName %>"
-                                                    class="btn btn-sm btn-light border rounded-pill">
-                                                    View Tasks
-                                                </a>
-                                            </td>
-                                        </tr>
-                                        <% }); %>
-                                            <% if (teams.length===0) { %>
-                                                <tr>
-                                                    <td colspan="4" class="text-center py-5 text-muted">
-                                                        <i class="fas fa-users-slash fs-1 mb-3 d-block opacity-25"></i>
-                                                        No teams assigned to you yet
-                                                    </td>
-                                                </tr>
-                                                <% } %>
-                                </tbody>
-                            </table>
+                        <!-- Stats Overview -->
+                        <div class="row g-4 mb-5">
+                            <div class="col-md-6">
+                                <div class="card stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="text-muted mb-1 fw-medium small text-uppercase">Individual Tasks
+                                            </p>
+                                            <h2 class="fw-bold mb-0">
+                                                <%= individualTaskCount %>
+                                            </h2>
+                                        </div>
+                                        <div class="icon-box bg-primary-subtle text-primary">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                    </div>
+                                    <a href="/existingtasks" class="stretched-link"></a>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card stat-card">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <p class="text-muted mb-1 fw-medium small text-uppercase">Team Member Tasks
+                                            </p>
+                                            <h2 class="fw-bold mb-0">
+                                                <%= teamTaskCount %>
+                                            </h2>
+                                            <p class="text-muted small mb-0">Assigned to your teammates</p>
+                                        </div>
+                                        <div class="icon-box bg-info-subtle text-info">
+                                            <i class="fas fa-users"></i>
+                                        </div>
+                                    </div>
+                                    <a href="/existingtasks" class="stretched-link"></a>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </main>
 
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                <script src="/js/dark-theme.js"></script>
                 <script>
                     function confirmLogout() {
                         return confirm("Are you sure you want to log out?");
                     }
-                    // Prevent bfcache issues (back button showing dashboard after logout)
                     window.addEventListener('pageshow', function (event) {
                         if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
                             window.location.reload();
@@ -682,6 +548,170 @@
                     });
                 </script>
             </body>
-            <% } %>
+<% } %>
+
+
+<% if (user.role==='subadmin' ) { %>
+    <body>
+        <div class="sidebar">
+            <a href="/dashboard" class="sidebar-brand text-white">
+                <i class="fas fa-check-double text-primary"></i>
+                <span>TaskApp</span>
+            </a>
+            <nav class="nav flex-column mt-4">
+                <a href="/dashboard" class="nav-link active">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="/existingtasks" class="nav-link">
+                    <i class="fas fa-tasks"></i> All Tasks
+                </a>
+                <a href="/view-teams" class="nav-link">
+                    <i class="fas fa-users"></i> Teams
+                </a>
+                <a href="/assign" class="nav-link">
+                    <i class="fas fa-plus-circle"></i> Assign Task
+                </a>
+                <a href="/view-emp" class="nav-link">
+                    <i class="fas fa-users-cog"></i> Employees
+                </a>
+                <a href="/taskboard" class="nav-link">
+                    <i class="fas fa-columns"></i> Task Board
+                </a>
+                <a href="/admin-subadmin-chat" class="nav-link">
+                    <i class="fas fa-comments"></i> Chat
+                </a>
+            </nav>
+                                        <div class="logout-btn">
+                <a href="/logout" class="nav-link text-danger" onclick="return confirmLogout()">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
+            </div>
+        </div>
+
+        <main class="main-content">
+            <header class="mb-5 d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 fw-bold mb-1">Sub-admin Dashboard</h1>
+                    <p class="text-muted mb-0">Welcome back, Sub-administrator</p>
+                </div>
+                <div class="d-flex gap-3 align-items-center">
+                    <button id="themeToggle" class="btn btn-link nav-link p-0" title="Toggle Dark Mode">
+                        <i class="fas fa-moon fs-5"></i>
+                    </button>
+                    <a href="/assign" class="btn btn-primary px-4 py-2 rounded-pill shadow-sm">
+                        <i class="fas fa-plus me-2"></i> New Task
+                    </a>
+                </div>
+            </header>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="card stat-card bg-white shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 fw-medium">Total Employees</p>
+                                <h2 class="fw-bold mb-0">
+                                    <%= emp %>
+                                </h2>
+                            </div>
+                            <div class="icon-box bg-primary-subtle text-primary">
+                                <i class="fas fa-users-cog"></i>
+                            </div>
+                        </div>
+                        <a href="/view-emp" class="stretched-link"></a>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card stat-card bg-white shadow-sm">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 fw-medium">Active Tasks</p>
+                                <h2 class="fw-bold mb-0">
+                                    <%= taskCount %>
+                                </h2>
+                            </div>
+                            <div class="icon-box bg-success-subtle text-success">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                        </div>
+                        <a href="/existingtasks" class="stretched-link"></a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div
+                    class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Managed Teams</h5>
+                    <a href="/admin/team/manage"
+                        class="btn btn-sm btn-outline-primary rounded-pill">Manage
+                        All</a>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light text-muted small text-uppercase">
+                            <tr>
+                                <th class="ps-4 py-3">Team Name</th>
+                                <th class="py-3">Team Members</th>
+                                <th class="py-3">Team Tasks</th>
+                                <th class="pe-4 py-3 text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% teams.forEach(team=> { %>
+                                <tr>
+                                    <td class="ps-4 py-3">
+                                        <span class="fw-medium">
+                                            <%= team.teamName %>
+                                        </span>
+                                    </td>
+                                    <td class="py-3 text-muted small">
+                                        <%= team.employees && team.employees.length> 0 ?
+                                            team.employees.join(',') : 'No members' %>
+                                    </td>
+                                    <td class="py-3 text-muted small">
+                                        <% const teamTasks=tasks.filter(t=> t.teamName ===
+                                            team.teamName); %>
+                                            <%= teamTasks.length %> Active Tasks
+                                    </td>
+                                    <td class="pe-4 py-3 text-end">
+                                        <a href="/existingtasks?teamName=<%= team.teamName %>"
+                                            class="btn btn-sm btn-light border rounded-pill">
+                                            View Tasks
+                                        </a>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                                    <% if (teams.length===0) { %>
+                                        <tr>
+                                            <td colspan="4" class="text-center py-5 text-muted">
+                                                <i
+                                                    class="fas fa-users-slash fs-1 mb-3 d-block opacity-25"></i>
+                                                No teams assigned to you yet
+                                            </td>
+                                        </tr>
+                                        <% } %>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </main>
+
+                        <script
+                            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                        <script src="/js/dark-theme.js"></script>
+                        <script>
+                            function confirmLogout() {
+                                return confirm("Are you sure you want to log out?");
+                            }
+                            // Prevent bfcache issues (back button showing dashboard after logout)
+                            window.addEventListener('pageshow', function (event) {
+                                if (event.persisted || (window.performance && window.performance.navigation.type === 2)) {
+                                    window.location.reload();
+                                }
+                            });
+                        </script>
+                    </body>
+                    <% } %>
 
 </html>

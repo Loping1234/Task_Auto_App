@@ -8,6 +8,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/dark-theme.css">
+    <link rel="stylesheet" href="/css/dark-theme-quill.css">
     <style>
         :root {
             --sidebar-width: 260px;
@@ -124,6 +126,9 @@
                 <a href="/view-emp" class="nav-link">
                     <i class="fas fa-users-cog"></i> Employees
                 </a>
+                <a href="/taskboard" class="nav-link">
+                    <i class="fas fa-columns"></i> Task Board
+                </a>
                 <a href="/admin-subadmin-chat" class="nav-link">
                     <i class="fas fa-comments"></i> Chat
                 </a>
@@ -157,6 +162,9 @@
                         <a href="/view-emp" class="nav-link">
                             <i class="fas fa-users"></i> Employees
                         </a>
+                        <a href="/taskboard" class="nav-link">
+                            <i class="fas fa-columns"></i> Task Board
+                        </a>
                         <a href="/admin-subadmin-chat" class="nav-link">
                             <i class="fas fa-comments"></i> Chat
                         </a>
@@ -171,9 +179,16 @@
 
 
                     <main class="main-content">
-                        <header class="mb-5">
-                            <h1 class="h3 fw-bold mb-1">Assign New Task</h1>
-                            <p class="text-muted mb-0">Fill in the details to delegate a task to an employee</p>
+                        <header class="mb-5 d-flex justify-content-between align-items-center">
+                            <div>
+                                <h1 class="h3 fw-bold mb-1">Assign New Task</h1>
+                                <p class="text-muted mb-0">Fill in the details to delegate a task to an employee</p>
+                            </div>
+                            <div class="d-flex align-items-center gap-3">
+                                <button id="themeToggle" class="btn btn-link nav-link p-0" title="Toggle Dark Mode">
+                                    <i class="fas fa-moon fs-5"></i>
+                                </button>
+                            </div>
                         </header>
 
                         <div class="card form-card bg-white p-4">
@@ -184,8 +199,8 @@
                                     <div class="col-12">
                                         <label for="title" class="form-label fw-semibold">Task Title <span
                                                 class="required-star">*</span></label>
-                                        <input type="text" class="form-control px-3 py-2" id="title" name="title"
-                                            placeholder="What needs to be done?" required>
+                                        <input type="text" class="form-control px-3 py-2 text-white id=" title"
+                                            name="title" placeholder="What needs to be done?" required>
                                     </div>
 
                                     <!-- Description -->
@@ -239,16 +254,16 @@
                                                 <i class="fas fa-paper-plane me-2"></i> Assign Task
                                             </button>
                                             <% if (user.role==='subadmin' ) { %>
-                                            <a href="/dashboard"
-                                                class="btn btn-light border px-4 py-2 rounded-pill">
-                                                Cancel
-                                            </a>
-                                            <% } else { %>
-                                            <a href="/dashboard"
-                                                class="btn btn-light border px-4 py-2 rounded-pill">
-                                                Cancel
-                                            </a>
-                                            <% } %>
+                                                <a href="/dashboard"
+                                                    class="btn btn-light border px-4 py-2 rounded-pill">
+                                                    Cancel
+                                                </a>
+                                                <% } else { %>
+                                                    <a href="/dashboard"
+                                                        class="btn btn-light border px-4 py-2 rounded-pill">
+                                                        Cancel
+                                                    </a>
+                                                    <% } %>
                                         </div>
                                     </div>
                                 </div>
@@ -257,6 +272,7 @@
                     </main>
 
                     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+                    <script src="/js/dark-theme.js"></script>
                     <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
                     <script>
                         const descriptionQuill = new Quill('#descriptionEditor', {

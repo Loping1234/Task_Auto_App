@@ -1,0 +1,352 @@
+:root {
+    --sidebar-width: 260px;
+    --primary-color: #4f46e5;
+    --secondary-color: #1e293b;
+    --bg-color: #f0f2f5;
+    --text-color: #333;
+    --card-bg: white;
+    --sidebar-bg: #1e293b;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --heading-color: #212529;
+    --border-color: #eee;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --card-bg: #2d2d2d;
+    --sidebar-bg: #0f172a;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --heading-color: #f8f9fa;
+    --border-color: #444;
+}
+
+body {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card,
+.stat-card,
+.subadmin-list {
+    background-color: var(--card-bg) !important;
+    box-shadow: var(--card-shadow) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.sidebar {
+    background-color: var(--sidebar-bg) !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--heading-color) !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .table {
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .table thead th {
+    background-color: #2d2d2d;
+    color: var(--heading-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #333;
+    border-color: #555;
+    color: #fff;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #444;
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#themeToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+    color: var(--text-color);
+    border: none;
+    background: transparent;
+}
+
+#themeToggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] #themeToggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Specific overrides for consistent look */
+.sidebar-brand {
+    color: #fff !important;
+}
+
+/* Chat specific overrides */
+[data-theme='dark'] .chat-body {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme='dark'] .message-incoming {
+    background-color: #2d2d2d !important;
+    border-color: #444 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme='dark'] .chat-footer {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .chat-input {
+    background-color: #333 !important;
+    color: white !important;
+}
+
+/* Login and Signup Overrides */
+[data-theme="dark"] body.login-page,
+[data-theme="dark"] body.signup-page {
+    background: linear-gradient(135deg, #121212 0%, #2d3748 100%) !important;
+}
+
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .signup-card {
+    background: rgba(30, 30, 30, 0.95);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .login-header h2,
+[data-theme="dark"] .signup-header h2 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #2d2d2d !important;
+    border-color: #444;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #333;
+    border-color: #444;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: #333;
+    color: var(--text-color);
+}
+
+/* Background Utility Overrides for Dark Mode */
+[data-theme="dark"] .bg-white {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #2d2d2d !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .text-dark {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #a0a0a0 !important;
+}
+
+[data-theme="dark"] .text-secondary {
+    color: #adb5bd !important;
+}
+
+/* Chat Container Dark Mode */
+[data-theme="dark"] .chat-container {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .chat-header {
+    background-color: #1a1a1a !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .no-team {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .member-list {
+    background-color: #1a1a1a !important;
+    color: var(--text-color) !important;
+}
+
+/* Table Dark Mode Enhancements */
+[data-theme="dark"] .table tbody tr {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: #333 !important;
+}
+
+[data-theme="dark"] .table thead {
+    background-color: #1a1a1a !important;
+}
+
+[data-theme="dark"] .table {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .table tbody {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .table-responsive {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] tbody,
+[data-theme="dark"] tbody td {
+    background-color: var(--card-bg) !important;
+}
+
+/* Card Header and Footer */
+[data-theme="dark"] .card-header {
+    background-color: #1a1a1a !important;
+    color: var(--text-color) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .card-footer {
+    background-color: #1a1a1a !important;
+    color: var(--text-color) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* Button Styles */
+[data-theme="dark"] .btn-light {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .btn-light:hover {
+    background-color: #444 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .btn-outline-primary {
+    color: #6366f1 !important;
+    border-color: #6366f1 !important;
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+    background-color: #6366f1 !important;
+    color: white !important;
+}
+
+/* Badge Styles */
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #444 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .bg-secondary-subtle {
+    background-color: #333 !important;
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .text-success {
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .text-primary {
+    color: #6366f1 !important;
+}
+
+[data-theme="dark"] .text-warning {
+    color: #facc15 !important;
+}
+
+/* Additional Table Row Styles */
+[data-theme="dark"] .secondary-task-row {
+    background-color: #252525 !important;
+}
+
+[data-theme="dark"] .data-row {
+    background-color: var(--card-bg) !important;
+}
+
+/* Empty State Icons */
+[data-theme="dark"] .fas.fa-inbox,
+[data-theme="dark"] .far.fa-inbox {
+    color: var(--text-color) !important;
+    opacity: 0.3;
+}
+
+/* Border Utilities */
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-top,
+[data-theme="dark"] .border-bottom {
+    border-color: var(--border-color) !important;
+}
+
+/* Rounded Elements */
+[data-theme="dark"] .rounded,
+[data-theme="dark"] .rounded-3,
+[data-theme="dark"] .rounded-pill {
+    border-color: var(--border-color) !important;
+}
+
+/* Team Selection Card */
+[data-theme="dark"] .team-selection-card {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .team-selection-card h4 {
+    color: var(--text-color) !important;
+}
