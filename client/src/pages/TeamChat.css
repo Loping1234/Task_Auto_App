@@ -1,0 +1,382 @@
+.chat-page {
+    padding: 0 !important;
+    display: flex;
+    height: calc(100vh - 70px);
+}
+
+/* Team Selection */
+.team-selection {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 2rem;
+}
+
+.team-selection h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 2rem;
+}
+
+.team-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    max-width: 600px;
+    width: 100%;
+}
+
+.team-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-sm);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.team-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-md);
+}
+
+.team-card i {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.team-card h4 {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+.team-card p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.no-teams {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 3rem;
+}
+
+.no-teams i {
+    font-size: 4rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+/* Chat Container */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 900px;
+    margin: 1.5rem auto;
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    overflow: hidden;
+    height: calc(100% - 3rem);
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+}
+
+.chat-header-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.chat-header-info i {
+    font-size: 1.5rem;
+}
+
+.chat-header-info h4 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.chat-header-info span {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* Member List */
+.member-list {
+    padding: 0.75rem 1rem;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.member-label {
+    font-weight: 600;
+    font-size: 0.85rem;
+    margin-right: 0.5rem;
+}
+
+.member-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+}
+
+.member-badge.you {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.member-badge.you i {
+    font-size: 0.65rem;
+    margin-right: 0.25rem;
+}
+
+/* Chat Body */
+.chat-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.empty-chat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+}
+
+.empty-chat i {
+    font-size: 3rem;
+    opacity: 0.3;
+    margin-bottom: 1rem;
+}
+
+/* Messages */
+.message-row {
+    display: flex;
+}
+
+.message-row.incoming {
+    justify-content: flex-start;
+}
+
+.message-row.outgoing {
+    justify-content: flex-end;
+}
+
+.message-bubble {
+    max-width: 70%;
+    padding: 0.75rem 1rem;
+    border-radius: 1rem;
+    word-wrap: break-word;
+}
+
+.message-row.incoming .message-bubble {
+    background: white;
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 4px;
+}
+
+.message-row.outgoing .message-bubble {
+    background: linear-gradient(135deg, var(--primary), #4f46e5);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.message-sender {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 0.25rem;
+}
+
+.message-text {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.message-time {
+    font-size: 0.65rem;
+    opacity: 0.6;
+    text-align: right;
+    margin-top: 0.25rem;
+}
+
+/* Chat Footer */
+.chat-footer {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: white;
+    border-top: 1px solid var(--border-color);
+}
+
+.chat-footer textarea {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-full);
+    padding: 0.75rem 1.25rem;
+    resize: none;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: border-color 0.2s;
+}
+
+.chat-footer textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.send-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+}
+
+.send-btn:hover {
+    transform: scale(1.05);
+}
+
+.send-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Channel Select (Admin Chat) */
+.channel-select {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    min-width: 180px;
+    cursor: pointer;
+}
+
+.channel-select option {
+    background: var(--bg-dark);
+    color: white;
+}
+
+/* Tasks Table Card (for TeamTasks) */
+.tasks-table-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.tasks-table-card .tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.tasks-table-card th {
+    text-align: left;
+    padding: 1rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    font-weight: 600;
+    background: var(--bg-secondary);
+}
+
+.tasks-table-card td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-badge.status-pending {
+    background: rgba(245, 158, 11, 0.15);
+    color: #d97706;
+}
+
+.status-badge.status-progress {
+    background: rgba(59, 130, 246, 0.15);
+    color: #2563eb;
+}
+
+.status-badge.status-completed {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+}
+
+/* Help Tip Box */
+.help-tip-box {
+    margin-top: 1.5rem;
+    padding: 1rem 1.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+}
+
+.help-tip-box h6 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+.help-tip-box h6 i {
+    color: #f59e0b;
+    margin-right: 0.5rem;
+}
+
+.help-tip-box p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.help-tip-box a {
+    color: var(--primary);
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.help-tip-box a:hover {
+    text-decoration: underline;
+}

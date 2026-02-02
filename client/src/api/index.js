@@ -1,0 +1,111 @@
+import axios from 'axios';
+
+// Use relative URL - Vite proxy handles forwarding to backend
+const API_URL = '/api';
+
+const api = axios.create({
+    baseURL: API_URL,
+    headers: {
+        'Content-Type': 'application/json',
+    },
+});
+
+// Add token to requests
+api.interceptors.request.use(
+    (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    (error) => Promise.reject(error)
+);
+
+// Handle auth errors
+api.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response?.status === 401) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        }
+        return Promise.reject(error);
+    }
+);
+
+// Auth API
+export const authAPI = {
+    login: (email, password) => api.post('/auth/login', { email, password }),
+    signup: (email, password) => api.post('/auth/signup', { email, password }),
+    logout: () => api.post('/auth/logout'),
+    getMe: () => api.get('/auth/me'),
+};
+
+// Tasks API
+export const tasksAPI = {
+    getAll: () => api.get('/tasks'),
+    getById: (id) => api.get(`/tasks/${id}`),
+    create: (data) => api.post('/tasks', data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+    update: (id, data) => api.put(`/tasks/${id}`, data),
+    updateStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
+    updateAssignee: (id, assignee) => api.patch(`/tasks/${id}/assignee`, { assignee }),
+    delete: (id) => api.delete(`/tasks/${id}`),
+    addComment: (id, data) => api.post(`/tasks/${id}/comments`, data, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+    getTaskboard: () => api.get('/tasks/board'),
+    getTeamTasks: () => api.get('/tasks/team-tasks'),
+};
+
+// Teams API
+export const teamsAPI = {
+    getAll: () => api.get('/teams'),
+    getById: (name) => api.get(`/teams/${encodeURIComponent(name)}`),
+    create: (data) => api.post('/teams', data),
+    update: (name, data) => api.put(`/teams/${encodeURIComponent(name)}`, data),
+    delete: (name) => api.delete(`/teams/${encodeURIComponent(name)}`),
+};
+
+// Employees API
+export const employeesAPI = {
+    getAll: () => api.get('/employees'),
+    getById: (email) => api.get(`/employees/${encodeURIComponent(email)}`),
+};
+
+// Subadmins API
+export const subadminsAPI = {
+    getAll: () => api.get('/subadmins'),
+};
+
+// Dashboard API
+export const dashboardAPI = {
+    getStats: () => api.get('/dashboard'),
+};
+
+// Chat API
+export const chatAPI = {
+    // Team Chat (Employee)
+    getEmployeeTeams: () => api.get('/chat/teams'),
+    getTeamMessages: (teamName) => api.get(`/chat/team/${encodeURIComponent(teamName)}`),
+    sendTeamMessage: (teamName, message) => api.post(`/chat/team/${encodeURIComponent(teamName)}`, { message }),
+
+    // Admin-Subadmin Chat
+    getSubadmins: () => api.get('/subadmins'),
+    getAdminSubadminMessages: (channel) => api.get(`/chat/admin?channel=${encodeURIComponent(channel)}`),
+    sendAdminSubadminMessage: (receiverEmail, message, channel) =>
+        api.post('/chat/admin', { receiverEmail, message, channel }),
+};
+
+// Messages API (legacy, kept for backwards compatibility)
+export const messagesAPI = {
+    getTeamMessages: (teamName) => api.get(`/messages/team/${encodeURIComponent(teamName)}`),
+    sendTeamMessage: (teamName, message) => api.post(`/messages/team/${encodeURIComponent(teamName)}`, { message }),
+    getAdminChat: () => api.get('/messages/admin-chat'),
+    sendAdminMessage: (message) => api.post('/messages/admin-chat', { message }),
+};
+
+export default api;
