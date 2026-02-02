@@ -1,0 +1,127 @@
+.board-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    min-height: calc(100vh - 200px);
+}
+
+.board-column {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    min-height: 500px;
+}
+
+.column-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    background: white;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    /* border-top: 3px solid; removed */
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.column-header i {
+    font-size: 1rem;
+}
+
+.task-count {
+    margin-left: auto;
+    background: var(--bg-secondary);
+    padding: 0.25rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.column-content {
+    flex: 1;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow-y: auto;
+}
+
+.board-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    box-shadow: var(--shadow-sm);
+    cursor: grab;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+}
+
+.board-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.board-card:active {
+    cursor: grabbing;
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary);
+}
+
+.card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.card-description {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+    line-height: 1.5;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.card-assignee,
+.card-due {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.card-assignee i,
+.card-due i {
+    font-size: 0.7rem;
+    opacity: 0.7;
+}
+
+.column-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    min-height: 100px;
+}
+
+@media (max-width: 1024px) {
+    .board-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .board-column {
+        min-height: 300px;
+    }
+}

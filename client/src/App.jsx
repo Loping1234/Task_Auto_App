@@ -3,23 +3,24 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Pages
-import Login from './pages/Login';
-import Signup from './pages/Signup';
-import Dashboard from './pages/Dashboard';
-import Tasks from './pages/Tasks';
-import TaskDetails from './pages/TaskDetails';
-import TaskBoard from './pages/TaskBoard';
-import AssignTask from './pages/AssignTask';
-import Employees from './pages/Employees';
-import Teams from './pages/Teams';
-import TeamManagement from './pages/TeamManagement';
-import Subadmins from './pages/Subadmins';
-import TeamChat from './pages/TeamChat';
-import AdminChat from './pages/AdminChat';
-import TeamTasks from './pages/TeamTasks';
-import EditTeam from './pages/EditTeam';
+import Login from './pages/components/Login';
+import Signup from './pages/components/Signup';
+import Dashboard from './pages/components/Dashboard';
+import Tasks from './pages/components/Tasks';
+import TaskDetails from './pages/components/TaskDetails';
+import TaskBoard from './pages/components/TaskBoard';
+import AssignTask from './pages/components/AssignTask';
+import Members from './pages/components/Members';
+import Teams from './pages/components/Teams';
+import TeamManagement from './pages/components/TeamManagement';
+import Subadmins from './pages/components/Subadmins';
+import TeamChat from './pages/components/TeamChat';
+import AdminChat from './pages/components/AdminChat';
+import TeamTasks from './pages/components/TeamTasks';
+import EditTeam from './pages/components/EditTeam';
 
 import './index.css';
+import './dark-theme.css';
 
 function App() {
   return (
@@ -74,10 +75,10 @@ function App() {
             }
           />
           <Route
-            path="/employees"
+            path="/members"
             element={
               <ProtectedRoute allowedRoles={['admin', 'subadmin']}>
-                <Employees />
+                <Members />
               </ProtectedRoute>
             }
           />

@@ -435,6 +435,22 @@ app.get("/api/teams", verifyToken, isAdminOrSubadmin, async (req, res) => {
     }
 });
 
+// Get single team by name
+app.get("/api/teams/:teamName", verifyToken, isAdminOrSubadmin, async (req, res) => {
+    try {
+        const teamName = decodeURIComponent(req.params.teamName);
+        const team = await Team.findOne({ teamName });
+
+        if (!team) {
+            return res.status(404).json({ message: "Team not found" });
+        }
+        res.json({ team });
+    } catch (err) {
+        console.error("Get team error", err);
+        res.status(500).json({ message: "Error loading team" });
+    }
+});
+
 // Create team
 app.post("/api/teams", verifyToken, isAdmin, async (req, res) => {
     try {

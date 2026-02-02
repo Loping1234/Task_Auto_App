@@ -1,0 +1,1272 @@
+:root {
+    --sidebar-width: 260px;
+    --primary-color: #4f46e5;
+    --secondary-color: #1e293b;
+    --bg-color: #f0f2f5;
+    --text-color: #333;
+    --card-bg: white;
+    --sidebar-bg: #1e293b;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    --heading-color: #212529;
+    --border-color: #eee;
+    --bg-color-members: #2d2d2d;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #e0e0e0;
+    --card-bg: #2d2d2d;
+    --sidebar-bg: #0f172a;
+    --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    --heading-color: #f8f9fa;
+    --border-color: #444;
+}
+
+body {
+    background-color: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.card,
+.stat-card,
+.subadmin-list {
+    background-color: var(--card-bg) !important;
+    box-shadow: var(--card-shadow) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+.sidebar {
+    background-color: var(--sidebar-bg) !important;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: var(--heading-color) !important;
+}
+
+.text-muted {
+    color: #6c757d !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .table {
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .table thead th {
+    background-color: #2d2d2d;
+    color: var(--heading-color);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .table td,
+[data-theme="dark"] .table th {
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .navbar-links a,
+[data-theme="dark"] .navbar-links a span,
+[data-theme="dark"] .navbar-links a i {
+    color: rgb(184, 169, 169) !important;
+}
+
+[data-theme="dark"] .form-control,
+[data-theme="dark"] .form-select {
+    background-color: #333;
+    border-color: #555;
+    color: #fff;
+}
+
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] .form-select:focus {
+    background-color: #444;
+    color: #fff;
+    border-color: var(--primary-color);
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+#themeToggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    transition: background-color 0.3s;
+    color: var(--text-color);
+    border: none;
+    background: transparent;
+}
+
+#themeToggle:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] #themeToggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Specific overrides for consistent look */
+.sidebar-brand {
+    color: #fff !important;
+}
+
+/* Chat specific overrides */
+[data-theme='dark'] .chat-body {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme='dark'] .message-incoming {
+    background-color: #2d2d2d !important;
+    border-color: #444 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme='dark'] .chat-footer {
+    background-color: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme='dark'] .chat-input {
+    background-color: #333 !important;
+    color: white !important;
+}
+
+/* Login and Signup Overrides */
+[data-theme="dark"] body.login-page,
+[data-theme="dark"] body.signup-page {
+    background: linear-gradient(135deg, #121212 0%, #2d3748 100%) !important;
+}
+
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .signup-card {
+    background: rgba(30, 30, 30, 0.95);
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .login-header h2,
+[data-theme="dark"] .signup-header h2 {
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .input-group-text {
+    background-color: #2d2d2d !important;
+    border-color: #444;
+}
+
+[data-theme="dark"] .form-control {
+    background-color: #333;
+    border-color: #444;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .form-control:focus {
+    background-color: #333;
+    color: var(--text-color);
+}
+
+/* Background Utility Overrides for Dark Mode */
+[data-theme="dark"] .bg-white {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .bg-light {
+    background-color: #2d2d2d !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .text-dark {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .text-muted {
+    color: #a0a0a0 !important;
+}
+
+[data-theme="dark"] .text-secondary {
+    color: #adb5bd !important;
+}
+
+/* Chat Container Dark Mode */
+[data-theme="dark"] .chat-container {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .chat-header {
+    background-color: #1a1a1a !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .no-team {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .member-list {
+    background-color: #1a1a1a !important;
+    color: var(--text-color) !important;
+}
+
+/* Table Dark Mode Enhancements */
+[data-theme="dark"] .table tbody tr {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: #333 !important;
+}
+
+[data-theme="dark"] .table thead {
+    background-color: #1a1a1a !important;
+}
+
+[data-theme="dark"] .table {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .table tbody {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .table-responsive {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] tbody,
+[data-theme="dark"] tbody td {
+    background-color: var(--card-bg) !important;
+}
+
+/* Card Header and Footer */
+[data-theme="dark"] .card-header {
+    background-color: #1a1a1a !important;
+    color: var(--text-color) !important;
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .card-footer {
+    background-color: #1a1a1a !important;
+    color: var(--text-color) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+/* Button Styles */
+[data-theme="dark"] .btn-light {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .btn-light:hover {
+    background-color: #444 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .btn-outline-primary {
+    color: #6366f1 !important;
+    border-color: #6366f1 !important;
+}
+
+[data-theme="dark"] .btn-outline-primary:hover {
+    background-color: #6366f1 !important;
+    color: white !important;
+}
+
+/* Badge Styles */
+[data-theme="dark"] .badge.bg-secondary {
+    background-color: #444 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .bg-secondary-subtle {
+    background-color: #333 !important;
+    color: #adb5bd !important;
+}
+
+[data-theme="dark"] .text-success {
+    color: #4ade80 !important;
+}
+
+[data-theme="dark"] .text-primary {
+    color: #6366f1 !important;
+}
+
+[data-theme="dark"] .text-warning {
+    color: #facc15 !important;
+}
+
+/* Additional Table Row Styles */
+[data-theme="dark"] .secondary-task-row {
+    background-color: #252525 !important;
+}
+
+[data-theme="dark"] .data-row {
+    background-color: var(--card-bg) !important;
+}
+
+/* Empty State Icons */
+[data-theme="dark"] .fas.fa-inbox,
+[data-theme="dark"] .far.fa-inbox {
+    color: var(--text-color) !important;
+    opacity: 0.3;
+}
+
+[data-theme="dark"] .fas.fa-lock,
+[data-theme="dark"] .fas.fa-envelope {
+    color: #333 !important;
+    opacity: 1;
+}
+
+/* Border Utilities */
+[data-theme="dark"] .border,
+[data-theme="dark"] .border-top,
+[data-theme="dark"] .border-bottom {
+    border-color: var(--border-color) !important;
+}
+
+/* Rounded Elements */
+[data-theme="dark"] .rounded,
+[data-theme="dark"] .rounded-3,
+[data-theme="dark"] .rounded-pill {
+    border-color: var(--border-color) !important;
+}
+
+/* Team Selection Card */
+[data-theme="dark"] .team-selection-card {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .team-selection-card h4 {
+    color: var(--text-color) !important;
+}
+
+/* ==========================================
+   React Component Specific Dark Mode Styles
+   ========================================== */
+
+/* Dashboard */
+[data-theme="dark"] .dashboard-layout {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .stat-card {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .stat-value {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .stat-label {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .quick-actions {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .quick-actions h2 {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .action-card {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .welcome-section h1 {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .welcome-subtitle {
+    color: var(--text-color) !important;
+}
+
+/* Page Layout */
+[data-theme="dark"] .page-layout {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .page-main {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .page-header h1 {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .page-subtitle {
+    color: var(--text-color) !important;
+}
+
+/* Tasks */
+[data-theme="dark"] .tasks-container,
+[data-theme="dark"] .task-card {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .loading-container {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .task-card h2 {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .task-title {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .tasks-table {
+    background-color: var(--card-bg) !important;
+}
+
+/* Taskboard */
+[data-theme="dark"] .taskboard-container {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .kanban-column {
+    background-color: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .kanban-card {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .tasks-table th {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .board-card {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .tasks-table td {
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .tasks-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+/* Auth Pages */
+[data-theme="dark"] .auth-container {
+    background: linear-gradient(135deg, #121212 0%, #2d3748 100%) !important;
+}
+
+[data-theme="dark"] .auth-card {
+    background-color: rgba(30, 30, 30, 0.95) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .auth-header h1 {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .auth-header p {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .auth-form input {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .auth-form input:focus {
+    background-color: #444 !important;
+    border-color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .navbar {
+    background: linear-gradient(135deg, #171718, #171718) !important;
+}
+
+[data-theme="dark"] .card-body {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .members-table-container {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .members-table th {
+    background: var(--bg-color-members) !important;
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .members-table td {
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .members-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .list-group-item {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .modal-content {
+    background-color: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .modal-header,
+[data-theme="dark"] .modal-footer {
+    border-color: var(--border-color) !important;
+}
+
+/* ==========================================
+   COMPREHENSIVE DARK MODE FOR ALL PAGES
+   ========================================== */
+
+/* ============ TEAMS PAGE ============ */
+[data-theme="dark"] .teams-container {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .teams-header {
+    background: white !important;
+    background-color: var(--card-bg) !important;
+}
+
+
+[data-theme="dark"] .team-card {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .team-name {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .team-info-item {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .team-card:hover {
+    background: #333 !important;
+}
+
+/* ============ TEAM MANAGEMENT PAGE ============ */
+[data-theme="dark"] .team-mgmt-header {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .form-card {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .form-card label {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group select,
+[data-theme="dark"] .form-group textarea {
+    background-color: #333 !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+    background-color: #444 !important;
+    border-color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .multi-select-wrapper select {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .team-list-card {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .team-item {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .member-badge {
+    background: #333 !important;
+    color: var(--text-color) !important;
+}
+
+/* ============ EMPLOYEES PAGE ============ */
+[data-theme="dark"] .employees-container {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .employee-card,
+[data-theme="dark"] .subadmin-card {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .employee-name,
+[data-theme="dark"] .subadmin-name {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .employee-email,
+[data-theme="dark"] .subadmin-email {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .employee-teams {
+    background: var(--bg-color) !important;
+}
+
+/* ============ ASSIGN TASK PAGE ============ */
+[data-theme="dark"] .assign-container {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .assign-form {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .assign-form input,
+[data-theme="dark"] .assign-form select,
+[data-theme="dark"] .assign-form textarea {
+    background-color: #333 !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .task-form {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .task-form input,
+[data-theme="dark"] .task-form select,
+[data-theme="dark"] .task-form textarea {
+    background-color: #333 !important;
+    border-color: var(--border-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .task-form label {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .assignment-toggle {
+    background: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .assignment-toggle button.active {
+    background: #333 !important;
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .form-actions {
+    border-top-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .page-main {
+    background-color: var(--bg-color) !important;
+}
+
+
+
+[data-theme="dark"] .input-wrapper input {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+}
+
+/* ============ TASK DETAILS PAGE ============ */
+[data-theme="dark"] .task-details-container {
+    background-color: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .task-header {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .task-meta {
+    background: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .task-section {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .comment-item {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .comment-author {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .comment-text {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .status-badge {
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .attachment-item {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* ============ TASKBOARD PAGE ============ */
+[data-theme="dark"] .board-container {
+    background: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .board-column {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .column-header {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .column-content {
+    background: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .board-header {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .kanban-column-header {
+    background: var(--card-bg) !important;
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .kanban-column {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .column-title {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .task-count {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .kanban-cards {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .cards-container {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .card-header-row {
+    border-bottom-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .task-meta-badge,
+[data-theme="dark"] .meta-badge {
+    border-color: var(--border-color) !important;
+}
+
+/* ============ TEAM CHAT PAGE ============ */
+[data-theme="dark"] .team-select-card {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .team-option {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .team-option:hover {
+    background: #333 !important;
+}
+
+[data-theme="dark"] .chat-messages {
+    background: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .message-bubble {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .message-outgoing .message-bubble {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    color: white !important;
+}
+
+[data-theme="dark"] .message-sender {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .message-time {
+    color: var(--text-color) !important;
+    opacity: 0.6;
+}
+
+[data-theme="dark"] .chat-input {
+    background: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .send-btn {
+    background: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .empty-chat {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .no-team {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .no-team h4 {
+    color: var(--heading-color) !important;
+}
+
+/* ============ AUTH PAGES (DETAILED) ============ */
+[data-theme="dark"] .input-wrapper {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .input-wrapper i {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .form-label,
+[data-theme="dark"] label {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .auth-footer a {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .auth-roles-info {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .auth-roles-info code {
+    background: #333 !important;
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .auth-btn {
+    background: linear-gradient(135deg, var(--primary-color), #4338ca) !important;
+}
+
+[data-theme="dark"] .error-message {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: #dc2626 !important;
+    color: #fca5a5 !important;
+}
+
+/* ============ SELECT DROPDOWNS ============ */
+[data-theme="dark"] select option {
+    background-color: #2d2d2d !important;
+    color: var(--text-color) !important;
+}
+
+/* ============ TEXTAREA ============ */
+[data-theme="dark"] textarea {
+    background-color: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] textarea:focus {
+    background-color: #444 !important;
+}
+
+/* ============ PLACEHOLDER TEXT ============ */
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+    color: #888 !important;
+}
+
+/* ============ FILTERS & SEARCH ============ */
+[data-theme="dark"] .filters {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .search-bar {
+    background: #333 !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .search-bar input {
+    background: transparent !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .filter-btn {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .filter-btn.active {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* ============ SCROLLBAR DARK MODE ============ */
+[data-theme="dark"] ::-webkit-scrollbar-track {
+    background: #1a1a1a !important;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #555 !important;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #666 !important;
+}
+
+/* ============ SMALL TEXT & HINTS ============ */
+[data-theme="dark"] small {
+    color: #aaa !important;
+}
+
+[data-theme="dark"] .hint-text,
+[data-theme="dark"] .help-text {
+    color: #999 !important;
+}
+
+/* ============ LINKS ============ */
+[data-theme="dark"] a:not(.btn):not(.action-card) {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] a:not(.btn):not(.action-card):hover {
+    color: #000000 !important;
+}
+
+/* ============ PAGE HEADER ============ */
+[data-theme="dark"] .page-title {
+    color: var(--heading-color) !important;
+}
+
+/* ============ EMPTY STATES ============ */
+[data-theme="dark"] .empty-state {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .empty-state i {
+    color: var(--text-color) !important;
+    opacity: 0.3;
+}
+
+/* ============ HOVER STATES ============ */
+[data-theme="dark"] .stat-card:hover {
+    background-color: #333 !important;
+}
+
+[data-theme="dark"] .team-card:hover,
+[data-theme="dark"] .employee-card:hover {
+    background-color: #333 !important;
+}
+
+/* ==========================================
+   COMPREHENSIVE ADDITIONS FROM ALL PAGES
+   ========================================== */
+
+/* Filter tabs complete */
+[data-theme="dark"] .filter-tabs {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .filter-tab {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .filter-tab:hover {
+    background: #333 !important;
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .filter-tab.active {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Teams page complete */
+[data-theme="dark"] .team-grid {
+    background: transparent !important;
+}
+
+[data-theme="dark"] .team-members,
+[data-theme="dark"] .members-list {
+    border-top-color: var(--border-color) !important;
+}
+
+/* Team Management complete */
+[data-theme="dark"] .management-header {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .teams-list {
+    background: var(--card-bg) !important;
+}
+
+/* Employees & Subadmins complete */
+[data-theme="dark"] .user-card {
+    background: var(--card-bg) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .user-card:hover {
+    background: #333 !important;
+}
+
+[data-theme="dark"] .user-name {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .user-email {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .subadmins-card {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .employee-role,
+[data-theme="dark"] .role-badge {
+    background: #333 !important;
+    color: var(--text-color) !important;
+}
+
+/* Chat pages complete */
+[data-theme="dark"] .chat-selection {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .chat-option {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .chat-option:hover {
+    background: #333 !important;
+}
+
+[data-theme="dark"] .messages-container {
+    background: var(--card-bg) !important;
+}
+
+[data-theme="dark"] .messages-list {
+    background: var(--bg-color) !important;
+}
+
+[data-theme="dark"] .message-item {
+    background: var(--card-bg) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .sender-name {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .timestamp {
+    color: var(--text-color) !important;
+    opacity: 0.6;
+}
+
+[data-theme="dark"] .message-input-container {
+    background: var(--card-bg) !important;
+    border-top-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .message-input {
+    background: #333 !important;
+    color: var(--text-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .submit-btn {
+    background: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .no-messages {
+    color: var(--text-color) !important;
+}
+
+/* General improvements */
+[data-theme="dark"] .section-title {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .section-subtitle {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .empty-title {
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .empty-description {
+    color: var(--text-muted) !important;
+}
+
+/* Status badges improved */
+[data-theme="dark"] .status-select,
+[data-theme="dark"] .status-badge {
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .status-pending {
+    background: rgba(245, 158, 11, 0.2) !important;
+    color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .status-progress {
+    background: rgba(59, 130, 246, 0.2) !important;
+    color: #60a5fa !important;
+}
+
+[data-theme="dark"] .status-completed {
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+}
+
+/* Tasks Table Fixes */
+[data-theme="dark"] .tasks-table-container {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .tasks-table th {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    font-weight: 600;
+}
+
+[data-theme="dark"] .tasks-table td {
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .tasks-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .task-title-link {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .task-title-link:hover {
+    color: #818cf8 !important;
+    /* brighter purple on hover */
+}
+
+[data-theme="dark"] .assignee-badge {
+    color: var(--text-color) !important;
+    opacity: 0.8;
+}
+
+/* Team Management Page Fixes */
+[data-theme="dark"] .teams-table-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .teams-table-header {
+    background: var(--card-bg) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .teams-table th {
+    background: var(--bg-color) !important;
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .teams-table td {
+    color: var(--text-color) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+}
+
+[data-theme="dark"] .teams-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .team-name-cell strong {
+    color: var(--heading-color) !important;
+}
+
+[data-theme="dark"] .team-count {
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-color) !important;
+}
+
+[data-theme="dark"] .form-card {
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="dark"] .multi-select-wrapper {
+    background: var(--bg-color) !important;
+    border-color: var(--border-color) !important;
+}
+
+[data-theme="dark"] .multi-select-wrapper select option {
+    background: var(--card-bg);
+    color: var(--text-color);
+}

@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
@@ -6,6 +7,32 @@ const Navbar = () => {
     const { user, logout, isAdmin, isSubadmin, isEmployee } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+    const [darkMode, setDarkMode] = useState(false);
+
+    // Load theme preference on mount
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setDarkMode(true);
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }, []);
+
+    // Toggle dark mode
+    const toggleDarkMode = () => {
+        const newMode = !darkMode;
+        setDarkMode(newMode);
+
+        if (newMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        }
+    };
 
     const handleLogout = () => {
         logout();
@@ -62,15 +89,15 @@ const Navbar = () => {
                             <span>Assign</span>
                         </Link>
 
-                        <Link to="/employees" className={isActive('/employees') ? 'active' : ''}>
+                        <Link to="/members" className={isActive('/members') ? 'active' : ''}>
                             <i className="fas fa-users"></i>
-                            <span>Employees</span>
+                            <span>Members</span>
                         </Link>
-
+{/*
                         <Link to="/teams" className={isActive('/teams') ? 'active' : ''}>
                             <i className="fas fa-user-friends"></i>
                             <span>Teams</span>
-                        </Link>
+                        </Link>*/}
 
                         <Link to="/admin-chat" className={isActive('/admin-chat') ? 'active' : ''}>
                             <i className="fas fa-comments"></i>
@@ -86,11 +113,6 @@ const Navbar = () => {
                             <i className="fas fa-users-cog"></i>
                             <span>Manage Teams</span>
                         </Link>
-
-                        <Link to="/subadmins" className={isActive('/subadmins') ? 'active' : ''}>
-                            <i className="fas fa-user-shield"></i>
-                            <span>Sub-Admins</span>
-                        </Link>
                     </>
                 )}
             </div>
@@ -100,6 +122,9 @@ const Navbar = () => {
                     <span className="user-role">{user?.role}</span>
                     <span className="user-email">{user?.email}</span>
                 </div>
+                <button onClick={toggleDarkMode} className="theme-toggle-btn" title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                    <i className={darkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
+                </button>
                 <button onClick={handleLogout} className="logout-btn">
                     <i className="fas fa-sign-out-alt"></i>
                     <span>Logout</span>
