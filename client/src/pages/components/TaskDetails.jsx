@@ -70,8 +70,19 @@ const TaskDetails = () => {
         try {
             await tasksAPI.updateStatus(id, newStatus);
             setTask({ ...task, status: newStatus });
+            setEditForm(prev => ({ ...prev, status: newStatus }));
         } catch (err) {
             console.error('Failed to update status', err);
+        }
+    };
+
+    const handleAssigneeChange = async (newAssignee) => {
+        try {
+            await tasksAPI.updateAssignee(id, newAssignee);
+            setTask({ ...task, assigneeEmail: newAssignee });
+            setEditForm(prev => ({ ...prev, assigneeEmail: newAssignee }));
+        } catch (err) {
+            console.error('Failed to update assignee', err);
         }
     };
 
@@ -79,7 +90,23 @@ const TaskDetails = () => {
         e.preventDefault();
         setSaving(true);
         try {
-            await tasksAPI.update(id, editForm);
+            let data = editForm;
+            let config = {};
+
+            if (editForm.image instanceof File) {
+                const formData = new FormData();
+                formData.append('title', editForm.title);
+                formData.append('description', editForm.description);
+                formData.append('status', editForm.status);
+                formData.append('startDate', editForm.startDate);
+                formData.append('endDate', editForm.endDate);
+                formData.append('assigneeEmail', editForm.assigneeEmail);
+                formData.append('image', editForm.image);
+                data = formData;
+                config = { headers: { 'Content-Type': 'multipart/form-data' } };
+            }
+
+            await tasksAPI.update(id, data, config);
             await fetchTask();
             setIsEditing(false);
         } catch (err) {
@@ -226,13 +253,36 @@ const TaskDetails = () => {
                         {/* Attachment */}
                         <div className="detail-card">
                             <h3><i className="fas fa-image"></i> Attachment</h3>
-                            {task.image ? (
-                                <img src={`/imgs/${task.image}`} alt={task.title} className="task-image" />
-                            ) : (
-                                <div className="no-attachment">
-                                    <i className="fas fa-file-upload"></i>
-                                    <span>No images attached</span>
+                            {isEditing ? (
+                                <div className="edit-attachment">
+                                    {task.image && (
+                                        <div className="current-image">
+                                            <span>Current Image:</span>
+                                            <img src={`/imgs/${task.image}`} alt={task.title} className="thumbnail" style={{ maxWidth: '100px', borderRadius: '4px', marginTop: '0.5rem' }} />
+                                        </div>
+                                    )}
+                                    <div className="upload-input" style={{ marginTop: '1rem' }}>
+                                        <label htmlFor="task-image-upload" style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                                            {task.image ? 'Change Image' : 'Upload Image'}
+                                        </label>
+                                        <input
+                                            type="file"
+                                            id="task-image-upload"
+                                            accept="image/*"
+                                            onChange={(e) => setEditForm(prev => ({ ...prev, image: e.target.files[0] }))}
+                                            style={{ width: '100%', padding: '0.5rem', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}
+                                        />
+                                    </div>
                                 </div>
+                            ) : (
+                                task.image ? (
+                                    <img src={`/imgs/${task.image}`} alt={task.title} className="task-image" />
+                                ) : (
+                                    <div className="no-attachment">
+                                        <i className="fas fa-file-upload"></i>
+                                        <span>No images attached</span>
+                                    </div>
+                                )
                             )}
                         </div>
                     </div>
@@ -258,10 +308,10 @@ const TaskDetails = () => {
 
                             <div className="attribute-group">
                                 <label>Assigned To</label>
-                                {isEditing ? (
+                                {canEdit ? (
                                     <select
-                                        value={editForm.assigneeEmail}
-                                        onChange={(e) => setEditForm({ ...editForm, assigneeEmail: e.target.value })}
+                                        value={task.assigneeEmail || ''}
+                                        onChange={(e) => handleAssigneeChange(e.target.value)}
                                         className="assignee-select"
                                     >
                                         <option value="">Select Employee</option>

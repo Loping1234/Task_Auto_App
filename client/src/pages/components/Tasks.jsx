@@ -138,6 +138,7 @@ const Tasks = () => {
                             <thead>
                                 <tr>
                                     <th>Title</th>
+                                    <th>Description</th>
                                     <th>Assignee</th>
                                     <th>Status</th>
                                     <th>Due Date</th>
@@ -148,12 +149,19 @@ const Tasks = () => {
                                 {filteredTasks.map(task => (
                                     <tr key={task._id}>
                                         <td>
-                                            <Link to={`/tasks/${task._id}`} className="task-title-link">
+                                            {/*<Link to={`/tasks/${task._id}`} className="task-title-link">
                                                 {task.title}
-                                            </Link>
+                                            </Link>*/}
                                             {task.description && (
                                                 <p className="task-description-preview">
                                                     {task.description.substring(0, 60)}...
+                                                </p>
+                                            )}
+                                        </td>
+                                        <td>
+                                            {task.title && (
+                                                <p className="task-title-preview">
+                                                    {task.title.substring(0, 60)}...
                                                 </p>
                                             )}
                                         </td>

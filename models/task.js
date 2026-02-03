@@ -28,8 +28,8 @@ const TaskSchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["Pending", "In Progress", "Completed"],
-            default: "Pending"
+            enum: ["N/A", "Pending", "In Progress", "Completed"],
+            default: "N/A"
         },
         assigneeEmail: {
             type: String,

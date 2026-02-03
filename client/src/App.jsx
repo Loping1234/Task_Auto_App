@@ -69,7 +69,7 @@ function App() {
           <Route
             path="/assign"
             element={
-              <ProtectedRoute allowedRoles={['admin', 'subadmin']}>
+              <ProtectedRoute allowedRoles={['admin', 'subadmin', 'employee']}>
                 <AssignTask />
               </ProtectedRoute>
             }

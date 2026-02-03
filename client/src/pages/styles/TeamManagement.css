@@ -16,6 +16,16 @@
     box-shadow: var(--shadow-sm);
 }
 
+.theme-toggle-btn {
+    position: relative;
+    left: 150px;
+    background: #27272b;
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
 .stat-card.primary {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;

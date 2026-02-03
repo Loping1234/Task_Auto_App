@@ -4,11 +4,21 @@
     align-items: center;
     justify-content: center;
     padding: 2rem;
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+    background: #0a0a14;
     position: relative;
     overflow: hidden;
 }
 
+
+.theme-toggle-btn {
+    position: relative;
+    left: 150px;
+    background: #27272b;
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
 .auth-background {
     position: absolute;
     inset: 0;
@@ -293,4 +303,33 @@
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
     font-size: 0.75rem;
+}
+
+.theme-toggle-btn-dark {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    z-index: 1000;
+}
+
+.theme-toggle-btn-dark:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.theme-toggle-btn-dark i {
+    pointer-events: none;
 }

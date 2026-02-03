@@ -472,7 +472,6 @@ h6 {
 [data-theme="dark"] .board-card {
     background: var(--bg-color) !important;
     color: var(--text-color) !important;
-    border-bottom: 1px solid var(--border-color) !important;
     font-weight: 600;
 }
 
@@ -486,10 +485,6 @@ h6 {
 }
 
 /* Auth Pages */
-[data-theme="dark"] .auth-container {
-    background: linear-gradient(135deg, #121212 0%, #2d3748 100%) !important;
-}
-
 [data-theme="dark"] .auth-card {
     background-color: rgba(30, 30, 30, 0.95) !important;
     color: var(--text-color) !important;
@@ -726,7 +721,9 @@ h6 {
 [data-theme="dark"] .task-details-container {
     background-color: var(--bg-color) !important;
 }
-
+[data-theme="dark"] .column-empty {
+    background-color: var(--bg-color) !important;
+}
 [data-theme="dark"] .task-header {
     background: var(--card-bg) !important;
 }
@@ -1269,4 +1266,36 @@ h6 {
 [data-theme="dark"] .multi-select-wrapper select option {
     background: var(--card-bg);
     color: var(--text-color);
+}
+
+
+
+[data-theme="dark"] .card-spotlight {
+  position: relative;
+  border-radius: 1.5rem;
+  border: 1px solid #222;
+  background-color: #111;
+  padding: 2rem;
+  overflow: hidden;
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+  --spotlight-color: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .card-spotlight::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at var(--mouse-x) var(--mouse-y), var(--spotlight-color), transparent 80%);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none;
+}
+
+[data-theme="dark"] .card-spotlight:hover::before,
+[data-theme="dark"] .card-spotlight:focus-within::before {
+  opacity: 0.6;
 }

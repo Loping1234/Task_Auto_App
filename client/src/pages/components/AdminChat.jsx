@@ -16,6 +16,7 @@ const AdminChat = () => {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const chatBodyRef = useRef(null);
+    const [darkMode, setDarkMode] = useState(false);
 
     useEffect(() => {
         if (isAdmin) {
@@ -31,6 +32,29 @@ const AdminChat = () => {
             chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
         }
     }, [messages]);
+
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setDarkMode(true);
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }, []);
+
+    const toggleDarkMode = () => {
+        const newMode = !darkMode;
+        setDarkMode(newMode);
+        if (newMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        }
+    };
+
 
     const fetchSubadmins = async () => {
         try {
@@ -144,13 +168,14 @@ const AdminChat = () => {
                             )}
                         </select>
                     </div>
-
+                    
                     <div className="chat-body" ref={chatBodyRef}>
                         {messages.length === 0 ? (
                             <div className="empty-chat">
                                 <i className="fas fa-comments"></i>
                                 <h5>No messages yet</h5>
                                 <p>Start the conversation by sending a message below.</p>
+                                
                             </div>
                         ) : (
                             messages.map((msg, idx) => {

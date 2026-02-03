@@ -6,7 +6,7 @@ import Navbar from '../../components/Navbar';
 import '../styles/AssignTask.css';
 
 const AssignTask = () => {
-    const { isAdmin, isSubadmin } = useAuth();
+    const { isAdmin, isSubadmin, isEmployee, user } = useAuth();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -15,7 +15,7 @@ const AssignTask = () => {
         startDate: '',
         endDate: '',
         status: 'N/A',
-        assigneeEmail: '',
+        assigneeEmail: '', // Will default to user email if employee
         teamName: '',
     });
     const [image, setImage] = useState(null);
@@ -27,7 +27,10 @@ const AssignTask = () => {
 
     useEffect(() => {
         fetchData();
-    }, []);
+        if (isEmployee && user) {
+            setFormData(prev => ({ ...prev, assigneeEmail: user.email }));
+        }
+    }, [isEmployee, user]);
 
     const fetchData = async () => {
         try {
@@ -83,16 +86,7 @@ const AssignTask = () => {
         }
     };
 
-    if (!isAdmin && !isSubadmin) {
-        return (
-            <div className="page-layout">
-                <Navbar />
-                <main className="page-main">
-                    <div className="error-banner">You do not have permission to assign tasks.</div>
-                </main>
-            </div>
-        );
-    }
+    // Permission check removed to allow employees to create tasks
 
     return (
         <div className="page-layout">
@@ -201,8 +195,7 @@ const AssignTask = () => {
                                     name="assigneeEmail"
                                     value={formData.assigneeEmail}
                                     onChange={handleChange}
-                                    required
-                                >
+                                    required>
                                     <option value="">Choose an employee...</option>
                                     {employees.map(emp => (
                                         <option key={emp.email || emp._id} value={emp.email}>
@@ -219,8 +212,7 @@ const AssignTask = () => {
                                     name="teamName"
                                     value={formData.teamName}
                                     onChange={handleChange}
-                                    required
-                                >
+                                    required>
                                     <option value="">Choose a team...</option>
                                     {teams.map(team => (
                                         <option key={team.teamName || team._id} value={team.teamName}>
@@ -250,7 +242,7 @@ const AssignTask = () => {
                             >
                                 Cancel
                             </button>
-                            <button type="submit" className="btn btn-primary" disabled={loading}>
+                            <button type="submit" className="btn btn-primary" enabled={loading}>
                                 {loading ? 'Creating...' : 'Create Task'}
                             </button>
                         </div>

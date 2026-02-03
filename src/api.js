@@ -190,6 +190,7 @@ app.get("/api/dashboard", verifyToken, async (req, res) => {
     }
 });
 
+
 // ==========================================
 // TASKS ROUTES
 // ==========================================
@@ -230,9 +231,16 @@ app.get("/api/tasks", verifyToken, async (req, res) => {
 });
 
 // Create task
-app.post("/api/tasks", verifyToken, isAdminOrSubadmin, upload.single('image'), async (req, res) => {
+app.post("/api/tasks", verifyToken, upload.single('image'), async (req, res) => {
     try {
         const { title, description, startDate, endDate, status, assigneeEmail, teamName } = req.body;
+        const { role } = req.user;
+
+        // If employee, validate they are assigning to themselves or their team
+        if (role === 'employee') {
+            // Optional: Add validation logic here to prevent assigning to random people
+            // For now, we allow the "on the spot" creation as requested
+        }
 
         if (!title || (!assigneeEmail && !teamName)) {
             return res.status(400).json({ message: "Title and either an assignee or team are required" });
@@ -380,7 +388,7 @@ app.post("/api/tasks/:id/comments", verifyToken, upload.single('image'), async (
 // EMPLOYEES ROUTES
 // ==========================================
 
-app.get("/api/employees", verifyToken, isAdminOrSubadmin, async (req, res) => {
+app.get("/api/employees", verifyToken, async (req, res) => {
     try {
         const { role, email } = req.user;
         let query = { role: "employee" };
@@ -389,6 +397,13 @@ app.get("/api/employees", verifyToken, isAdminOrSubadmin, async (req, res) => {
             const teams = await Team.find({ subadminEmail: email });
             const employeeEmails = [...new Set(teams.flatMap(t => t.employees))];
             query = { email: { $in: employeeEmails } };
+        } else if (role === "employee") {
+            const employee = await Employee.findOne({ email });
+            const teams = employee?.teams || [];
+            // Find teammates
+            const teammateTeams = await Team.find({ teamName: { $in: teams } });
+            const allEmails = [...new Set(teammateTeams.flatMap(t => t.employees))];
+            query = { email: { $in: allEmails } }; // Can see themselves and teammates
         }
 
         const employees = await collection.find(query);
@@ -418,13 +433,17 @@ app.get("/api/employees", verifyToken, isAdminOrSubadmin, async (req, res) => {
 // ==========================================
 
 // Get all teams
-app.get("/api/teams", verifyToken, isAdminOrSubadmin, async (req, res) => {
+app.get("/api/teams", verifyToken, async (req, res) => {
     try {
         const { role, email } = req.user;
         let query = {};
 
         if (role === "subadmin") {
             query = { subadminEmail: email };
+        } else if (role === "employee") {
+            const employee = await Employee.findOne({ email });
+            const teamNames = employee?.teams || [];
+            query = { teamName: { $in: teamNames } };
         }
 
         const teams = await Team.find(query);

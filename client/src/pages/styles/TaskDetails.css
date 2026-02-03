@@ -2,6 +2,20 @@
     max-width: 1400px;
 }
 
+/* Form Styles for Dark Mode Compatibility */
+input,
+textarea,
+select {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.edit-title-input {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+}
+
 /* Header */
 .task-header {
     display: flex;
@@ -10,6 +24,16 @@
     margin-bottom: 2rem;
     gap: 1rem;
     flex-wrap: wrap;
+}
+
+.theme-toggle-btn {
+    position: relative;
+    left: 150px;
+    background: #27272b;
+    border-radius: var(--radius-md);
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
 .task-header-left {
@@ -41,8 +65,8 @@
     font-size: 1.75rem;
     font-weight: 700;
     border: 2px solid var(--primary);
-    border-radius: var(--radius-md);
-    padding: 0.5rem;
+    border-radius: 1rem;
+    padding: 0.5rem 1rem;
     width: 100%;
     max-width: 500px;
 }
@@ -79,10 +103,11 @@
 
 /* Detail Cards */
 .detail-card {
-    background: white;
-    border-radius: var(--radius-lg);
-    padding: 1.5rem;
+    background: var(--bg-card);
+    border-radius: 2rem;
+    padding: 2rem;
     box-shadow: var(--shadow-sm);
+    transition: background 0.3s ease, color 0.3s ease;
 }
 
 .detail-card h3 {
@@ -166,18 +191,24 @@
 .assignee-select {
     width: 100%;
     padding: 0.5rem 0.75rem;
-    border: none;
+    border: 1px solid var(--border-color);
     background: var(--bg-secondary);
     border-radius: var(--radius-sm);
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
+    
 }
 
 .attribute-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-wrap: wrap;
     gap: 1rem;
+}
+
+.attribute-row .attribute-group {
+    flex: 1;
+    min-width: 120px;
 }
 
 .attribute-group input[type="date"] {
@@ -189,10 +220,11 @@
 
 /* Tabs */
 .tabs-section {
-    background: white;
-    border-radius: var(--radius-lg);
+    background: var(--bg-card);
+    border-radius: 2rem;
     box-shadow: var(--shadow-sm);
     overflow: hidden;
+    transition: background 0.3s ease;
 }
 
 .tabs-nav {

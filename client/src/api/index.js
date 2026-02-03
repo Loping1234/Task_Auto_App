@@ -50,7 +50,7 @@ export const tasksAPI = {
     create: (data) => api.post('/tasks', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
     }),
-    update: (id, data) => api.put(`/tasks/${id}`, data),
+    update: (id, data, config = {}) => api.put(`/tasks/${id}`, data, config),
     updateStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
     updateAssignee: (id, assignee) => api.patch(`/tasks/${id}/assignee`, { assignee }),
     delete: (id) => api.delete(`/tasks/${id}`),

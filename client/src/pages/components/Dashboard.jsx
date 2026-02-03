@@ -4,12 +4,36 @@ import { useAuth } from '../../context/AuthContext';
 import { dashboardAPI } from '../../api';
 import Navbar from '../../components/Navbar';
 import '../styles/Dashboard.css';
+import SpotlightCard from '../../components/Rbits/Spotlight';
 
 const Dashboard = () => {
     const { user, isAdmin, isSubadmin, isEmployee } = useAuth();
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [darkMode, setDarkMode] = useState(false);
+
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+            setDarkMode(true);
+            document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+        }
+    }, []);
+
+    const toggleDarkMode = () => {
+        const newMode = !darkMode;
+        setDarkMode(newMode);
+        if (newMode) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.setAttribute('data-theme', 'light');
+            localStorage.setItem('theme', 'light');
+        }
+    };
 
     useEffect(() => {
         const fetchDashboard = async () => {
@@ -47,11 +71,11 @@ const Dashboard = () => {
             <main className="dashboard-main">
                 <div className="dashboard-header">
                     <div className="welcome-section">
-                        <h1>Welcome back, <span className="user-name">{user?.email?.split('@')[0]}</span>!</h1>
+                        <h1>Welcome back, <span className="user-name">{user.email}</span>!</h1>
                         <p className="welcome-subtitle">Here's an overview of your workspace</p>
                     </div>
                     <div className="header-actions">
-                        {(isAdmin || isSubadmin) && (
+                        {(isAdmin || isSubadmin || isEmployee) && (
                             <Link to="/assign" className="btn btn-primary">
                                 <i className="fas fa-plus"></i>
                                 Create Task
@@ -64,8 +88,8 @@ const Dashboard = () => {
 
                 <div className="stats-grid">
                     {isAdmin && (
-                        <>
-                            <div className="stat-card stat-primary">
+                        <>  
+                            <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(0, 229, 255, 0.2)">
                                 <div className="stat-icon">
                                     <i className="fas fa-user-shield"></i>
                                 </div>
@@ -73,7 +97,7 @@ const Dashboard = () => {
                                     <span className="stat-value">{stats?.subadminCount || 0}</span>
                                     <span className="stat-label">Sub-Admins</span>
                                 </div>
-                            </div>
+                            </SpotlightCard>
                             <div className="stat-card stat-secondary">
                                 <div className="stat-icon">
                                     <i className="fas fa-users"></i>
