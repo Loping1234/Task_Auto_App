@@ -8,12 +8,11 @@ import '../styles/AssignTask.css';
 const AssignTask = () => {
     const { isAdmin, isSubadmin, isEmployee, user } = useAuth();
     const navigate = useNavigate();
-
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        startDate: '',
-        endDate: '',
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
         status: 'N/A',
         assigneeEmail: '', // Will default to user email if employee
         teamName: '',
@@ -164,26 +163,6 @@ const AssignTask = () => {
                                         {status}
                                     </button>
                                 ))}
-                            </div>
-                        </div>
-
-                        <div className="form-group">
-                            <label>Assign To</label>
-                            <div className="assignment-toggle">
-                                <button
-                                    type="button"
-                                    className={assignmentType === 'employee' ? 'active' : ''}
-                                    onClick={() => setAssignmentType('employee')}
-                                >
-                                    <i className="fas fa-user"></i> Employee
-                                </button>
-                                <button
-                                    type="button"
-                                    className={assignmentType === 'team' ? 'active' : ''}
-                                    onClick={() => setAssignmentType('team')}
-                                >
-                                    <i className="fas fa-users"></i> Team
-                                </button>
                             </div>
                         </div>
 

@@ -24,23 +24,19 @@ select {
     margin-bottom: 2rem;
     gap: 1rem;
     flex-wrap: wrap;
+    border-radius: 2rem;
 }
 
-.theme-toggle-btn {
-    position: relative;
-    left: 150px;
-    background: #27272b;
-    border-radius: var(--radius-md);
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
+
 
 .task-header-left {
     flex: 1;
+    border-radius: 2rem;
 }
 
 .back-link {
+    position: relative;
+    left: 30px;
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
@@ -55,6 +51,8 @@ select {
 }
 
 .task-header-left h1 {
+    position: relative;
+    left: 30px;
     font-size: 1.75rem;
     font-weight: 700;
     color: var(--text-primary);
@@ -72,6 +70,8 @@ select {
 }
 
 .task-id {
+    position: relative;
+    left: 30px;
     font-size: 0.8rem;
     color: var(--text-muted);
 }
@@ -197,7 +197,7 @@ select {
     font-size: 0.9rem;
     font-weight: 500;
     cursor: pointer;
-    
+
 }
 
 .attribute-row {

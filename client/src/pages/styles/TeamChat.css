@@ -14,18 +14,6 @@
     padding: 2rem;
 }
 
-
-.theme-toggle-btn {
-    position: relative;
-    top: 28px;
-    left: 150px;
-    background: #27272b;
-    border-radius: var(--radius-md);
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
 .team-selection h2 {
     font-size: 1.5rem;
     font-weight: 700;

@@ -209,10 +209,10 @@ const TaskDetails = () => {
                     <div className="task-header-actions">
                         {canEdit && !isEditing && (
                             <>
-                                <button className="btn btn-primary" onClick={() => setIsEditing(true)}>
+                                <button className="btn btn-primary-edit" onClick={() => setIsEditing(true)}>
                                     <i className="fas fa-edit"></i> Edit
                                 </button>
-                                <button className="btn btn-danger" onClick={handleDelete}>
+                                <button className="btn btn-danger-delete" onClick={handleDelete}>
                                     <i className="fas fa-trash"></i> Delete
                                 </button>
                             </>

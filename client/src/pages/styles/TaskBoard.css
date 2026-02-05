@@ -13,15 +13,7 @@
     min-height: 500px;
 }
 
-.theme-toggle-btn {
-    position: relative;
-    left: 150px;
-    background: #27272b;
-    border-radius: var(--radius-md);
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
+
 
 .column-header {
     display: flex;

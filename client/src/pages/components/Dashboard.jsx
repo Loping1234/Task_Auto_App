@@ -5,6 +5,9 @@ import { dashboardAPI } from '../../api';
 import Navbar from '../../components/Navbar';
 import '../styles/Dashboard.css';
 import SpotlightCard from '../../components/Rbits/Spotlight';
+import ClickSpark from '../../components/Rbits/ClickSpark';
+import FadeContent from '../../components/Rbits/Fade';
+import NotificationPane from '../../components/NotificationPane';
 
 const Dashboard = () => {
     const { user, isAdmin, isSubadmin, isEmployee } = useAuth();
@@ -67,158 +70,167 @@ const Dashboard = () => {
 
     return (
         <div className="dashboard-layout">
-            <Navbar />
-            <main className="dashboard-main">
-                <div className="dashboard-header">
-                    <div className="welcome-section">
-                        <h1>Welcome back, <span className="user-name">{user.email}</span>!</h1>
-                        <p className="welcome-subtitle">Here's an overview of your workspace</p>
-                    </div>
-                    <div className="header-actions">
-                        {(isAdmin || isSubadmin || isEmployee) && (
+            <ClickSpark
+                sparkColor='#fff'
+                sparkSize={10}
+                sparkRadius={15}
+                sparkCount={8}
+                duration={400}
+            >
+                <Navbar />
+                <main className="dashboard-main">
+                    <div className="dashboard-header">
+                        <div className="welcome-section">
+                            <h1>Welcome back, <span className="user-name">{user.email}</span>!</h1>
+                            <p className="welcome-subtitle">Here's an overview of your workspace</p>
+                        </div>
+                        <div className="header-actions">
+                            {(isAdmin || isSubadmin || isEmployee) && <NotificationPane />}
                             <Link to="/assign" className="btn btn-primary">
                                 <i className="fas fa-plus"></i>
                                 Create Task
                             </Link>
-                        )}
+                        </div>
                     </div>
-                </div>
 
-                {error && <div className="error-banner">{error}</div>}
+                    {error && <div className="error-banner">{error}</div>}
 
-                <div className="stats-grid">
-                    {isAdmin && (
-                        <>  
-                            <SpotlightCard className="custom-spotlight-card" spotlightColor="rgba(0, 229, 255, 0.2)">
-                                <div className="stat-icon">
-                                    <i className="fas fa-user-shield"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.subadminCount || 0}</span>
-                                    <span className="stat-label">Sub-Admins</span>
-                                </div>
-                            </SpotlightCard>
-                            <div className="stat-card stat-secondary">
-                                <div className="stat-icon">
-                                    <i className="fas fa-users"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.empCount || 0}</span>
-                                    <span className="stat-label">Employees</span>
-                                </div>
-                            </div>
-                            <div className="stat-card stat-accent">
-                                <div className="stat-icon">
-                                    <i className="fas fa-tasks"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.taskCount || 0}</span>
-                                    <span className="stat-label">Total Tasks</span>
-                                </div>
-                            </div>
-                            <div className="stat-card stat-success">
-                                <div className="stat-icon">
-                                    <i className="fas fa-user-friends"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.teamCount || 0}</span>
-                                    <span className="stat-label">Teams</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {isSubadmin && (
-                        <>
-                            <div className="stat-card stat-secondary">
-                                <div className="stat-icon">
-                                    <i className="fas fa-users"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.empCount || 0}</span>
-                                    <span className="stat-label">My Employees</span>
-                                </div>
-                            </div>
-                            <div className="stat-card stat-accent">
-                                <div className="stat-icon">
-                                    <i className="fas fa-tasks"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.taskCount || 0}</span>
-                                    <span className="stat-label">Active Tasks</span>
-                                </div>
-                            </div>
-                            <div className="stat-card stat-success">
-                                <div className="stat-icon">
-                                    <i className="fas fa-user-friends"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.teams?.length || 0}</span>
-                                    <span className="stat-label">My Teams</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {isEmployee && (
-                        <>
-                            <div className="stat-card stat-primary">
-                                <div className="stat-icon">
-                                    <i className="fas fa-clipboard-list"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.individualTaskCount || 0}</span>
-                                    <span className="stat-label">My Tasks</span>
-                                </div>
-                            </div>
-                            <div className="stat-card stat-secondary">
-                                <div className="stat-icon">
-                                    <i className="fas fa-users-cog"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.teamTaskCount || 0}</span>
-                                    <span className="stat-label">Team Tasks</span>
-                                </div>
-                            </div>
-                            <div className="stat-card stat-success">
-                                <div className="stat-icon">
-                                    <i className="fas fa-user-friends"></i>
-                                </div>
-                                <div className="stat-content">
-                                    <span className="stat-value">{stats?.teams?.length || 0}</span>
-                                    <span className="stat-label">My Teams</span>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-
-                <div className="quick-actions">
-                    <h2>Quick Actions</h2>
-                    <div className="actions-grid">
-                        <Link to="/tasks" className="action-card">
-                            <i className="fas fa-list-check"></i>
-                            <span>View All Tasks</span>
-                        </Link>
-                        <Link to="/taskboard" className="action-card">
-                            <i className="fas fa-columns"></i>
-                            <span>Task Board</span>
-                        </Link>
-                        {(isAdmin || isSubadmin) && (
+                    <div className="stats-grid">
+                        {isAdmin && (
                             <>
-                                <Link to="/members" className="action-card">
-                                    <i className="fas fa-users"></i>
-                                    <span>View Members</span>
-                                </Link>
-                                <Link to="/team-management" className="action-card">
-                                    <i className="fas fa-user-friends"></i>
-                                    <span>Manage Teams</span>
-                                </Link>
+                                    <SpotlightCard className="stat-card stat-primary" spotlightColor="rgba(0, 229, 255, 0.2)">
+                                        <div className="stat-icon">
+                                            <i className="fas fa-user-shield"></i>
+                                        </div>
+                                        <div className="stat-content">
+                                            <span className="stat-value">{stats?.subadminCount || 0}</span>
+                                            <span className="stat-label">Sub-Admins</span>
+                                        </div>
+                                    </SpotlightCard>
+                                    <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
+                                        <div className="stat-card stat-secondary">
+                                            <div className="stat-icon">
+                                                <i className="fas fa-users"></i>
+                                            </div>
+                                            <div className="stat-content">
+                                                <span className="stat-value">{stats?.empCount || 0}</span>
+                                                <span className="stat-label">Employees</span>
+                                            </div>
+                                        </div>
+                                    </FadeContent>
+                                    <div className="stat-card stat-accent">
+                                        <div className="stat-icon">
+                                            <i className="fas fa-tasks"></i>
+                                        </div>
+                                        <div className="stat-content">
+                                            <span className="stat-value">{stats?.taskCount || 0}</span>
+                                            <span className="stat-label">Total Tasks</span>
+                                        </div>
+                                    </div>
+                                    <div className="stat-card stat-success">
+                                        <div className="stat-icon">
+                                            <i className="fas fa-user-friends"></i>
+                                        </div>
+                                        <div className="stat-content">
+                                            <span className="stat-value">{stats?.teamCount || 0}</span>
+                                            <span className="stat-label">Teams</span>
+                                        </div>
+                                    </div>
+                            </>
+                        )}
+
+                        {isSubadmin && (
+                            <>
+                                <div className="stat-card stat-secondary">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-users"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.empCount || 0}</span>
+                                        <span className="stat-label">My Employees</span>
+                                    </div>
+                                </div>
+                                <div className="stat-card stat-accent">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-tasks"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.taskCount || 0}</span>
+                                        <span className="stat-label">Active Tasks</span>
+                                    </div>
+                                </div>
+                                <div className="stat-card stat-success">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-user-friends"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.teams?.length || 0}</span>
+                                        <span className="stat-label">My Teams</span>
+                                    </div>
+                                </div>
+                            </>
+                        )}
+
+                        {isEmployee && (
+                            <>
+                                <div className="stat-card stat-primary">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-clipboard-list"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.individualTaskCount || 0}</span>
+                                        <span className="stat-label">My Tasks</span>
+                                    </div>
+                                </div>
+                                <div className="stat-card stat-secondary">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-users-cog"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.teamTaskCount || 0}</span>
+                                        <span className="stat-label">Team Tasks</span>
+                                    </div>
+                                </div>
+                                <div className="stat-card stat-success">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-user-friends"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.teams?.length || 0}</span>
+                                        <span className="stat-label">My Teams</span>
+                                    </div>
+                                </div>
                             </>
                         )}
                     </div>
-                </div>
-            </main>
+
+                    <div className="quick-actions">
+                        <h2>Quick Actions</h2>
+                        <div className="actions-grid">
+                            <Link to="/tasks" className="action-card">
+                                <i className="fas fa-list-check"></i>
+                                <span>View All Tasks</span>
+                            </Link>
+                            <Link to="/taskboard" className="action-card">
+                                <i className="fas fa-columns"></i>
+                                <span>Task Board</span>
+                            </Link>
+                            {(isAdmin || isSubadmin) && (
+                                <>
+                                    <Link to="/members" className="action-card">
+                                        <i className="fas fa-users"></i>
+                                        <span>View Members</span>
+                                    </Link>
+                                    <Link to="/team-management" className="action-card">
+                                        <i className="fas fa-user-friends"></i>
+                                        <span>Manage Teams</span>
+                                    </Link>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </main>
+            </ClickSpark>
         </div>
     );
 };

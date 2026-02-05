@@ -134,15 +134,7 @@
     border-radius: 50%;
 }
 
-.theme-toggle-btn {
-    position: relative;
-    left: 150px;
-    background: #27272b;
-    border-radius: var(--radius-md);
-    padding: 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-}
+
 
 .role-badge {
     padding: 0.25rem 0.6rem;

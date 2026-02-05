@@ -7,6 +7,7 @@ const Team = require("../models/team");
 const Employee = require("../models/employee");
 const TeamMessage = require("../models/teamMessage");
 const AdminSubadminMessage = require("../models/adminSubadminMessage");
+const Notification = require("../models/notification");
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -16,7 +17,7 @@ const app = express();
 
 // CORS configuration for React frontend
 app.use(cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -259,10 +260,75 @@ app.post("/api/tasks", verifyToken, upload.single('image'), async (req, res) => 
         };
 
         const task = await Task.create(taskData);
+
+        // Send Notification if assigned to someone
+        if (assigneeEmail) {
+            try {
+                console.log(`[NOTIFICATION DEBUG] Attempting to create notification for: ${assigneeEmail}`);
+                const assignee = await collection.findOne({ email: assigneeEmail });
+                console.log(`[NOTIFICATION DEBUG] Assignee found:`, assignee ? `Yes (ID: ${assignee._id})` : 'No');
+                console.log(`[NOTIFICATION DEBUG] Creator ID: ${req.user.id}`);
+
+                if (!assignee) {
+                    console.log(`[NOTIFICATION DEBUG] SKIP: Assignee not found in database`);
+                } else if (assignee._id.toString() === req.user.id) {
+                    console.log(`[NOTIFICATION DEBUG] SKIP: Self-assignment (creator = assignee)`);
+                } else {
+                    console.log(`[NOTIFICATION DEBUG] Creating notification...`);
+                    const notification = await Notification.create({
+                        recipient: assignee._id,
+                        sender: req.user.id,
+                        task: task._id,
+                        message: `You have been assigned a new task: "${title}" by ${req.user.email}`,
+                        type: 'assignment',
+                        priority: 'primary',
+                        category: 'assignment'
+                    });
+                    console.log(`[NOTIFICATION DEBUG] SUCCESS: Notification created with ID: ${notification._id}`);
+                }
+            } catch (notifErr) {
+                console.error("[NOTIFICATION DEBUG] ERROR:", notifErr);
+            }
+        } else {
+            console.log(`[NOTIFICATION DEBUG] SKIP: No assigneeEmail provided`);
+        }
+
         res.status(201).json({ task, message: "Task created successfully" });
     } catch (err) {
         console.error("Create task error", err);
         res.status(500).json({ message: "Failed to create task" });
+    }
+});
+
+// Get team tasks (Moved before :id route to prevent conflict)
+app.get("/api/tasks/team-tasks", verifyToken, async (req, res) => {
+    try {
+        const { email, role } = req.user;
+
+        if (role !== "employee") {
+            return res.status(403).json({ message: "Only employees can access team tasks" });
+        }
+
+        const employee = await Employee.findOne({ email });
+        const teams = employee?.teams || [];
+
+        if (teams.length === 0) {
+            return res.json({ tasks: [], teams: [] });
+        }
+
+        // Get tasks assigned to team members (excluding current user)
+        const tasks = await Task.find({
+            $or: [
+                { teamName: { $in: teams } },
+                { assigneeEmail: { $in: await getTeammateEmails(teams, email) } }
+            ],
+            assigneeEmail: { $ne: email }
+        }).sort({ createdAt: -1 });
+
+        res.json({ tasks, teams });
+    } catch (err) {
+        console.error("Get team tasks error", err);
+        res.status(500).json({ message: "Error loading team tasks" });
     }
 });
 
@@ -305,6 +371,60 @@ app.put("/api/tasks/:id", verifyToken, isAdminOrSubadmin, upload.single('image')
             return res.status(404).json({ message: "Task not found" });
         }
 
+        // Send Task Edit Notifications
+        try {
+            const notifications = [];
+
+            // Primary: Notify assignee
+            if (task.assigneeEmail) {
+                const assignee = await collection.findOne({ email: task.assigneeEmail });
+                if (assignee && assignee._id.toString() !== req.user.id) {
+                    notifications.push({
+                        recipient: assignee._id,
+                        sender: req.user.id,
+                        task: task._id,
+                        message: `Your task "${task.title}" was updated by ${req.user.email}`,
+                        type: 'task_edit',
+                        priority: 'primary',
+                        category: 'task_edit',
+                        metadata: { teamName: task.teamName }
+                    });
+                }
+            }
+
+            // Secondary: Notify team members (if task has a team)
+            if (task.teamName) {
+                const team = await Team.findOne({ teamName: task.teamName });
+                if (team) {
+                    const teammateEmails = team.employees.filter(e =>
+                        e !== task.assigneeEmail && e !== req.user.email
+                    );
+
+                    for (const email of teammateEmails) {
+                        const teammate = await collection.findOne({ email });
+                        if (teammate) {
+                            notifications.push({
+                                recipient: teammate._id,
+                                sender: req.user.id,
+                                task: task._id,
+                                message: `Task "${task.title}" (${task.assigneeEmail}) was updated`,
+                                type: 'task_edit',
+                                priority: 'secondary',
+                                category: 'task_edit',
+                                metadata: { teamName: task.teamName, affectedUser: task.assigneeEmail }
+                            });
+                        }
+                    }
+                }
+            }
+
+            if (notifications.length > 0) {
+                await Notification.insertMany(notifications);
+            }
+        } catch (notifErr) {
+            console.error("[TASK EDIT NOTIFICATION ERROR]", notifErr);
+        }
+
         res.json({ task, message: "Task updated successfully" });
     } catch (err) {
         console.error("Update task error", err);
@@ -332,6 +452,39 @@ app.patch("/api/tasks/:id/status", verifyToken, async (req, res) => {
                 newValue: status,
                 changedBy: req.user.email
             });
+
+            // Send Notification if updated by Employee
+            if (req.user.role === 'employee') {
+                try {
+                    const recipients = new Set();
+
+                    // 1. If Team Task, find Subadmin
+                    if (task.teamName) {
+                        const team = await Team.findOne({ teamName: task.teamName });
+                        if (team && team.subadminEmail) {
+                            const subadmin = await collection.findOne({ email: team.subadminEmail });
+                            if (subadmin) recipients.add(subadmin._id.toString());
+                        }
+                    }
+
+                    // 2. Notify Admins
+                    const admins = await collection.find({ role: 'admin' });
+                    admins.forEach(a => recipients.add(a._id.toString()));
+
+                    // Create Notifications
+                    await Promise.all(Array.from(recipients).map(recipientId =>
+                        Notification.create({
+                            recipient: recipientId,
+                            sender: req.user.id,
+                            task: task._id,
+                            message: `Task "${task.title}" status updated to ${status} by ${req.user.email}`,
+                            type: 'status_change'
+                        })
+                    ));
+                } catch (notifErr) {
+                    console.error("Notification creation failed", notifErr);
+                }
+            }
         }
 
         await task.save();
@@ -555,6 +708,93 @@ app.put("/api/teams/:teamName", verifyToken, isAdmin, async (req, res) => {
             await Task.updateMany({ teamName: oldTeamName }, { teamName: updatedTeamName });
         }
 
+        // Send Team Management Notifications
+        try {
+            const notifications = [];
+            const addedEmployees = employeeEmails.filter(e => !team.employees.includes(e));
+            const unchangedEmployees = team.employees.filter(e => employeeEmails.includes(e));
+
+            // Notify Subadmin (Primary)
+            const subadmin = await collection.findOne({ email: subadminEmail });
+            if (subadmin && subadmin.email !== req.user.email) {
+                let changeMsg = '';
+                if (removedEmployees.length > 0 || addedEmployees.length > 0) {
+                    changeMsg = `Team "${updatedTeamName}" was updated`;
+                }
+                if (changeMsg) {
+                    notifications.push({
+                        recipient: subadmin._id,
+                        sender: req.user.id,
+                        message: changeMsg,
+                        type: 'team_change',
+                        priority: 'primary',
+                        category: 'team_change',
+                        metadata: { teamName: updatedTeamName, changeType: 'update' }
+                    });
+                }
+            }
+
+            // Notify Removed Employees (Primary)
+            for (const email of removedEmployees) {
+                const user = await collection.findOne({ email });
+                if (user) {
+                    notifications.push({
+                        recipient: user._id,
+                        sender: req.user.id,
+                        message: `You were removed from team "${updatedTeamName}"`,
+                        type: 'team_change',
+                        priority: 'primary',
+                        category: 'team_change',
+                        metadata: { teamName: updatedTeamName, changeType: 'removed' }
+                    });
+                }
+            }
+
+            // Notify Added Employees (Primary)
+            for (const email of addedEmployees) {
+                const user = await collection.findOne({ email });
+                if (user) {
+                    notifications.push({
+                        recipient: user._id,
+                        sender: req.user.id,
+                        message: `You were added to team "${updatedTeamName}"`,
+                        type: 'team_change',
+                        priority: 'primary',
+                        category: 'team_change',
+                        metadata: { teamName: updatedTeamName, changeType: 'added' }
+                    });
+                }
+            }
+
+            // Notify Unchanged Employees (Secondary)
+            for (const email of unchangedEmployees) {
+                const user = await collection.findOne({ email });
+                if (user && user.email !== req.user.email) {
+                    const changes = [];
+                    if (removedEmployees.length > 0) changes.push(`${removedEmployees.join(', ')} removed`);
+                    if (addedEmployees.length > 0) changes.push(`${addedEmployees.join(', ')} added`);
+
+                    if (changes.length > 0) {
+                        notifications.push({
+                            recipient: user._id,
+                            sender: req.user.id,
+                            message: `Team "${updatedTeamName}" updated: ${changes.join('; ')}`,
+                            type: 'team_change',
+                            priority: 'secondary',
+                            category: 'team_change',
+                            metadata: { teamName: updatedTeamName, changeType: 'member_change' }
+                        });
+                    }
+                }
+            }
+
+            if (notifications.length > 0) {
+                await Notification.insertMany(notifications);
+            }
+        } catch (notifErr) {
+            console.error("[TEAM MANAGEMENT NOTIFICATION ERROR]", notifErr);
+        }
+
         const updatedTeam = await Team.findOne({ teamName: updatedTeamName });
         res.json({ team: updatedTeam, message: "Team updated successfully" });
     } catch (err) {
@@ -616,36 +856,7 @@ app.get("/api/subadmins", verifyToken, isAdminOrSubadmin, async (req, res) => {
 // TEAM TASKS ROUTES (Employee)
 // ==========================================
 
-app.get("/api/tasks/team-tasks", verifyToken, async (req, res) => {
-    try {
-        const { email, role } = req.user;
-
-        if (role !== "employee") {
-            return res.status(403).json({ message: "Only employees can access team tasks" });
-        }
-
-        const employee = await Employee.findOne({ email });
-        const teams = employee?.teams || [];
-
-        if (teams.length === 0) {
-            return res.json({ tasks: [], teams: [] });
-        }
-
-        // Get tasks assigned to team members (excluding current user)
-        const tasks = await Task.find({
-            $or: [
-                { teamName: { $in: teams } },
-                { assigneeEmail: { $in: await getTeammateEmails(teams, email) } }
-            ],
-            assigneeEmail: { $ne: email }
-        }).sort({ createdAt: -1 });
-
-        res.json({ tasks, teams });
-    } catch (err) {
-        console.error("Get team tasks error", err);
-        res.status(500).json({ message: "Error loading team tasks" });
-    }
-});
+// (Moved team-tasks route to lines 269)
 
 // Helper function to get teammate emails
 async function getTeammateEmails(teams, excludeEmail) {
@@ -735,6 +946,36 @@ app.post("/api/chat/team/:teamName", verifyToken, async (req, res) => {
             message: message.trim()
         });
 
+        // Send Chat Notifications to team members
+        try {
+            const team = await Team.findOne({ teamName });
+            if (team) {
+                const recipientEmails = team.employees.filter(e => e !== email);
+                const notifications = [];
+
+                for (const recipientEmail of recipientEmails) {
+                    const recipient = await collection.findOne({ email: recipientEmail });
+                    if (recipient) {
+                        notifications.push({
+                            recipient: recipient._id,
+                            sender: req.user.id,
+                            message: `You have unread messages in ${teamName} chat`,
+                            type: 'chat',
+                            priority: 'primary',
+                            category: 'chat',
+                            metadata: { chatName: teamName }
+                        });
+                    }
+                }
+
+                if (notifications.length > 0) {
+                    await Notification.insertMany(notifications);
+                }
+            }
+        } catch (notifErr) {
+            console.error("[TEAM CHAT NOTIFICATION ERROR]", notifErr);
+        }
+
         res.status(201).json({ message: newMessage });
     } catch (err) {
         console.error("Send team message error", err);
@@ -801,10 +1042,159 @@ app.post("/api/chat/admin", verifyToken, isAdminOrSubadmin, async (req, res) => 
             message: message.trim()
         });
 
+        // Send Chat Notifications
+        try {
+            const notifications = [];
+
+            if (actualReceiver === 'all@subadmin.com') {
+                // Broadcast to all subadmins and admin
+                const subadmins = await collection.find({ role: 'subadmin' });
+                const admin = await collection.findOne({ role: 'admin' });
+
+                const recipients = [...subadmins];
+                if (admin) recipients.push(admin);
+
+                for (const recipient of recipients) {
+                    if (recipient.email !== email) {
+                        notifications.push({
+                            recipient: recipient._id,
+                            sender: req.user.id,
+                            message: `You have unread messages in Admin Chat (General)`,
+                            type: 'chat',
+                            priority: 'primary',
+                            category: 'chat',
+                            metadata: { chatName: 'Admin Chat - General' }
+                        });
+                    }
+                }
+            } else {
+                // Direct message
+                const recipient = await collection.findOne({ email: actualReceiver });
+                if (recipient) {
+                    notifications.push({
+                        recipient: recipient._id,
+                        sender: req.user.id,
+                        message: `You have unread messages from ${email}`,
+                        type: 'chat',
+                        priority: 'primary',
+                        category: 'chat',
+                        metadata: { chatName: `Admin Chat - ${email}` }
+                    });
+                }
+            }
+
+            if (notifications.length > 0) {
+                await Notification.insertMany(notifications);
+            }
+        } catch (notifErr) {
+            console.error("[ADMIN CHAT NOTIFICATION ERROR]", notifErr);
+        }
+
         res.status(201).json({ message: newMessage });
     } catch (err) {
         console.error("Send admin chat error", err);
         res.status(500).json({ message: "Failed to send message" });
+    }
+});
+
+
+// ==========================================
+// USERS ROUTES (for Watchlist)
+// ==========================================
+
+// Get all users (for watchlist feature)
+app.get("/api/users/all", verifyToken, async (req, res) => {
+    try {
+        const users = await collection.find({}, { password: 0 });
+
+        // Get additional employee details
+        const userDetails = await Promise.all(
+            users.map(async (user) => {
+                const empModel = await Employee.findOne({ email: user.email });
+                return {
+                    _id: user._id,
+                    email: user.email,
+                    role: user.role,
+                    name: empModel?.name || user.email.split("@")[0]
+                };
+            })
+        );
+
+        res.json({ users: userDetails });
+    } catch (err) {
+        console.error("Get all users error", err);
+        res.status(500).json({ message: "Error loading users" });
+    }
+});
+
+// ==========================================
+// NOTIFICATIONS ROUTES
+// ==========================================
+
+// Get user notifications (supports watchlist via userId query param)
+app.get("/api/notifications", verifyToken, async (req, res) => {
+    try {
+        // Support watchlist: use userId query param if provided, else use current user
+        const targetUserId = req.query.userId || req.user.id;
+        const typeFilter = req.query.type; // Optional: filter by notification type
+
+        let query = { recipient: targetUserId };
+
+        // Add type filter if specified (e.g., 'assignment', 'task_edit', 'team_change', 'chat')
+        if (typeFilter && typeFilter !== 'all') {
+            query.type = typeFilter;
+        }
+
+        const notifications = await Notification.find(query)
+            .sort({ createdAt: -1 })
+            .limit(50);
+        res.json({ notifications });
+    } catch (err) {
+        console.error("Get notifications error", err);
+        res.status(500).json({ message: "Error loading notifications" });
+    }
+});
+
+// Mark notification as read
+app.put("/api/notifications/:id/read", verifyToken, async (req, res) => {
+    try {
+        await Notification.findByIdAndUpdate(req.params.id, {
+            isRead: true,
+            readAt: new Date()
+        });
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Mark read error", err);
+        res.status(500).json({ message: "Error updating notification" });
+    }
+});
+
+// Mark notification as unread
+app.put("/api/notifications/:id/unread", verifyToken, async (req, res) => {
+    try {
+        await Notification.findByIdAndUpdate(req.params.id, {
+            isRead: false,
+            readAt: null
+        });
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Mark unread error", err);
+        res.status(500).json({ message: "Error updating notification" });
+    }
+});
+
+// Mark all as read
+app.put("/api/notifications/read-all", verifyToken, async (req, res) => {
+    try {
+        const { id } = req.user;
+        await Notification.updateMany(
+            { recipient: id, isRead: false },
+            { isRead: true, readAt: new Date() }
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Mark all read error", err);
+        res.status(500).json({ message: "Error updating notifications" });
     }
 });
 

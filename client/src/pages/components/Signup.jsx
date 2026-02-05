@@ -2,8 +2,6 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import '../styles/Auth.css';
-import ElectricBorder from '../../components/Rbits/ElectricBorder';
-import Particles from '../../components/Rbits/Particles';
 
 const Signup = () => {
     const [email, setEmail] = useState('');
@@ -67,18 +65,7 @@ const Signup = () => {
     };
 
     return (
-        <div style={{ width: '100%', height: '100vh', position: 'relative', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#0a0a14' }}>
-            <Particles
-                particleColors={["#ffffff"]}
-                particleCount={5000}
-                particleSpread={25}
-                speed={0.1}
-                particleBaseSize={100}
-                moveParticlesOnHover
-                alphaParticles={false}
-                disableRotation={false}
-                pixelRatio={1}
-            />
+        <div className="auth-container">
             <div className="auth-background">
                 <div className="shape shape-1"></div>
                 <div className="shape shape-2"></div>
@@ -87,20 +74,7 @@ const Signup = () => {
             <button onClick={toggleDarkMode} className="theme-toggle-btn-dark" title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
                 <i className={darkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
             </button>
-            <ElectricBorder
-                color="#7df9ff"
-                borderRadius={16}
-                style={{
-                    width: '100%',
-                    maxWidth: '440px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.1)',
-                }}
-            >
-                <div className="auth-card" style={{
-                    boxShadow: 'none',
-                    maxWidth: '100%',
-                    margin: 0
-                }}>
+                <div className="auth-card">
                     <div className="auth-header">
                         <span className="auth-logo">📋</span>
                         <h1>Create Account</h1>
@@ -176,13 +150,13 @@ const Signup = () => {
                             )}
                         </button>
                     </form>
+                
 
                     <div className="auth-footer">
                         <p>Already have an account? <Link to="/login">Sign in</Link></p>
                     </div>
                 </div>
-            </ElectricBorder>
-        </div>
+            </div>
     );
 };
 

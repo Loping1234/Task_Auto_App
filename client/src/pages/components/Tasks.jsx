@@ -33,7 +33,7 @@ const Tasks = () => {
         try {
             await tasksAPI.updateStatus(taskId, newStatus);
             setTasks(tasks.map(task =>
-                task._id === taskId ? { ...task, status: newStatus } : task
+                task._id === taskId ? { task, status: newStatus } : task
             ));
         } catch (err) {
             console.error('Failed to update status', err);
@@ -52,7 +52,16 @@ const Tasks = () => {
     };
 
     const filteredTasks = tasks.filter(task => {
-        const matchesFilter = filter === 'all' || task.status === filter;
+        let matchesFilter = filter === 'all' || task.status === filter;
+        if (filter === 'Today') {
+            const today = new Date();
+            const taskDate = task.endDate ? new Date(task.endDate) : null;
+            matchesFilter = taskDate &&
+                taskDate.getDate() === today.getDate() &&
+                taskDate.getMonth() === today.getMonth() &&
+                taskDate.getFullYear() === today.getFullYear();
+        }
+
         const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (task.assigneeEmail && task.assigneeEmail.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesFilter && matchesSearch;
@@ -112,7 +121,7 @@ const Tasks = () => {
                         />
                     </div>
                     <div className="filter-tabs">
-                        {['all', 'N/A', 'Pending', 'In Progress', 'Completed'].map(status => (
+                        {['all', 'Today', 'N/A', 'Pending', 'In Progress', 'Completed'].map(status => (
                             <button
                                 key={status}
                                 className={`filter-tab ${filter === status ? 'active' : ''}`}
@@ -154,14 +163,14 @@ const Tasks = () => {
                                             </Link>*/}
                                             {task.description && (
                                                 <p className="task-description-preview">
-                                                    {task.description.substring(0, 60)}...
+                                                    {task.description.substring(0, 60)}
                                                 </p>
                                             )}
                                         </td>
                                         <td>
                                             {task.title && (
                                                 <p className="task-title-preview">
-                                                    {task.title.substring(0, 60)}...
+                                                    {task.title.substring(0, 60)}
                                                 </p>
                                             )}
                                         </td>

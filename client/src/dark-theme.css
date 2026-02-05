@@ -12,6 +12,8 @@
     --bg-color-members: #2d2d2d;
 }
 
+
+
 [data-theme="dark"] {
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;
@@ -56,6 +58,14 @@ h6 {
 
 [data-theme="dark"] .text-muted {
     color: #adb5bd !important;
+}
+
+.back-link {
+    color: var(--primary-color) !important;
+}
+
+[data-theme="dark"] .back-link {
+    color: var(--primary-color) !important;
 }
 
 [data-theme="dark"] .table {

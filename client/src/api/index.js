@@ -1,6 +1,5 @@
 import axios from 'axios';
 
-// Use relative URL - Vite proxy handles forwarding to backend
 const API_URL = '/api';
 
 const api = axios.create({
@@ -106,6 +105,25 @@ export const messagesAPI = {
     sendTeamMessage: (teamName, message) => api.post(`/messages/team/${encodeURIComponent(teamName)}`, { message }),
     getAdminChat: () => api.get('/messages/admin-chat'),
     sendAdminMessage: (message) => api.post('/messages/admin-chat', { message }),
+};
+
+// Notifications API
+export const notificationAPI = {
+    getAll: (params = {}) => {
+        const queryParams = new URLSearchParams();
+        if (params.userId) queryParams.append('userId', params.userId);
+        if (params.type) queryParams.append('type', params.type);
+        const queryString = queryParams.toString();
+        return api.get(`/notifications${queryString ? `?${queryString}` : ''}`);
+    },
+    markRead: (id) => api.put(`/notifications/${id}/read`),
+    markUnread: (id) => api.put(`/notifications/${id}/unread`),
+    markAllRead: () => api.put('/notifications/read-all'),
+};
+
+// Users API (for Watchlist)
+export const usersAPI = {
+    getAll: () => api.get('/users/all'),
 };
 
 export default api;

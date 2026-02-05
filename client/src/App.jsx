@@ -19,7 +19,7 @@ import AdminChat from './pages/components/AdminChat';
 import TeamTasks from './pages/components/TeamTasks';
 import EditTeam from './pages/components/EditTeam';
 
-import './index.css';
+import './app.css';
 import './dark-theme.css';
 
 function App() {

@@ -3,19 +3,26 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
+import NotificationPane from './NotificationPane';
+
 const Navbar = () => {
     const { user, logout, isAdmin, isSubadmin, isEmployee } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    // Initialize from localStorage or default to true
+    const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+        const saved = localStorage.getItem('sidebarOpen');
+        return saved !== null ? JSON.parse(saved) : true;
+    });
 
     // Toggle sidebar
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
 
-    // Update CSS variable for layout
+    // Update CSS variable for layout and save to localStorage
     useEffect(() => {
+        localStorage.setItem('sidebarOpen', JSON.stringify(isSidebarOpen));
         const width = isSidebarOpen ? '260px' : '80px';
         document.documentElement.style.setProperty('--sidebar-width', width);
     }, [isSidebarOpen]);
@@ -52,8 +59,8 @@ const Navbar = () => {
                 onClick={toggleSidebar}
                 style={{
                     position: 'fixed',
-                    left: isSidebarOpen ? '220px' : '20px',
-                    top: '20px',
+                    left: isSidebarOpen ? '200px' : '23px',
+                    top: '23px',
                     zIndex: 1001,
                     transition: 'left 0.3s ease',
                     background: 'var(--primary)',
@@ -138,7 +145,8 @@ const Navbar = () => {
                 </div>
 
                 <div className="navbar-user">
-                    <button onClick={toggleDarkMode} className="theme-toggle-btn" style={{ marginBottom: '70px', width: '100%', justifyContent: 'flex-start' }} title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                    {(isAdmin || isSubadmin || isEmployee) }
+                    <button onClick={toggleDarkMode} className="theme-toggle-btn" title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
                         <i className={darkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
                         <span>{darkMode ? 'Light' : 'Dark'} Mode</span>
                     </button>
