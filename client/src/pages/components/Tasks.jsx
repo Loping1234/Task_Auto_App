@@ -33,7 +33,7 @@ const Tasks = () => {
         try {
             await tasksAPI.updateStatus(taskId, newStatus);
             setTasks(tasks.map(task =>
-                task._id === taskId ? { task, status: newStatus } : task
+                task._id === taskId ? { ...task, status: newStatus } : task
             ));
         } catch (err) {
             console.error('Failed to update status', err);
@@ -62,7 +62,7 @@ const Tasks = () => {
                 taskDate.getFullYear() === today.getFullYear();
         }
 
-        const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = (task.title && task.title.toLowerCase().includes(searchTerm.toLowerCase())) ||
             (task.assigneeEmail && task.assigneeEmail.toLowerCase().includes(searchTerm.toLowerCase()));
         return matchesFilter && matchesSearch;
     });
@@ -158,9 +158,6 @@ const Tasks = () => {
                                 {filteredTasks.map(task => (
                                     <tr key={task._id}>
                                         <td>
-                                            {/*<Link to={`/tasks/${task._id}`} className="task-title-link">
-                                                {task.title}
-                                            </Link>*/}
                                             {task.description && (
                                                 <p className="task-description-preview">
                                                     {task.description.substring(0, 60)}
@@ -226,7 +223,7 @@ const Tasks = () => {
                                                 </Link>
                                                 {(isAdmin || isSubadmin) && (
                                                     <>
-                                                        <Link to={`/tasks/${task._id}/edit`} className="action-btn edit">
+                                                        <Link to={`/tasks/${task._id}?edit=true`} className="action-btn edit">
                                                             <i className="fas fa-edit"></i>
                                                         </Link>
                                                         <button

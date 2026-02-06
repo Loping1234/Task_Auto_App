@@ -64,6 +64,15 @@ function App() {
               </ProtectedRoute>
             }
           />
+          // For viewing task details
+          <Route 
+            path="/tasks/:taskId" 
+            element={
+              <ProtectedRoute>
+                <TaskDetails />
+              </ProtectedRoute>
+            } 
+          />
 
           {/* Protected Routes - Admin & Subadmin Only */}
           <Route

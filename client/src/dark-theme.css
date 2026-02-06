@@ -782,7 +782,7 @@ h6 {
 }
 
 [data-theme="dark"] .column-content {
-    background: var(--bg-color) !important;
+    background: #22201f !important;
 }
 
 [data-theme="dark"] .board-header {

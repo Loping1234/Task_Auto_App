@@ -109,21 +109,25 @@ export const messagesAPI = {
 
 // Notifications API
 export const notificationAPI = {
-    getAll: (params = {}) => {
-        const queryParams = new URLSearchParams();
-        if (params.userId) queryParams.append('userId', params.userId);
-        if (params.type) queryParams.append('type', params.type);
-        const queryString = queryParams.toString();
-        return api.get(`/notifications${queryString ? `?${queryString}` : ''}`);
-    },
+    getAll: (params = {}) => api.get('/notifications', { params }),
     markRead: (id) => api.put(`/notifications/${id}/read`),
     markUnread: (id) => api.put(`/notifications/${id}/unread`),
     markAllRead: () => api.put('/notifications/read-all'),
 };
 
-// Users API (for Watchlist)
+// Users API
 export const usersAPI = {
     getAll: () => api.get('/users/all'),
+};
+
+// Watchlist API
+export const watchlistAPI = {
+    // Get my watchlist settings (who I've granted access to)
+    getMySettings: () => api.get('/watchlist/my-settings'),
+    // Update my watchlist (add/remove watchers with their allowed types)
+    update: (watchers) => api.put('/watchlist/update', { watchers }),
+    // Get list of users who have granted me access to watch their notifications
+    getWhoICanWatch: () => api.get('/watchlist/i-can-watch'),
 };
 
 export default api;

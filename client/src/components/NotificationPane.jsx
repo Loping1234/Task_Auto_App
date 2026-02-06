@@ -1,79 +1,146 @@
 import { useState, useEffect, useRef } from 'react';
-import { notificationAPI, usersAPI } from '../api';
+import { notificationAPI, watchlistAPI, usersAPI } from '../api';
 import './NotificationPane.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
+const notificationTypes = [
+    { value: 'all', label: 'All Types' },
+    { value: 'assignment', label: 'Task Assignments' },
+    { value: 'task_edit', label: 'Task Updates' },
+    { value: 'team_change', label: 'Team Changes' },
+    { value: 'chat', label: 'Chat Messages' },
+    { value: 'status_change', label: 'Status Changes' }
+];
 
 const NotificationPane = () => {
     const { isEmployee, user } = useAuth();
     const [notifications, setNotifications] = useState([]);
     const [isOpen, setIsOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState('unread'); // 'unread', 'read', 'history'
-    const [priorityTab, setPriorityTab] = useState('primary'); // 'primary', 'secondary' - for employee only
+    const [activeTab, setActiveTab] = useState('unread');
+    const [priorityTab, setPriorityTab] = useState('primary');
     const dropdownRef = useRef(null);
     const navigate = useNavigate();
 
     // Watchlist state
     const [watchlistOpen, setWatchlistOpen] = useState(false);
     const [allUsers, setAllUsers] = useState([]);
-    const [watchedUser, setWatchedUser] = useState(null); // null = watching self
-    const [typeFilter, setTypeFilter] = useState('all'); // 'all', 'assignment', 'task_edit', 'team_change', 'chat', 'status_change'
+    const [myWatchers, setMyWatchers] = useState([]); // Users I've granted access to
+    const [canWatchUsers, setCanWatchUsers] = useState([]); // Users who granted me access
+    const [watchedUser, setWatchedUser] = useState(null);
+    const [typeFilter, setTypeFilter] = useState('all');
     const watchlistRef = useRef(null);
 
-    const notificationTypes = [
-        { value: 'all', label: 'All Types' },
-        { value: 'assignment', label: 'Task Assignments' },
-        { value: 'task_edit', label: 'Task Updates' },
-        { value: 'team_change', label: 'Team Changes' },
-        { value: 'chat', label: 'Chat Messages' },
-        { value: 'status_change', label: 'Status Changes' }
-    ];
+    // User config popup state
+    const [configUser, setConfigUser] = useState(null);
+    const [configTypes, setConfigTypes] = useState(['all']);
+    const [saving, setSaving] = useState(false);
+
+    // Watched user notifications (displayed inside watchlist panel)
+    const [watchedNotifications, setWatchedNotifications] = useState([]);
+    const [loadingWatched, setLoadingWatched] = useState(false);
+
+    // Pagination state
+    const [page, setPage] = useState(1);
+    const [hasMore, setHasMore] = useState(true);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-        // Reset priority tab to 'primary' when switching main tabs
         if (tab !== 'history') {
             setPriorityTab('primary');
         }
     };
 
-    const fetchNotifications = async () => {
+    const fetchNotifications = async (pageNum = 1, isLoadMore = false) => {
+        if (loading) return; // Prevent multiple calls
+
         try {
-            if (notifications.length === 0) setLoading(true);
-            const params = {};
-            if (watchedUser) params.userId = watchedUser._id;
+            setLoading(true);
+            const params = { page: pageNum, limit: 10 };
+            if (watchedUser) params.userId = watchedUser.ownerId;
             if (typeFilter !== 'all') params.type = typeFilter;
 
             const { data } = await notificationAPI.getAll(params);
-            setNotifications(data.notifications || []);
+
+            if (isLoadMore) {
+                setNotifications(prev => {
+                    // Filter out duplicates based on _id
+                    const newNotifs = data.notifications.filter(
+                        newN => !prev.some(existingN => existingN._id === newN._id)
+                    );
+                    return [...prev, ...newNotifs];
+                });
+            } else {
+                setNotifications(data.notifications || []);
+            }
+
+            setHasMore(data.hasMore);
+            if (pageNum === 1) setPage(1);
+            else setPage(pageNum);
+
         } catch (error) {
             console.error("Failed to fetch notifications", error);
+            if (error.response?.status === 403) {
+                setWatchedUser(null);
+            }
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchUsers = async () => {
+    const fetchAllData = async () => {
         try {
-            const { data } = await usersAPI.getAll();
-            setAllUsers(data.users || []);
+            const [usersRes, settingsRes, canWatchRes] = await Promise.all([
+                usersAPI.getAll(),
+                watchlistAPI.getMySettings(),
+                watchlistAPI.getWhoICanWatch()
+            ]);
+            console.log("[DEBUG] All users:", usersRes.data.users?.length);
+            console.log("[DEBUG] My watchers:", settingsRes.data.watchers);
+            console.log("[DEBUG] Can watch users:", canWatchRes.data.canWatch);
+            setAllUsers(usersRes.data.users || []);
+            setMyWatchers(settingsRes.data.watchers || []);
+            setCanWatchUsers(canWatchRes.data.canWatch || []);
         } catch (error) {
-            console.error("Failed to fetch users", error);
+            console.error("Failed to fetch data", error);
         }
     };
 
     useEffect(() => {
-        fetchNotifications();
-        fetchUsers();
-        const interval = setInterval(fetchNotifications, 30000);
+        fetchNotifications(1);
+        fetchAllData();
+        const interval = setInterval(() => {
+            // Only poll page 1 if we haven't loaded more pages to avoid overwriting scroll state
+            if (page === 1) fetchNotifications(1);
+        }, 30000);
         return () => clearInterval(interval);
     }, []);
 
-    // Refetch when watched user or type filter changes
     useEffect(() => {
-        fetchNotifications();
+        setNotifications([]); // Clear old notifications immediately when context changes
+        setPage(1);
+        setHasMore(true);
+        fetchNotifications(1);
     }, [watchedUser, typeFilter]);
+
+    // [MANUAL PAGINATION] Handler to load next batch
+    const handleLoadMore = () => {
+        if (hasMore && !loading) {
+            fetchNotifications(page + 1, true);
+        }
+    };
+
+    // [MANUAL PAGINATION] Handler to remove last batch
+    const handleShowLess = () => {
+        if (page > 1) {
+            // Revert to previous page count (e.g. 18 -> 10, 30 -> 20)
+            const targetCount = (page - 1) * 10;
+            setNotifications(prev => prev.slice(0, targetCount));
+            setPage(prev => prev - 1);
+            setHasMore(true);
+        }
+    };
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -82,6 +149,7 @@ const NotificationPane = () => {
             }
             if (watchlistRef.current && !watchlistRef.current.contains(event.target)) {
                 setWatchlistOpen(false);
+                setConfigUser(null);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -90,7 +158,6 @@ const NotificationPane = () => {
 
     const handleMarkAllRead = async (e) => {
         e.stopPropagation();
-        // Only allow marking all read for own notifications
         if (watchedUser) return;
         try {
             await notificationAPI.markAllRead();
@@ -106,7 +173,6 @@ const NotificationPane = () => {
 
     const toggleReadStatus = async (n, e) => {
         e.stopPropagation();
-        // Only allow toggling for own notifications
         if (watchedUser) return;
         try {
             const newStatus = !n.isRead;
@@ -115,7 +181,6 @@ const NotificationPane = () => {
             } else {
                 await notificationAPI.markUnread(n._id);
             }
-
             setNotifications(prev => prev.map(item =>
                 item._id === n._id ? {
                     ...item,
@@ -146,161 +211,289 @@ const NotificationPane = () => {
         return iconMap[category] || 'fa-info-circle';
     };
 
-    const handleSelectUser = (selectedUser) => {
-        if (selectedUser._id === user?.id) {
-            setWatchedUser(null); // Watching self
+    // Check if a user is in my watchlist
+    const isUserInMyWatchlist = (userId) => {
+        return myWatchers.some(w => w.userId === userId || w.userId?.toString() === userId);
+    };
+
+    // Get watcher config for a user
+    const getWatcherConfig = (userId) => {
+        return myWatchers.find(w => w.userId === userId || w.userId?.toString() === userId);
+    };
+
+    // When user clicks on a member to configure
+    const handleUserClick = (clickedUser) => {
+        const existing = getWatcherConfig(clickedUser._id);
+        setConfigUser(clickedUser);
+        setConfigTypes(existing?.allowedTypes || ['all']);
+    };
+
+    // Toggle type in config
+    const handleTypeToggle = (type) => {
+        let newTypes = [...configTypes];
+
+        if (type === 'all') {
+            newTypes = newTypes.includes('all') ? [] : ['all'];
         } else {
-            setWatchedUser(selectedUser);
+            newTypes = newTypes.filter(t => t !== 'all');
+            if (newTypes.includes(type)) {
+                newTypes = newTypes.filter(t => t !== type);
+            } else {
+                newTypes.push(type);
+            }
+            if (newTypes.length === 5) {
+                newTypes = ['all'];
+            }
         }
-        setWatchlistOpen(false);
+
+        if (newTypes.length === 0) {
+            newTypes = ['all'];
+        }
+
+        setConfigTypes(newTypes);
+    };
+
+    // Save watcher config
+    const handleSaveWatcher = async () => {
+        if (!configUser) return;
+        setSaving(true);
+        try {
+            const newWatchers = myWatchers.filter(w =>
+                w.userId !== configUser._id && w.userId?.toString() !== configUser._id
+            );
+            newWatchers.push({
+                userId: configUser._id,
+                allowedTypes: configTypes
+            });
+
+            await watchlistAPI.update(newWatchers);
+            await fetchAllData();
+            setConfigUser(null);
+        } catch (err) {
+            console.error("Failed to save watcher", err);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Remove from watchlist
+    const handleRemoveWatcher = async () => {
+        if (!configUser) return;
+        setSaving(true);
+        try {
+            const newWatchers = myWatchers.filter(w =>
+                w.userId !== configUser._id && w.userId?.toString() !== configUser._id
+            );
+            await watchlistAPI.update(newWatchers);
+            await fetchAllData();
+            setConfigUser(null);
+        } catch (err) {
+            console.error("Failed to remove watcher", err);
+        } finally {
+            setSaving(false);
+        }
     };
 
     const handleClearWatchlist = () => {
         setWatchedUser(null);
+        setWatchedNotifications([]);
         setTypeFilter('all');
-        setWatchlistOpen(false);
     };
+
+    const handleSelectWatchedUser = async (selectedUser) => {
+        setWatchedUser(selectedUser);
+        setLoadingWatched(true);
+        try {
+            const { data } = await notificationAPI.getAll({ userId: selectedUser.ownerId });
+            setWatchedNotifications(data.notifications || []);
+        } catch (error) {
+            console.error("Failed to fetch watched user notifications", error);
+            setWatchedNotifications([]);
+        } finally {
+            setLoadingWatched(false);
+        }
+    };
+
+    const getWatchedUserAllowedTypes = () => {
+        if (!watchedUser) return notificationTypes;
+        const hasAll = watchedUser.allowedTypes?.includes('all');
+        if (hasAll) return notificationTypes;
+        return notificationTypes.filter(t =>
+            t.value === 'all' || watchedUser.allowedTypes?.includes(t.value)
+        );
+    };
+
+    const renderNotificationItem = (n) => {
+        const isUnread = activeTab === 'unread' || (!n.isRead && activeTab === 'history');
+        const formattedDate = new Date(n.createdAt).toLocaleDateString();
+        const formattedTime = new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        return (
+            <div
+                key={n._id}
+                className={`notification-item ${isUnread ? 'unread' : ''}`}
+                onClick={() => handleContentClick(n)}
+            >
+                <div className="notif-icon-wrapper">
+                    <i className={`fas ${getCategoryIcon(n.type)}`}></i>
+                </div>
+                <div className="notif-content">
+                    <p className="notif-message">{n.message}</p>
+                    <span className="notif-time">{formattedDate} • {formattedTime}</span>
+                </div>
+                {!watchedUser && (activeTab === 'unread' || activeTab === 'read') && (
+                    <button
+                        className="mark-action-btn"
+                        onClick={(e) => toggleReadStatus(n, e)}
+                        title={n.isRead ? "Mark as unread" : "Mark as read"}
+                    >
+                        <i className={`fas ${n.isRead ? 'fa-envelope' : 'fa-check'}`}></i>
+                    </button>
+                )}
+            </div>
+        );
+    };
+
+    const filteredNotifications = notifications.filter(n => {
+        if (watchedUser) return true; // Show all for watched users
+        if (activeTab === 'history') return true;
+
+        // Filter by read/unread
+        const matchesReadStatus = activeTab === 'read' ? n.isRead : !n.isRead;
+        if (!matchesReadStatus) return false;
+
+        // Filter by priority
+        if (isEmployee) {
+            return priorityTab === 'primary' ? n.priority === 'primary' : n.priority === 'secondary';
+        }
+
+        return true;
+    });
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
 
-    const getFilteredNotifications = () => {
-        let filtered;
-        switch (activeTab) {
-            case 'unread':
-                filtered = notifications.filter(n => !n.isRead);
-                break;
-            case 'read':
-                filtered = notifications.filter(n => n.isRead);
-                break;
-            case 'history':
-                filtered = notifications;
-                break;
-            default:
-                filtered = [];
-        }
-
-        // Further filter by priority for employees when not in history tab (only for own notifications)
-        if (isEmployee && activeTab !== 'history' && !watchedUser) {
-            if (priorityTab === 'primary') {
-                filtered = filtered.filter(n => n.priority === 'primary' || !n.priority);
-            } else if (priorityTab === 'secondary') {
-                filtered = filtered.filter(n => n.priority === 'secondary');
-            }
-        }
-
-        return filtered;
-    };
-
-    const groupByPriority = (notifs) => {
-        const primary = notifs.filter(n => n.priority === 'primary' || !n.priority);
-        const secondary = notifs.filter(n => n.priority === 'secondary');
-        return { primary, secondary };
-    };
-
-    const filteredNotifications = getFilteredNotifications();
-    const { primary, secondary } = activeTab !== 'history'
-        ? groupByPriority(filteredNotifications)
-        : { primary: [], secondary: [] };
-
-    const renderNotificationItem = (n) => (
-        <div
-            key={n._id}
-            className={`notification-item ${!n.isRead ? 'unread' : ''} ${n.priority === 'secondary' ? 'secondary' : ''}`}
-        >
-            <div className="notification-icon">
-                <i className={`fas ${getCategoryIcon(n.category)}`}></i>
-            </div>
-            <div className="notification-content">
-                <p onClick={() => handleContentClick(n)}>{n.message}</p>
-                <span className="notification-time">
-                    {new Date(n.createdAt).toLocaleString()}
-                </span>
-                {activeTab === 'history' && n.isRead && n.readAt && (
-                    <span className="history-meta">
-                        Seen: {new Date(n.readAt).toLocaleString()}
-                    </span>
-                )}
-            </div>
-            {!watchedUser && (
-                <div className="notification-actions">
-                    <button
-                        className="icon-btn"
-                        title={n.isRead ? "Mark as Unread" : "Mark as Read"}
-                        onClick={(e) => toggleReadStatus(n, e)}
-                    >
-                        <i className={`fas ${n.isRead ? 'fa-envelope-open' : 'fa-envelope'}`}></i>
-                    </button>
-                </div>
-            )}
-        </div>
-    );
+    const allowedTypes = getWatchedUserAllowedTypes();
 
     return (
-        <div className="notification-area">
-            {/* Watchlist Button */}
-            <div className="watchlist-wrapper" ref={watchlistRef}>
-                <button
-                    className={`watchlist-btn ${watchedUser ? 'active' : ''}`}
-                    onClick={() => setWatchlistOpen(!watchlistOpen)}
-                    title="Watch another user's notifications"
-                >
-                    <i className="fas fa-eye"></i>
-                    {watchedUser && <span className="watchlist-indicator"></span>}
-                </button>
+        <div className="notification-container">
+            {/* Watchlist Wrapper */}
+            <div className="watchlist-wrapper">
+                {/* Watchlist Toggle Button */}
+                {!watchedUser && (
+                    <button
+                        className={`watchlist-toggle-btn ${watchlistOpen ? 'active' : ''}`}
+                        onClick={() => setWatchlistOpen(!watchlistOpen)}
+                        title="Manage Watchlist"
+                    >
+                        <i className="fas fa-eye"></i>
+                    </button>
+                )}
 
+                {/* Watchlist Dropdown */}
                 {watchlistOpen && (
-                    <div className="watchlist-dropdown">
-                        <div className="watchlist-header">
-                            <h4>Watchlist</h4>
-                            {watchedUser && (
-                                <button className="clear-watchlist-btn" onClick={handleClearWatchlist}>
-                                    Clear
-                                </button>
-                            )}
-                        </div>
+                    <div className="watchlist-dropdown" ref={watchlistRef}>
+                        {configUser ? (
+                            <div className="watchlist-config">
+                                <div className="config-header">
+                                    <button className="back-btn" onClick={() => setConfigUser(null)}>
+                                        <i className="fas fa-arrow-left"></i>
+                                    </button>
+                                    <span>Configure Access</span>
+                                </div>
 
-                        {/* Type Filter */}
-                        <div className="watchlist-filter">
-                            <label>Filter by Type:</label>
-                            <select
-                                value={typeFilter}
-                                onChange={(e) => setTypeFilter(e.target.value)}
-                            >
-                                {notificationTypes.map(t => (
-                                    <option key={t.value} value={t.value}>{t.label}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        {/* User List */}
-                        <div className="watchlist-users">
-                            <div
-                                className={`watchlist-user-item ${!watchedUser ? 'active' : ''}`}
-                                onClick={handleClearWatchlist}
-                            >
-                                <span className="user-avatar">Me</span>
-                                <span className="user-name">My Notifications</span>
-                            </div>
-                            {allUsers
-                                .filter(u => u._id !== user?.id)
-                                .map(u => (
-                                    <div
-                                        key={u._id}
-                                        className={`watchlist-user-item ${watchedUser?._id === u._id ? 'active' : ''}`}
-                                        onClick={() => handleSelectUser(u)}
-                                    >
-                                        <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
-                                        <div className="user-info">
-                                            <span className="user-name">{u.name || u.email.split('@')[0]}</span>
-                                            <span className="user-role">{u.role}</span>
-                                        </div>
+                                <div className="config-user-info">
+                                    <span className="user-avatar large">{configUser.name?.[0]?.toUpperCase()}</span>
+                                    <div className="user-details">
+                                        <span className="name">{configUser.name || configUser.email}</span>
+                                        <span className="email">{configUser.email}</span>
                                     </div>
-                                ))}
-                        </div>
+                                </div>
+
+                                <div className="config-types">
+                                    <h5>Allowed Notification Types:</h5>
+                                    {notificationTypes.map(type => (
+                                        <label key={type.value} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={configTypes.includes(type.value)}
+                                                onChange={() => handleTypeToggle(type.value)}
+                                            />
+                                            {type.label}
+                                        </label>
+                                    ))}
+                                </div>
+
+                                <div className="config-actions">
+                                    <button className="btn-save" onClick={handleSaveWatcher} disabled={saving}>
+                                        {saving ? 'Saving...' : 'Save Access'}
+                                    </button>
+                                    <button className="btn-remove" onClick={handleRemoveWatcher} disabled={saving}>
+                                        Remove Access
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="watchlist-header">
+                                    <h4>Watchlist</h4>
+                                </div>
+
+                                {/* Section: View Others' Notifications */}
+                                {canWatchUsers.length > 0 && (
+                                    <div className="watchlist-section">
+                                        <div className="section-header">
+                                            <i className="fas fa-eye"></i> You Can View
+                                        </div>
+                                        {canWatchUsers.map(u => (
+                                            <div
+                                                key={u.ownerId}
+                                                className="watchlist-user-item"
+                                                onClick={() => handleSelectWatchedUser(u)}
+                                            >
+                                                <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
+                                                <div className="user-info">
+                                                    <span className="user-name">{u.name || u.email}</span>
+                                                    <span className="user-role">{u.role}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                {/* Section: Grant Access to Others */}
+                                <div className="watchlist-section">
+                                    <div className="section-header">
+                                        <i className="fas fa-user-plus"></i> Grant Access (click to configure)
+                                    </div>
+                                    <div className="watchlist-users">
+                                        {allUsers
+                                            .filter(u => u._id !== user?.id)
+                                            .map(u => (
+                                                <div
+                                                    key={u._id}
+                                                    className={`watchlist-user-item ${isUserInMyWatchlist(u._id) ? 'granted' : ''}`}
+                                                    onClick={() => handleUserClick(u)}
+                                                >
+                                                    <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
+                                                    <div className="user-info">
+                                                        <span className="user-name">{u.name || u.email}</span>
+                                                        <span className="user-role">{u.role}</span>
+                                                        {isUserInMyWatchlist(u._id) && (
+                                                            <span className="access-badge">
+                                                                <i className="fas fa-check"></i> Access Granted
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <i className="fas fa-chevron-right config-arrow"></i>
+                                                </div>
+                                            ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                     </div>
                 )}
             </div>
-
             {/* Notification Button */}
             <div className="notification-wrapper" ref={dropdownRef}>
                 <button
@@ -318,7 +511,6 @@ const NotificationPane = () => {
 
                 {isOpen && (
                     <div className="notification-dropdown">
-                        {/* Watching banner */}
                         {watchedUser && (
                             <div className="watching-banner">
                                 <i className="fas fa-eye"></i>
@@ -347,7 +539,6 @@ const NotificationPane = () => {
                             </button>
                         </div>
 
-                        {/* Priority Sub-Tabs - Employee Only in Unread/Read, only for own notifications */}
                         {isEmployee && activeTab !== 'history' && !watchedUser && (
                             <div className="notification-tabs priority-tabs">
                                 <button
@@ -371,12 +562,53 @@ const NotificationPane = () => {
                             </button>
                         )}
 
-
-                        <div className="notification-list">
-                            {loading && notifications.length === 0 ? (
+                        <div
+                            className="notification-list"
+                        >
+                            {loading && page === 1 && notifications.length === 0 ? (
                                 <div className="notification-empty">Loading...</div>
                             ) : filteredNotifications.length > 0 ? (
-                                filteredNotifications.map(renderNotificationItem)
+                                <>
+                                    {filteredNotifications.map(renderNotificationItem)}
+
+                                    {/* Manual Pagination Controls */}
+                                    <div style={{ display: 'flex', gap: '10px', padding: '10px', justifyContent: 'center' }}>
+                                        {page > 1 && (
+                                            <button
+                                                onClick={handleShowLess}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #e5e7eb',
+                                                    background: 'var(--bg-color, #fff)',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.8rem',
+                                                    color: 'var(--text-primary, #374151)'
+                                                }}
+                                            >
+                                                ⬆️ Show Less
+                                            </button>
+                                        )}
+
+                                        {hasMore && (
+                                            <button
+                                                onClick={handleLoadMore}
+                                                disabled={loading}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: 'var(--primary-color, #4f46e5)',
+                                                    color: 'white',
+                                                    cursor: loading ? 'wait' : 'pointer',
+                                                    fontSize: '0.8rem'
+                                                }}
+                                            >
+                                                {loading ? 'Loading...' : '⬇️ Load 10 More'}
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
                             ) : (
                                 <div className="notification-empty">
                                     <i className="far fa-bell-slash"></i>
@@ -387,8 +619,8 @@ const NotificationPane = () => {
                     </div>
                 )}
             </div>
-        </div>
-    );
-};
+        </div >
+    )
+}
 
 export default NotificationPane;

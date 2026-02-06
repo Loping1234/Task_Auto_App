@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { tasksAPI, employeesAPI } from '../../api';
 import Navbar from '../../components/Navbar';
@@ -8,6 +8,7 @@ import '../styles/TaskDetails.css';
 const TaskDetails = () => {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user, isAdmin, isSubadmin, isEmployee } = useAuth();
 
     const [task, setTask] = useState(null);
@@ -15,7 +16,8 @@ const TaskDetails = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [activeTab, setActiveTab] = useState('activity');
-    const [isEditing, setIsEditing] = useState(false);
+    // Start in edit mode if ?edit=true is in URL
+    const [isEditing, setIsEditing] = useState(searchParams.get('edit') === 'true');
     const [saving, setSaving] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [commentImage, setCommentImage] = useState(null);
@@ -193,7 +195,7 @@ const TaskDetails = () => {
                     <div className="task-header-left">
                         <Link to="/tasks" className="back-link">
                             <i className="fas fa-arrow-left"></i> Back to Tasks
-                        </Link>
+                        </Link> <br />
                         {isEditing ? (
                             <input
                                 type="text"
@@ -203,7 +205,7 @@ const TaskDetails = () => {
                             />
                         ) : (
                             <h1>{task.title}</h1>
-                        )}
+                        )}<br />
                         <span className="task-id">ID: {task._id}</span>
                     </div>
                     <div className="task-header-actions">
@@ -415,7 +417,7 @@ const TaskDetails = () => {
 
                         {activeTab === 'comments' && (
                             <div className="comments-section">
-                                {(isEmployee && isAssignee) && (
+                                {(isAdmin || isSubadmin || (isEmployee && isAssignee)) && (
                                     <form className="comment-form" onSubmit={handleAddComment}>
                                         <h4>Add a Comment</h4>
                                         <textarea

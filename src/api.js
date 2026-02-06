@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
+const mongoose = require("mongoose");
 const collection = require("./config");
 const Task = require("../models/task");
 const Team = require("../models/team");
@@ -8,6 +9,7 @@ const Employee = require("../models/employee");
 const TeamMessage = require("../models/teamMessage");
 const AdminSubadminMessage = require("../models/adminSubadminMessage");
 const Notification = require("../models/notification");
+const Watchlist = require("../models/watchlist");
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
@@ -1099,10 +1101,10 @@ app.post("/api/chat/admin", verifyToken, isAdminOrSubadmin, async (req, res) => 
 
 
 // ==========================================
-// USERS ROUTES (for Watchlist)
+// WATCHLIST ROUTES
 // ==========================================
 
-// Get all users (for watchlist feature)
+// Get all users (for adding watchers to your watchlist)
 app.get("/api/users/all", verifyToken, async (req, res) => {
     try {
         const users = await collection.find({}, { password: 0 });
@@ -1127,6 +1129,100 @@ app.get("/api/users/all", verifyToken, async (req, res) => {
     }
 });
 
+// Get my watchlist settings (who I've granted access to)
+app.get("/api/watchlist/my-settings", verifyToken, async (req, res) => {
+    try {
+        let watchlist = await Watchlist.findOne({ owner: req.user.id });
+
+        if (!watchlist) {
+            // Create empty watchlist if doesn't exist
+            watchlist = await Watchlist.create({ owner: req.user.id, watchers: [] });
+        }
+
+        // Populate watcher details
+        const watcherDetails = await Promise.all(
+            watchlist.watchers.map(async (w) => {
+                const user = await collection.findById(w.user);
+                const empModel = user ? await Employee.findOne({ email: user.email }) : null;
+                return {
+                    userId: w.user,
+                    email: user?.email || 'Unknown',
+                    name: empModel?.name || user?.email?.split("@")[0] || 'Unknown',
+                    role: user?.role || 'Unknown',
+                    allowedTypes: w.allowedTypes,
+                    addedAt: w.addedAt
+                };
+            })
+        );
+
+        res.json({ watchers: watcherDetails });
+    } catch (err) {
+        console.error("Get watchlist settings error", err);
+        res.status(500).json({ message: "Error loading watchlist settings" });
+    }
+});
+
+// Update my watchlist (add/remove watchers)
+app.put("/api/watchlist/update", verifyToken, async (req, res) => {
+    try {
+        const { watchers } = req.body; // Array of { userId, allowedTypes }
+
+        let watchlist = await Watchlist.findOne({ owner: req.user.id });
+
+        if (!watchlist) {
+            watchlist = new Watchlist({ owner: req.user.id, watchers: [] });
+        }
+
+        // Validate and format watchers
+        watchlist.watchers = watchers.map(w => ({
+            user: w.userId,
+            allowedTypes: w.allowedTypes || ['all'],
+            addedAt: w.addedAt || new Date()
+        }));
+
+        await watchlist.save();
+
+        res.json({ success: true, message: "Watchlist updated successfully" });
+    } catch (err) {
+        console.error("Update watchlist error", err);
+        res.status(500).json({ message: "Error updating watchlist" });
+    }
+});
+
+// Get list of users who have granted me access to watch their notifications
+app.get("/api/watchlist/i-can-watch", verifyToken, async (req, res) => {
+    try {
+        // Find all watchlists where current user is a watcher
+        // Convert to ObjectId for proper MongoDB matching
+        const userObjId = new mongoose.Types.ObjectId(req.user.id);
+        const watchlists = await Watchlist.find({ "watchers.user": userObjId });
+
+        console.log("[i-can-watch] User:", req.user.id, "Found watchlists:", watchlists.length);
+
+        const canWatch = await Promise.all(
+            watchlists.map(async (wl) => {
+                const owner = await collection.findById(wl.owner);
+                const empModel = owner ? await Employee.findOne({ email: owner.email }) : null;
+                const myAccess = wl.watchers.find(w => w.user?.toString() === req.user.id);
+
+                return {
+                    ownerId: wl.owner,
+                    email: owner?.email || 'Unknown',
+                    name: empModel?.name || owner?.email?.split("@")[0] || 'Unknown',
+                    role: owner?.role || 'Unknown',
+                    allowedTypes: myAccess?.allowedTypes || []
+                };
+            })
+        );
+
+        res.json({ canWatch });
+    } catch (err) {
+        console.error("Get i-can-watch error", err);
+        res.status(500).json({ message: "Error loading watchable users" });
+    }
+});
+
+
 // ==========================================
 // NOTIFICATIONS ROUTES
 // ==========================================
@@ -1134,21 +1230,80 @@ app.get("/api/users/all", verifyToken, async (req, res) => {
 // Get user notifications (supports watchlist via userId query param)
 app.get("/api/notifications", verifyToken, async (req, res) => {
     try {
-        // Support watchlist: use userId query param if provided, else use current user
         const targetUserId = req.query.userId || req.user.id;
-        const typeFilter = req.query.type; // Optional: filter by notification type
+        const typeFilter = req.query.type;
 
+        // If requesting another user's notifications, check permission
+        if (targetUserId !== req.user.id) {
+            const ownerWatchlist = await Watchlist.findOne({ owner: targetUserId });
+
+            if (!ownerWatchlist) {
+                console.log("No watchlist found for owner:", targetUserId);
+                return res.status(403).json({ message: "You don't have permission to view this user's notifications" });
+            }
+
+            // Find current user in the watchers array
+            const myAccess = ownerWatchlist.watchers.find(w => {
+                const watcherUserId = w.user?.toString() || w.userId?.toString();
+                return watcherUserId === req.user.id || watcherUserId === req.user.id?.toString();
+            });
+
+            if (!myAccess) {
+                console.log("User not in watchers:", req.user.id, "Watchers:", ownerWatchlist.watchers);
+                return res.status(403).json({ message: "You don't have permission to view this user's notifications" });
+            }
+
+            // Build query based on allowed types
+            let query = { recipient: targetUserId };
+
+            const hasAllAccess = myAccess.allowedTypes && myAccess.allowedTypes.includes('all');
+
+            if (!hasAllAccess && myAccess.allowedTypes && myAccess.allowedTypes.length > 0) {
+                // Filter by allowed types only
+                if (typeFilter && typeFilter !== 'all') {
+                    // If type filter specified, check if it's in allowed types
+                    if (!myAccess.allowedTypes.includes(typeFilter)) {
+                        return res.json({ notifications: [] }); // Not allowed to see this type
+                    }
+                    query.type = typeFilter;
+                } else {
+                    // Show only allowed types
+                    query.type = { $in: myAccess.allowedTypes };
+                }
+            } else if (typeFilter && typeFilter !== 'all') {
+                query.type = typeFilter;
+            }
+
+            const notifications = await Notification.find(query)
+                .sort({ createdAt: -1 })
+                .limit(50);
+            return res.json({ notifications });
+        }
+
+
+        // Viewing own notifications - no permission check needed
         let query = { recipient: targetUserId };
 
-        // Add type filter if specified (e.g., 'assignment', 'task_edit', 'team_change', 'chat')
         if (typeFilter && typeFilter !== 'all') {
             query.type = typeFilter;
         }
 
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        const total = await Notification.countDocuments(query);
         const notifications = await Notification.find(query)
             .sort({ createdAt: -1 })
-            .limit(50);
-        res.json({ notifications });
+            .skip(skip)
+            .limit(limit);
+
+        res.json({
+            notifications,
+            hasMore: total > skip + notifications.length,
+            total,
+            page
+        });
     } catch (err) {
         console.error("Get notifications error", err);
         res.status(500).json({ message: "Error loading notifications" });
@@ -1198,10 +1353,130 @@ app.put("/api/notifications/read-all", verifyToken, async (req, res) => {
     }
 });
 
+// ==========================================
+// USERS API
+// ==========================================
+
+// Get all users (for watchlist)
+app.get("/api/users/all", verifyToken, async (req, res) => {
+    try {
+        const users = await collection.find({}, { password: 0 }).lean();
+        res.json({
+            users: users.map(u => ({
+                _id: u._id,
+                email: u.email,
+                name: u.name || u.email.split('@')[0],
+                role: u.role
+            }))
+        });
+    } catch (err) {
+        console.error("Get all users error", err);
+        res.status(500).json({ message: "Error loading users" });
+    }
+});
+
+// ==========================================
+// WATCHLIST API
+// ==========================================
+
+// Get my watchlist settings (who I've granted access to)
+app.get("/api/watchlist/my-settings", verifyToken, async (req, res) => {
+    try {
+        const { id } = req.user;
+        let watchlist = await Watchlist.findOne({ owner: id });
+
+        if (!watchlist) {
+            watchlist = { owner: id, watchers: [] };
+        }
+
+        // Populate watcher details
+        const watchersWithDetails = await Promise.all(
+            (watchlist.watchers || []).map(async (w) => {
+                const user = await collection.findById(w.user || w.userId).lean();
+                return {
+                    userId: w.user || w.userId,
+                    email: user?.email,
+                    name: user?.name || user?.email?.split('@')[0],
+                    role: user?.role,
+                    allowedTypes: w.allowedTypes || ['all']
+                };
+            })
+        );
+
+        res.json({ watchers: watchersWithDetails });
+    } catch (err) {
+        console.error("Get watchlist settings error", err);
+        res.status(500).json({ message: "Error loading watchlist" });
+    }
+});
+
+// Update my watchlist (add/remove watchers)
+app.put("/api/watchlist/update", verifyToken, async (req, res) => {
+    try {
+        const { id } = req.user;
+        const { watchers } = req.body;
+
+        // Transform watchers to proper format
+        const watcherData = (watchers || []).map(w => ({
+            user: w.userId,
+            allowedTypes: w.allowedTypes || ['all'],
+            addedAt: new Date()
+        }));
+
+        await Watchlist.findOneAndUpdate(
+            { owner: id },
+            {
+                owner: id,
+                watchers: watcherData,
+                updatedAt: new Date()
+            },
+            { upsert: true, new: true }
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error("Update watchlist error", err);
+        res.status(500).json({ message: "Error updating watchlist" });
+    }
+});
+
+// Get list of users who have granted me access to watch their notifications
+app.get("/api/watchlist/i-can-watch", verifyToken, async (req, res) => {
+    try {
+        const { id } = req.user;
+
+        // Find all watchlists where current user is in the watchers array
+        const watchlists = await Watchlist.find({
+            'watchers.user': id
+        }).lean();
+
+        // Get owner details and allowed types for each
+        const canWatch = await Promise.all(
+            watchlists.map(async (wl) => {
+                const owner = await collection.findById(wl.owner).lean();
+                const myEntry = wl.watchers.find(w => w.user?.toString() === id);
+                return {
+                    ownerId: wl.owner,
+                    email: owner?.email,
+                    name: owner?.name || owner?.email?.split('@')[0],
+                    role: owner?.role,
+                    allowedTypes: myEntry?.allowedTypes || ['all']
+                };
+            })
+        );
+
+        res.json({ canWatch });
+    } catch (err) {
+        console.error("Get i-can-watch error", err);
+        res.status(500).json({ message: "Error loading watchable users" });
+    }
+});
+
 
 // ==========================================
 // SERVE REACT APP (Production)
 // ==========================================
+
 
 // Serve static files from React build
 const clientBuildPath = path.join(__dirname, '../client/dist');
