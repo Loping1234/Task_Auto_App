@@ -1,19 +1,17 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
+import { useParams, useNavigate } from 'react-router-dom';
 import '../styles/Auth.css';
 
-const Login = () => {
-    const [email, setEmail] = useState('');
+const ResetPassword = () => {
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [message, setMessage] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    const { login } = useAuth();
+    const { token } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
-
-    const from = location.state?.from?.pathname || '/dashboard';
 
     // Theme toggle logic
     const [darkMode, setDarkMode] = useState(() => {
@@ -23,34 +21,37 @@ const Login = () => {
     const toggleDarkMode = () => {
         const newMode = !darkMode;
         setDarkMode(newMode);
-        if (newMode) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        }
+        document.documentElement.setAttribute('data-theme', newMode ? 'dark' : 'light');
+        localStorage.setItem('theme', newMode ? 'dark' : 'light');
     };
 
-    // Apply theme on mount
     useEffect(() => {
-        if (darkMode) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-        }
+        document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     }, [darkMode]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setMessage('');
+
+        if (password !== confirmPassword) {
+            setError("Passwords don't match");
+            return;
+        }
+
         setLoading(true);
 
         try {
-            await login(email, password);
-            navigate(from, { replace: true });
+            const res = await axios.post('http://localhost:5000/api/auth/reset-password', {
+                token,
+                password
+            });
+            setMessage(res.data.message);
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed. Please try again.');
+            setError(err.response?.data?.message || 'Failed to reset password.');
         } finally {
             setLoading(false);
         }
@@ -69,31 +70,17 @@ const Login = () => {
 
             <div className="auth-card">
                 <div className="auth-header">
-                    <span className="auth-logo">📋</span>
-                    <h1>Welcome Back</h1>
-                    <p>Sign in to continue to TaskFlow</p>
+                    <span className="auth-logo">🔐</span>
+                    <h1>Reset Password</h1>
+                    <p>Enter your new password below</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="auth-form">
                     {error && <div className="error-message">{error}</div>}
+                    {message && <div className="success-message" style={{ color: 'green', padding: '10px', background: '#e8f5e9', borderRadius: '5px', marginBottom: '15px' }}>{message}</div>}
 
                     <div className="form-group">
-                        <label htmlFor="email">Email Address</label>
-                        <div className="input-wrapper">
-                            <i className="fas fa-envelope"></i>
-                            <input
-                                type="email"
-                                id="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="you@example.com"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-group">
-                        <label htmlFor="password">Password</label>
+                        <label htmlFor="password">New Password</label>
                         <div className="input-wrapper">
                             <i className="fas fa-lock"></i>
                             <input
@@ -101,7 +88,22 @@ const Login = () => {
                                 id="password"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                placeholder="Enter your password"
+                                placeholder="New Password"
+                                required
+                            />
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="confirmPassword">Confirm Password</label>
+                        <div className="input-wrapper">
+                            <i className="fas fa-lock"></i>
+                            <input
+                                type="password"
+                                id="confirmPassword"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm Password"
                                 required
                             />
                         </div>
@@ -111,25 +113,16 @@ const Login = () => {
                         {loading ? (
                             <>
                                 <span className="spinner-small"></span>
-                                Signing in...
+                                Resetting...
                             </>
                         ) : (
-                            <>
-                                <i className="fas fa-sign-in-alt"></i>
-                                Sign In
-                            </>
-                        )
-                        }
+                            'Reset Password'
+                        )}
                     </button>
                 </form>
-
-                <div className="auth-footer">
-                    <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
-                    <p>Forgot your password? <Link to="/forget-password">Reset Password</Link></p>
-                </div>
             </div>
         </div>
     );
 };
 
-export default Login;
+export default ResetPassword;

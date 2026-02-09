@@ -49,6 +49,27 @@
     border-radius: var(--radius-lg);
 }
 
+.card-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-assigned-by,
+.card-team {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.card-assigned-by i,
+.card-team i {
+    font-size: 0.65rem;
+}
+
 .board-card {
     background: white;
     border-radius: var(--radius-md);

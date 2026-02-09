@@ -8,7 +8,7 @@ import SpotlightCard from '../../components/Rbits/Spotlight';
 import ClickSpark from '../../components/Rbits/ClickSpark';
 import FadeContent from '../../components/Rbits/Fade';
 import NotificationPane from '../../components/NotificationPane';
-
+import Profile from './Profile';
 const Dashboard = () => {
     const { user, isAdmin, isSubadmin, isEmployee } = useAuth();
     const [stats, setStats] = useState(null);
@@ -81,15 +81,26 @@ const Dashboard = () => {
                 <main className="dashboard-main">
                     <div className="dashboard-header">
                         <div className="welcome-section">
-                            <h1>Welcome back, <span className="user-name">{user.email}</span>!</h1>
+                            <h1>Welcome back, <span className="user-name">{user.fullName}</span>!</h1>
                             <p className="welcome-subtitle">Here's an overview of your workspace</p>
                         </div>
                         <div className="header-actions">
                             {(isAdmin || isSubadmin || isEmployee) && <NotificationPane />}
+                            <Link to="/profile" className="profile-icon-btn" title="Profile">
+                                {user?.profilePicture ? (
+                                    <img
+                                        src={`http://localhost:5000/imgs/${user.profilePicture}`}
+                                        alt="Profile"
+                                        className="profile-avatar-img"
+                                        style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <span className="profile-avatar">{user.email?.[0]?.toUpperCase()}</span>
+                                )}
+                            </Link>
                             <Link to="/assign" className="btn btn-primary">
                                 <i className="fas fa-plus"></i>
-                                
-                                 Task
+                                Task
                             </Link>
                         </div>
                     </div>
@@ -99,44 +110,44 @@ const Dashboard = () => {
                     <div className="stats-grid">
                         {isAdmin && (
                             <>
-                                    <SpotlightCard className="stat-card stat-primary" spotlightColor="rgba(0, 229, 255, 0.2)">
+                                <SpotlightCard className="stat-card stat-primary" spotlightColor="rgba(0, 229, 255, 0.2)">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-user-shield"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.subadminCount || 0}</span>
+                                        <span className="stat-label">Sub-Admins</span>
+                                    </div>
+                                </SpotlightCard>
+                                <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
+                                    <div className="stat-card stat-secondary">
                                         <div className="stat-icon">
-                                            <i className="fas fa-user-shield"></i>
+                                            <i className="fas fa-users"></i>
                                         </div>
                                         <div className="stat-content">
-                                            <span className="stat-value">{stats?.subadminCount || 0}</span>
-                                            <span className="stat-label">Sub-Admins</span>
-                                        </div>
-                                    </SpotlightCard>
-                                    <FadeContent blur={true} duration={1000} easing="ease-out" initialOpacity={0}>
-                                        <div className="stat-card stat-secondary">
-                                            <div className="stat-icon">
-                                                <i className="fas fa-users"></i>
-                                            </div>
-                                            <div className="stat-content">
-                                                <span className="stat-value">{stats?.empCount || 0}</span>
-                                                <span className="stat-label">Employees</span>
-                                            </div>
-                                        </div>
-                                    </FadeContent>
-                                    <div className="stat-card stat-accent">
-                                        <div className="stat-icon">
-                                            <i className="fas fa-tasks"></i>
-                                        </div>
-                                        <div className="stat-content">
-                                            <span className="stat-value">{stats?.taskCount || 0}</span>
-                                            <span className="stat-label">Total Tasks</span>
+                                            <span className="stat-value">{stats?.empCount || 0}</span>
+                                            <span className="stat-label">Employees</span>
                                         </div>
                                     </div>
-                                    <div className="stat-card stat-success">
-                                        <div className="stat-icon">
-                                            <i className="fas fa-user-friends"></i>
-                                        </div>
-                                        <div className="stat-content">
-                                            <span className="stat-value">{stats?.teamCount || 0}</span>
-                                            <span className="stat-label">Teams</span>
-                                        </div>
+                                </FadeContent>
+                                <div className="stat-card stat-accent">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-tasks"></i>
                                     </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.taskCount || 0}</span>
+                                        <span className="stat-label">Total Tasks</span>
+                                    </div>
+                                </div>
+                                <div className="stat-card stat-success">
+                                    <div className="stat-icon">
+                                        <i className="fas fa-user-friends"></i>
+                                    </div>
+                                    <div className="stat-content">
+                                        <span className="stat-value">{stats?.teamCount || 0}</span>
+                                        <span className="stat-label">Teams</span>
+                                    </div>
+                                </div>
                             </>
                         )}
 

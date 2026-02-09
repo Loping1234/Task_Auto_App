@@ -18,6 +18,10 @@ import TeamChat from './pages/components/TeamChat';
 import AdminChat from './pages/components/AdminChat';
 import TeamTasks from './pages/components/TeamTasks';
 import EditTeam from './pages/components/EditTeam';
+import ForgetPassword from './pages/components/ForgetPassword';
+import ResetPassword from './pages/components/ResetPassword';
+import EnterOTP from './pages/components/EnterOTP';
+import Profile from './pages/components/Profile';
 
 import './app.css';
 import './dark-theme.css';
@@ -30,8 +34,18 @@ function App() {
           {/* Public Routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-
+          <Route path="/forget-password" element={<ForgetPassword />} />
+          <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/enter-otp" element={<EnterOTP />} />
           {/* Protected Routes - All Roles */}
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
           <Route
             path="/dashboard"
             element={
@@ -65,13 +79,13 @@ function App() {
             }
           />
           // For viewing task details
-          <Route 
-            path="/tasks/:taskId" 
+          <Route
+            path="/tasks/:taskId"
             element={
               <ProtectedRoute>
                 <TaskDetails />
               </ProtectedRoute>
-            } 
+            }
           />
 
           {/* Protected Routes - Admin & Subadmin Only */}

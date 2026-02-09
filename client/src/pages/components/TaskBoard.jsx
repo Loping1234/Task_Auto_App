@@ -132,15 +132,22 @@ const TaskBoard = () => {
                                         onDragStart={(e) => handleDragStart(e, task, column.id)}
                                     >
                                         <h4 className="card-title" style={{ color: column.color }}>{task.title}</h4>
-                                        {task.description && (
-                                            <p className="card-description">
-                                                {task.description.substring(0, 80)}...
-                                            </p>
-                                        )}
+                                        <div className="card-meta">
+                                            {task.assignedBy && (
+                                                <p className="card-assigned-by">
+                                                    <i className="fas fa-user-tag"></i> {task.assignedBy.split('@')[0]}
+                                                </p>
+                                            )}
+                                            {task.teamName && (
+                                                <p className="card-team">
+                                                    <i className="fas fa-users"></i> {task.teamName}
+                                                </p>
+                                            )}
+                                        </div>
                                         <div className="card-footer">
                                             <span className="card-assignee">
                                                 <i className="fas fa-user"></i>
-                                                {task.assigneeEmail?.split('@')[0] || task.teamName || 'Unassigned'}
+                                                {task.assigneeEmail?.split('@')[0] || 'Unassigned'}
                                             </span>
                                             {task.endDate && (
                                                 <span className="card-due">

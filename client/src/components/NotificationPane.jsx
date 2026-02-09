@@ -402,7 +402,11 @@ const NotificationPane = () => {
                                 </div>
 
                                 <div className="config-user-info">
-                                    <span className="user-avatar large">{configUser.name?.[0]?.toUpperCase()}</span>
+                                    {configUser.profilePicture ? (
+                                        <img src={`http://localhost:5000/imgs/${configUser.profilePicture}`} alt="Avatar" className="user-avatar-img large" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+                                    ) : (
+                                        <span className="user-avatar large">{configUser.name?.[0]?.toUpperCase()}</span>
+                                    )}
                                     <div className="user-details">
                                         <span className="name">{configUser.name || configUser.email}</span>
                                         <span className="email">{configUser.email}</span>
@@ -450,7 +454,11 @@ const NotificationPane = () => {
                                                 className="watchlist-user-item"
                                                 onClick={() => handleSelectWatchedUser(u)}
                                             >
-                                                <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
+                                                {u.profilePicture ? (
+                                                    <img src={`http://localhost:5000/imgs/${u.profilePicture}`} alt="Avatar" className="user-avatar-img" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                                ) : (
+                                                    <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
+                                                )}
                                                 <div className="user-info">
                                                     <span className="user-name">{u.name || u.email}</span>
                                                     <span className="user-role">{u.role}</span>
@@ -474,7 +482,11 @@ const NotificationPane = () => {
                                                     className={`watchlist-user-item ${isUserInMyWatchlist(u._id) ? 'granted' : ''}`}
                                                     onClick={() => handleUserClick(u)}
                                                 >
-                                                    <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
+                                                    {u.profilePicture ? (
+                                                        <img src={`http://localhost:5000/imgs/${u.profilePicture}`} alt="Avatar" className="user-avatar-img" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                                    ) : (
+                                                        <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
+                                                    )}
                                                     <div className="user-info">
                                                         <span className="user-name">{u.name || u.email}</span>
                                                         <span className="user-role">{u.role}</span>

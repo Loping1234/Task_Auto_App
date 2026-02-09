@@ -1,6 +1,9 @@
+require('dotenv').config();
 const express = require("express");
 const bcrypt = require("bcrypt");
 const cors = require("cors");
+const nodemailer = require("nodemailer");
+const crypto = require("crypto");
 const mongoose = require("mongoose");
 const collection = require("./config");
 const Task = require("../models/task");
@@ -57,6 +60,9 @@ app.post("/api/auth/login", async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+        if (!user.isVerified) {
+            return res.status(401).json({ message: "Email not verified" });
+        }
 
         const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
@@ -70,7 +76,9 @@ app.post("/api/auth/login", async (req, res) => {
             user: {
                 id: user._id,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                fullName: user.fullName || user.name || user.email.split('@')[0],
+                profilePicture: user.profilePicture
             }
         });
     } catch (err) {
@@ -79,27 +87,95 @@ app.post("/api/auth/login", async (req, res) => {
     }
 });
 
+app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await collection.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        const token = crypto.randomBytes(20).toString("hex");
+        user.resetPasswordToken = token;
+        user.resetPasswordExpires = Date.now() + 3600000;
+        await user.save();
+
+        const transporter = nodemailer.createTransport({
+            service: "gmail" || "techbizsolutions",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Password Reset",
+            text: `You requested a password reset. Click the link to reset your password: http://localhost:5173/reset-password/${token}`
+        };
+        await transporter.sendMail(mailOptions);
+        res.json({ message: "Password reset link sent" });
+    } catch (err) {
+        console.error("Forgot password error", err);
+        res.status(500).json({ message: "Forgot password failed" });
+    }
+});
+
+app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+        const { token, password } = req.body;
+        const user = await collection.findOne({
+            resetPasswordToken: token,
+            resetPasswordExpires: { $gt: Date.now() }
+        });
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired token" });
+        }
+        const hashedPassword = await bcrypt.hash(password, 10);
+        user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+        res.json({ message: "Password reset successful" });
+    } catch (err) {
+        console.error("Reset password error", err);
+        res.status(500).json({ message: "Reset password failed" });
+    }
+});
+
 // Signup
 app.post("/api/auth/signup", async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const existingUser = await collection.findOne({ email });
         if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
         }
-
         const hashedPassword = await bcrypt.hash(password, 10);
         const domain = email.split("@")[1];
-
         let role = "employee";
-        if (domain === "admin.com") role = "admin";
-        else if (domain === "subadmin.com") role = "subadmin";
-
+        // Predefined role mapping
+        if (email === "pranaykumar@techbizsolution.co.in") {
+            role = "admin";
+        } else if (email === "pranaykumar302@gmail.com") {
+            role = "subadmin";
+        } else if (domain === "gmail.com") {
+            role = "employee";
+        } else {
+            // Default domain-based assignment
+            if (domain === "admin.com") role = "admin";
+            else if (domain === "subadmin.com") role = "subadmin";
+        }
+        const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+        const emailVerificationExpires = Date.now() + 3600000; // 1 hour
         const user = await collection.create({
             email,
             password: hashedPassword,
-            role
+            role,
+            emailVerificationToken,
+            emailVerificationExpires,
+            isVerified: false,
+            fullName: email.split("@")[0],
+            profilePicture: "default-avatar.png"
         });
 
         // Create employee record if employee role
@@ -111,10 +187,163 @@ app.post("/api/auth/signup", async (req, res) => {
             });
         }
 
+        const transporter = nodemailer.createTransport({
+            service: "gmail" || "techbizsolutions",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Verify your email address",
+            text: `Your verification code is: ${emailVerificationToken}\n\nThis code will expire in 1 hour.`
+        };
+        await transporter.sendMail(mailOptions);
         res.status(201).json({ message: "Signup successful" });
     } catch (err) {
         console.error("Signup error", err);
         res.status(500).json({ message: "Signup failed" });
+    }
+});
+
+// Verify email with OTP
+app.post("/api/auth/verify-email", async (req, res) => {
+    try {
+        const { email, otp } = req.body;
+        const user = await collection.findOne({
+            email,
+            emailVerificationToken: otp,
+            emailVerificationExpires: { $gt: Date.now() }
+        });
+        if (!user) {
+            return res.status(400).json({ message: "Invalid or expired OTP" });
+        }
+        user.isVerified = true;
+        user.emailVerificationToken = undefined;
+        user.emailVerificationExpires = undefined;
+        await user.save();
+        res.json({ message: "Email verified successfully! Redirecting to login..." });
+    } catch (err) {
+        console.error("Verify email error", err);
+        res.status(500).json({ message: "Verify email failed" });
+    }
+});
+
+app.post("/api/auth/resend-otp", async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await collection.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
+        if (user.isVerified) {
+            return res.status(400).json({ message: "Account already verified" });
+        }
+        const emailVerificationToken = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+        const emailVerificationExpires = Date.now() + 3600000; // 1 hour
+        user.emailVerificationToken = emailVerificationToken;
+        user.emailVerificationExpires = emailVerificationExpires;
+        await user.save();
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
+        });
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: email,
+            subject: "Verify your email address",
+            text: `Your verification code is: ${emailVerificationToken}\n\nThis code will expire in 1 hour.`
+        };
+        await transporter.sendMail(mailOptions);
+        res.json({ message: "Email verification code resent successfully" });
+    }
+    catch (err) {
+        console.error("Resend OTP error", err);
+        res.status(500).json({ message: "Resend OTP failed" });
+    }
+});
+
+// Upload Profile Picture
+app.post("/api/users/profile-picture", verifyToken, upload.single('profilePicture'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: "No image uploaded" });
+        }
+
+        const userId = req.user.id;
+        const profilePicture = req.file.filename;
+
+        await collection.findByIdAndUpdate(userId, { profilePicture });
+
+        // Update employee record if exists
+        const user = await collection.findById(userId);
+        if (user.role === 'employee') {
+            await Employee.findOneAndUpdate({ email: user.email }, { profilePicture });
+        }
+
+        res.json({ message: "Profile picture updated", profilePicture });
+    } catch (err) {
+        console.error("Profile picture upload error", err);
+        res.status(500).json({ message: "Failed to upload profile picture" });
+    }
+});
+
+// Update Profile
+app.put("/api/users/profile", verifyToken, async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { fullName } = req.body;
+
+        const user = await collection.findByIdAndUpdate(
+            userId,
+            { fullName },
+            { new: true }
+        ).select("-password -__v");
+
+        if (user.role === 'employee') {
+            await Employee.findOneAndUpdate({ email: user.email }, { name: fullName });
+        }
+
+        res.json({ user, message: "Profile updated successfully" });
+    } catch (err) {
+        console.error("Update profile error", err);
+        res.status(500).json({ message: "Failed to update profile" });
+    }
+});
+
+// Change Password
+app.post("/api/auth/change-password", verifyToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        const userId = req.user.id;
+
+        const user = await collection.findById(userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Incorrect current password" });
+        }
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        await user.save();
+
+        if (user.role === 'employee') {
+            await Employee.findOneAndUpdate({ email: user.email }, { password: hashedPassword });
+        }
+
+        res.json({ message: "Password changed successfully" });
+    } catch (err) {
+        console.error("Change password error", err);
+        res.status(500).json({ message: "Failed to change password" });
     }
 });
 
@@ -156,6 +385,7 @@ app.get("/api/dashboard", verifyToken, async (req, res) => {
                 Task.countDocuments({
                     $or: [
                         { assigneeEmail: { $in: employeeEmails } },
+                        { assignedBy: { $ne: email } },
                         { teamName: { $in: teams.map(t => t.teamName) } }
                     ]
                 })
@@ -258,7 +488,8 @@ app.post("/api/tasks", verifyToken, upload.single('image'), async (req, res) => 
             endDate: endDate ? new Date(endDate) : undefined,
             status: status || "Pending",
             assigneeEmail: assigneeEmail || null,
-            teamName: teamName || null
+            teamName: teamName || null,
+            assignedBy: req.user.fullName || req.user.email
         };
 
         const task = await Task.create(taskData);
@@ -299,6 +530,29 @@ app.post("/api/tasks", verifyToken, upload.single('image'), async (req, res) => 
     } catch (err) {
         console.error("Create task error", err);
         res.status(500).json({ message: "Failed to create task" });
+    }
+});
+
+// Update task assignee
+app.patch("/api/tasks/:id/assignee", verifyToken, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { assignee } = req.body;
+
+        const task = await Task.findByIdAndUpdate(
+            id,
+            { assigneeEmail: assignee },
+            { new: true }
+        );
+
+        if (!task) {
+            return res.status(404).json({ message: "Task not found" });
+        }
+
+        res.json(task);
+    } catch (err) {
+        console.error("Update assignee error:", err);
+        res.status(500).json({ message: "Failed to update assignee" });
     }
 });
 
@@ -1365,8 +1619,10 @@ app.get("/api/users/all", verifyToken, async (req, res) => {
             users: users.map(u => ({
                 _id: u._id,
                 email: u.email,
-                name: u.name || u.email.split('@')[0],
-                role: u.role
+                name: u.fullName || u.name || u.email.split('@')[0],
+                fullName: u.fullName || u.name || u.email.split('@')[0],
+                role: u.role,
+                profilePicture: u.profilePicture
             }))
         });
     } catch (err) {

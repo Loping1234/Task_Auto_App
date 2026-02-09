@@ -37,7 +37,9 @@ const verifyToken = async (req, res, next) => {
         req.user = {
             id: user._id,
             email: user.email,
-            role: user.role
+            role: user.role,
+            fullName: user.fullName || user.name || user.email.split('@')[0],
+            profilePicture: user.profilePicture
         };
 
         next();
