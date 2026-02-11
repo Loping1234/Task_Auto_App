@@ -2,20 +2,19 @@ import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
-
-import NotificationPane from './NotificationPane';
+import { getImageUrl } from '../utils/imageUtils';
 
 const Navbar = () => {
     const { user, logout, isAdmin, isSubadmin, isEmployee } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
+
     // Initialize from localStorage or default to true
     const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
         const saved = localStorage.getItem('sidebarOpen');
         return saved !== null ? JSON.parse(saved) : true;
     });
 
-    // Toggle sidebar
     const toggleSidebar = () => {
         setIsSidebarOpen(!isSidebarOpen);
     };
@@ -23,7 +22,7 @@ const Navbar = () => {
     // Update CSS variable for layout and save to localStorage
     useEffect(() => {
         localStorage.setItem('sidebarOpen', JSON.stringify(isSidebarOpen));
-        const width = isSidebarOpen ? '260px' : '80px';
+        const width = isSidebarOpen ? '240px' : '72px';
         document.documentElement.style.setProperty('--sidebar-width', width);
     }, [isSidebarOpen]);
 
@@ -53,110 +52,126 @@ const Navbar = () => {
     const isActive = (path) => location.pathname === path || location.pathname.startsWith(path + '/');
 
     return (
-        <>
-            <button
-                className="sidebar-toggle-btn"
-                onClick={toggleSidebar}
-                style={{
-                    position: 'fixed',
-                    left: isSidebarOpen ? '200px' : '23px',
-                    top: '23px',
-                    zIndex: 1001,
-                    transition: 'left 0.3s ease',
-                    background: 'var(--primary)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    padding: '8px 12px',
-                    cursor: 'pointer'
-                }}
-                title={isSidebarOpen ? "Collapse Sidebar" : "Expand Sidebar"}
-            >
-                <i className={isSidebarOpen ? "fas fa-times" : "fas fa-bars"}></i>
-            </button>
-
-            <nav className={`navbar ${!isSidebarOpen ? 'collapsed' : ''}`}>
-                <div className="navbar-brand">
-                    <Link to="/dashboard">
-                        <span className="logo">📋</span>
-                        <span className="brand-text">TaskFlow</span>
+        <nav className={`navbar ${!isSidebarOpen ? 'collapsed' : ''}`}>
+            {/* Header: Hamburger + Logo */}
+            <div className="navbar-header">
+                <button
+                    className="menu-btn"
+                    onClick={toggleSidebar}
+                    title={isSidebarOpen ? "Collapse" : "Expand"}
+                >
+                    <i className="fas fa-bars"></i>
+                </button>
+                <div className="logo-container">
+                    <Link to="/dashboard" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none', color: 'inherit' }}>
+                        <span className="logo-icon">📋</span>
+                        <span className="logo-text">TaskFlow</span>
                     </Link>
                 </div>
+            </div>
+            {/* User Profile (Bottom Pinned) */}
+            <div className="user-profile-section">
+                {(isAdmin || isSubadmin || isEmployee) && user && (
+                    <Link to="/profile" className="user-profile-link" title="Profile">
+                        {user.profilePicture ? (
+                            <img src={getImageUrl(user.profilePicture)} alt="User" className="user-avatar-mini" />
+                        ) : (
+                            <div className="user-avatar-placeholder-mini">
+                                {user.email?.[0]?.toUpperCase()}
+                            </div>
+                        )}
+                        <div className="user-info-mini">
+                            <span className="user-name">{user.fullName || user.email?.split('@')[0]}</span>
+                            <span className="user-role">{isAdmin ? 'Admin' : isSubadmin ? 'Sub-Admin' : 'Employee'}</span>
+                        </div>
+                    </Link>
+                )}
+            </div>
 
-                <div className="navbar-links">
-                    <Link to="/dashboard" className={isActive('/dashboard') ? 'active' : ''}>
+            {/* Scrollable Content */}
+            <div className="navbar-content">
+
+                {/* Main Navigation */}
+                <div className="nav-section">
+                    <Link to="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`} title="Dashboard">
                         <i className="fas fa-home"></i>
-                        <span>Dashboard</span>
+                        <span className="nav-text">Dashboard</span>
                     </Link>
-
-                    <Link to="/tasks" className={location.pathname === '/tasks' ? 'active' : ''}>
+                    <Link to="/tasks" className={`nav-item ${location.pathname === '/tasks' ? 'active' : ''}`} title="Tasks">
                         <i className="fas fa-tasks"></i>
-                        <span>Tasks</span>
+                        <span className="nav-text">Tasks</span>
                     </Link>
-
-                    <Link to="/taskboard" className={isActive('/taskboard') ? 'active' : ''}>
+                    <Link to="/taskboard" className={`nav-item ${isActive('/taskboard') ? 'active' : ''}`} title="Board">
                         <i className="fas fa-columns"></i>
-                        <span>Board</span>
+                        <span className="nav-text">Board</span>
                     </Link>
+                </div>
 
-                    {/* Employee-only links */}
-                    {isEmployee && (
-                        <>
-                            <Link to="/team-tasks" className={isActive('/team-tasks') ? 'active' : ''}>
+                <div className="divider"></div>
+
+                {/* Employee Links */}
+                {isEmployee && (
+                    <>
+                        <div className="nav-section">
+                            <div className="section-title">Team</div>
+                            <Link to="/team-tasks" className={`nav-item ${isActive('/team-tasks') ? 'active' : ''}`} title="Team Tasks">
                                 <i className="fas fa-users"></i>
-                                <span>Team Tasks</span>
+                                <span className="nav-text">Team Tasks</span>
                             </Link>
-
-                            <Link to="/team-chat" className={isActive('/team-chat') ? 'active' : ''}>
+                            <Link to="/team-chat" className={`nav-item ${isActive('/team-chat') ? 'active' : ''}`} title="Team Chat">
                                 <i className="fas fa-comments"></i>
-                                <span>Team Chat</span>
+                                <span className="nav-text">Team Chat</span>
                             </Link>
-                        </>
-                    )}
+                        </div>
+                        <div className="divider"></div>
+                    </>
+                )}
 
-                    {/* Admin & Subadmin links */}
-                    {(isAdmin || isSubadmin) && (
-                        <>
-                            <Link to="/assign" className={isActive('/assign') ? 'active' : ''}>
+                {/* Admin/Subadmin Links */}
+                {(isAdmin || isSubadmin) && (
+                    <>
+                        <div className="nav-section">
+                            <div className="section-title">Management</div>
+                            <Link to="/assign" className={`nav-item ${isActive('/assign') ? 'active' : ''}`} title="Create Task">
                                 <i className="fas fa-plus-circle"></i>
-                                <span>Create</span>
+                                <span className="nav-text">Create</span>
                             </Link>
-
-                            <Link to="/members" className={isActive('/members') ? 'active' : ''}>
+                            <Link to="/members" className={`nav-item ${isActive('/members') ? 'active' : ''}`} title="Members">
                                 <i className="fas fa-users"></i>
-                                <span>Members</span>
+                                <span className="nav-text">Members</span>
                             </Link>
-                            <Link to="/admin-chat" className={isActive('/admin-chat') ? 'active' : ''}>
+                            <Link to="/admin-chat" className={`nav-item ${isActive('/admin-chat') ? 'active' : ''}`} title="Chat">
                                 <i className="fas fa-comments"></i>
-                                <span>Chat</span>
+                                <span className="nav-text">Chat</span>
                             </Link>
-                        </>
-                    )}
-
-                    {/* Admin-only links */}
-                    {isAdmin && (
-                        <>
-                            <Link to="/team-management" className={isActive('/team-management') ? 'active' : ''}>
-                                <i className="fas fa-users-cog"></i>
-                                <span>Manage Teams</span>
+                            <Link to="/projects" className={`nav-item ${isActive('/projects') ? 'active' : ''}`} title="Projects">
+                                <i className="fas fa-projects"></i>
+                                <span className="nav-text">Projects</span>                                
                             </Link>
-                        </>
-                    )}
-                </div>
+                            {isAdmin && (
+                                <Link to="/team-management" className={`nav-item ${isActive('/team-management') ? 'active' : ''}`} title="Manage Teams">
+                                    <i className="fas fa-users-cog"></i>
+                                    <span className="nav-text">Manage Teams</span>
+                                </Link>
+                            )}
+                        </div>
+                        <div className="divider"></div>
+                    </>
+                )}
 
-                <div className="navbar-user">
-                    {(isAdmin || isSubadmin || isEmployee) }
-                    <button onClick={toggleDarkMode} className="theme-toggle-btn" title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
+                {/* Bottom Actions: Theme & Logout (Above Profile) */}
+                <div className="nav-section">
+                    <button onClick={toggleDarkMode} className="nav-item theme-btn" title={darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}>
                         <i className={darkMode ? 'fas fa-sun' : 'fas fa-moon'}></i>
-                        <span>{darkMode ? 'Light' : 'Dark'} Mode</span>
+                        <span className="nav-text">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>
                     </button>
-                    <button onClick={handleLogout} className="logout-btn">
+                    <button onClick={handleLogout} className="nav-item logout-btn" title="Logout">
                         <i className="fas fa-sign-out-alt"></i>
-                        <span>Logout</span>
+                        <span className="nav-text">Logout</span>
                     </button>
                 </div>
-            </nav>
-        </>
+            </div>
+        </nav>
     );
 };
 

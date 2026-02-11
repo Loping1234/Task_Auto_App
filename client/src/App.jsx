@@ -21,7 +21,10 @@ import EditTeam from './pages/components/EditTeam';
 import ForgetPassword from './pages/components/ForgetPassword';
 import ResetPassword from './pages/components/ResetPassword';
 import EnterOTP from './pages/components/EnterOTP';
+import VerifyEmail from './pages/components/VerifyEmail';
 import Profile from './pages/components/Profile';
+import Project from './pages/components/Project';
+import CreateProject from './pages/components/CreateProject';
 
 import './app.css';
 import './dark-theme.css';
@@ -37,6 +40,7 @@ function App() {
           <Route path="/forget-password" element={<ForgetPassword />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
           <Route path="/enter-otp" element={<EnterOTP />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           {/* Protected Routes - All Roles */}
           <Route
             path="/profile"
@@ -78,16 +82,14 @@ function App() {
               </ProtectedRoute>
             }
           />
-          // For viewing task details
           <Route
-            path="/tasks/:taskId"
+            path="/projects/:id"
             element={
-              <ProtectedRoute>
-                <TaskDetails />
+              <ProtectedRoute allowedRoles={['admin', 'subadmin']}>
+                <Project />
               </ProtectedRoute>
             }
           />
-
           {/* Protected Routes - Admin & Subadmin Only */}
           <Route
             path="/assign"
@@ -102,6 +104,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={['admin', 'subadmin']}>
                 <Members />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects"
+            element={
+              <ProtectedRoute allowedRoles={['admin', 'subadmin']}>
+                <Project />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/create"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <CreateProject />
               </ProtectedRoute>
             }
           />

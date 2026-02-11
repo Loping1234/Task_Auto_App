@@ -32,9 +32,8 @@ const Signup = () => {
         setLoading(true);
 
         try {
-            await signup(email, password);
-            setSuccess('Account created! Check your email for the verification code.');
-            setTimeout(() => navigate('/enter-otp', { state: { email } }), 2000);
+            const res = await signup(email, password);
+            setSuccess(res.message || 'Account registration initiated! Check your email for the verification link.');
         } catch (err) {
             setError(err.response?.data?.message || 'Signup failed. Please try again.');
         } finally {

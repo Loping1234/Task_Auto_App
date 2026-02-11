@@ -1,8 +1,9 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext'; // Adjusted import path
 import Navbar from '../../components/Navbar';
 import axios from 'axios';
 import '../styles/Dashboard.css'; // Reuse dashboard styles for layout
+import { getImageUrl } from '../../utils/imageUtils';
 
 const Profile = () => {
     const { user, updateUser } = useAuth(); // Destructure updateUser
@@ -16,6 +17,11 @@ const Profile = () => {
     const [loading, setLoading] = useState(false);
     const [previewImage, setPreviewImage] = useState(null);
     const fileInputRef = useRef(null);
+    const [twoFactorEnabled, setTwoFactorEnabled] = useState(user?.twoFactorEnabled !== false);
+
+    useEffect(() => {
+        setTwoFactorEnabled(user?.twoFactorEnabled !== false);
+    }, [user]);
 
     const handleProfileUpdate = async (e) => {
         e.preventDefault();
@@ -100,6 +106,27 @@ const Profile = () => {
         }
     };
 
+    const handleToggle2FA = async (e) => {
+        const enabled = e.target.checked;
+        setLoading(true);
+        setMessage('');
+        setError('');
+        try {
+            const token = localStorage.getItem('token');
+            const res = await axios.put('/api/users/toggle2fa', { enabled }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            setTwoFactorEnabled(enabled);
+            setMessage(res.data.message);
+            updateUser({ twoFactorEnabled: enabled });
+        } catch (err) {
+            setError(err.response?.data?.message || 'Failed to update 2FA setting');
+            setTwoFactorEnabled(!enabled); // Revert on error
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="dashboard-layout">
             <Navbar />
@@ -109,7 +136,7 @@ const Profile = () => {
 
                     {/* Tabs */}
                     <div className="profile-tabs" style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', marginBottom: '2rem' }}>
-                        {['profile', 'picture', 'password'].map(tab => (
+                        {['profile', 'picture', 'security', 'password'].map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
@@ -166,7 +193,7 @@ const Profile = () => {
                                     {previewImage ? (
                                         <img src={previewImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     ) : user?.profilePicture ? (
-                                        <img src={`http://localhost:5000/imgs/${user.profilePicture}`} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        <img src={getImageUrl(user.profilePicture)} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                     ) : (
                                         <span style={{ fontSize: '3rem', color: 'var(--text-muted)' }}>{user?.email?.[0]?.toUpperCase()}</span>
                                     )}
@@ -198,6 +225,73 @@ const Profile = () => {
                                         </button>
                                     )}
                                 </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'security' && (
+                            <div className="security-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div className="form-group" style={{ 
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'space-between',
+                                    padding: '1.5rem',
+                                    background: 'var(--bg-primary)',
+                                    borderRadius: '12px',
+                                    border: '1px solid var(--border-color)'
+                                }}>
+                                    <div>
+                                        <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-primary)', fontWeight: '600', fontSize: '1.1rem' }}>
+                                            Two-Factor Authentication (2FA)
+                                        </label>
+                                        <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
+                                            {twoFactorEnabled 
+                                                ? 'An OTP will be sent to your email each time you log in.' 
+                                                : '2FA is disabled. You will log in directly without OTP verification.'}
+                                        </p>
+                                    </div>
+                                    <label style={{ 
+                                        position: 'relative', 
+                                        display: 'inline-block', 
+                                        width: '60px', 
+                                        height: '34px',
+                                        flexShrink: 0,
+                                        marginLeft: '1rem'
+                                    }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={twoFactorEnabled}
+                                            onChange={handleToggle2FA}
+                                            disabled={loading}
+                                            style={{ opacity: 0, width: 0, height: 0 }}
+                                        />
+                                        <span style={{
+                                            position: 'absolute',
+                                            cursor: loading ? 'not-allowed' : 'pointer',
+                                            top: 0,
+                                            left: 0,
+                                            right: 0,
+                                            bottom: 0,
+                                            backgroundColor: twoFactorEnabled ? 'var(--primary)' : '#ccc',
+                                            transition: '0.4s',
+                                            borderRadius: '34px'
+                                        }}>
+                                            <span style={{
+                                                position: 'absolute',
+                                                content: '""',
+                                                height: '26px',
+                                                width: '26px',
+                                                left: twoFactorEnabled ? '30px' : '4px',
+                                                bottom: '4px',
+                                                backgroundColor: 'white',
+                                                transition: '0.4s',
+                                                borderRadius: '50%'
+                                            }}></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+                                    <strong>Note:</strong> Changes will take effect from your next login session.
+                                </p>
                             </div>
                         )}
 

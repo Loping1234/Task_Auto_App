@@ -37,7 +37,10 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
     login: (email, password) => api.post('/auth/login', { email, password }),
+    verify2FA: (email, otp) => api.post('/auth/verify-2fa', { email, otp }),
     signup: (email, password) => api.post('/auth/signup', { email, password }),
+    verifyEmail: (email, token) => api.post('/auth/verify-email', { email, token }),
+    resendOtp: (email) => api.post('/auth/resend-otp', { email }),
     logout: () => api.post('/auth/logout'),
     getMe: () => api.get('/auth/me'),
 };
@@ -67,6 +70,20 @@ export const teamsAPI = {
     create: (data) => api.post('/teams', data),
     update: (name, data) => api.put(`/teams/${encodeURIComponent(name)}`, data),
     delete: (name) => api.delete(`/teams/${encodeURIComponent(name)}`),
+};
+
+// Project API
+export const projectsAPI = {
+    getAll: () => api.get('/projects'),
+    getById: (id) => api.get(`/projects/${id}`),
+    create: (data) => api.post('/projects', data),
+    update: (id, data) => api.put(`/projects/${id}`, data),
+    delete: (id) => api.delete(`/projects/${id}`),
+    addMembers: (id, data) => api.post(`/projects/${id}/members`, data),
+    removeMember: (id, userId, memberType) => api.delete(`/projects/${id}/members`, { data: { userId, memberType } }),
+    updateStatuses: (id, customStatuses) => api.put(`/projects/${id}/statuses`, { customStatuses }),
+    addTask: (id, taskId) => api.post(`/projects/${id}/tasks`, { taskId }),
+    removeTask: (id, taskId) => api.delete(`/projects/${id}/tasks`, { data: { taskId } }),
 };
 
 // Employees API

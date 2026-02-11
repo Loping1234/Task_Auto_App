@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { tasksAPI, employeesAPI } from '../../api';
 import Navbar from '../../components/Navbar';
 import '../styles/TaskDetails.css';
+import { getImageUrl } from '../../utils/imageUtils';
 
 const TaskDetails = () => {
     const { id } = useParams();
@@ -260,7 +261,7 @@ const TaskDetails = () => {
                                     {task.image && (
                                         <div className="current-image">
                                             <span>Current Image:</span>
-                                            <img src={`/imgs/${task.image}`} alt={task.title} className="thumbnail" style={{ maxWidth: '100px', borderRadius: '4px', marginTop: '0.5rem' }} />
+                                            <img src={getImageUrl(task.image)} alt={task.title} className="thumbnail" style={{ maxWidth: '100px', borderRadius: '4px', marginTop: '0.5rem' }} />
                                         </div>
                                     )}
                                     <div className="upload-input" style={{ marginTop: '1rem' }}>
@@ -278,7 +279,7 @@ const TaskDetails = () => {
                                 </div>
                             ) : (
                                 task.image ? (
-                                    <img src={`/imgs/${task.image}`} alt={task.title} className="task-image" />
+                                    <img src={getImageUrl(task.image)} alt={task.title} className="task-image" />
                                 ) : (
                                     <div className="no-attachment">
                                         <i className="fas fa-file-upload"></i>
@@ -452,9 +453,9 @@ const TaskDetails = () => {
                                                     </div>
                                                     <p className="comment-text">{comment.text}</p>
                                                     {comment.image && (
-                                                        <a href={`/imgs/${comment.image}`} target="_blank" rel="noopener noreferrer">
+                                                        <a href={getImageUrl(comment.image)} target="_blank" rel="noopener noreferrer">
                                                             <img
-                                                                src={`/imgs/${comment.image}`}
+                                                                src={getImageUrl(comment.image)}
                                                                 alt="Comment attachment"
                                                                 className="comment-image"
                                                                 style={{ cursor: 'zoom-in' }}

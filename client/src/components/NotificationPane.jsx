@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { notificationAPI, watchlistAPI, usersAPI } from '../api';
-import './NotificationPane.css';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { notificationAPI, watchlistAPI, usersAPI } from '../api';
+import './NotificationPane.css';
+import { getImageUrl } from '../utils/imageUtils';
 
 const notificationTypes = [
     { value: 'all', label: 'All Types' },
@@ -403,7 +404,7 @@ const NotificationPane = () => {
 
                                 <div className="config-user-info">
                                     {configUser.profilePicture ? (
-                                        <img src={`http://localhost:5000/imgs/${configUser.profilePicture}`} alt="Avatar" className="user-avatar-img large" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
+                                        <img src={getImageUrl(configUser.profilePicture)} alt="Avatar" className="user-avatar-img large" style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover' }} />
                                     ) : (
                                         <span className="user-avatar large">{configUser.name?.[0]?.toUpperCase()}</span>
                                     )}
@@ -455,7 +456,7 @@ const NotificationPane = () => {
                                                 onClick={() => handleSelectWatchedUser(u)}
                                             >
                                                 {u.profilePicture ? (
-                                                    <img src={`http://localhost:5000/imgs/${u.profilePicture}`} alt="Avatar" className="user-avatar-img" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                                    <img src={getImageUrl(u.profilePicture)} alt="Avatar" className="user-avatar-img" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                                                 ) : (
                                                     <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
                                                 )}
@@ -483,7 +484,7 @@ const NotificationPane = () => {
                                                     onClick={() => handleUserClick(u)}
                                                 >
                                                     {u.profilePicture ? (
-                                                        <img src={`http://localhost:5000/imgs/${u.profilePicture}`} alt="Avatar" className="user-avatar-img" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
+                                                        <img src={getImageUrl(u.profilePicture)} alt="Avatar" className="user-avatar-img" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />
                                                     ) : (
                                                         <span className="user-avatar">{u.name?.[0]?.toUpperCase() || u.email?.[0]?.toUpperCase()}</span>
                                                     )}
@@ -632,7 +633,7 @@ const NotificationPane = () => {
                 )}
             </div>
         </div >
-    )
+    );
 }
 
 export default NotificationPane;

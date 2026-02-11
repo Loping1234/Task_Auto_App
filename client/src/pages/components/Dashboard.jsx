@@ -8,6 +8,7 @@ import SpotlightCard from '../../components/Rbits/Spotlight';
 import ClickSpark from '../../components/Rbits/ClickSpark';
 import FadeContent from '../../components/Rbits/Fade';
 import NotificationPane from '../../components/NotificationPane';
+import { getImageUrl } from '../../utils/imageUtils';
 import {
     PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
     BarChart, Bar, XAxis, YAxis, CartesianGrid
@@ -138,7 +139,7 @@ const Dashboard = () => {
                             <Link to="/profile" className="profile-icon-btn" title="Profile">
                                 {user?.profilePicture ? (
                                     <img
-                                        src={`http://localhost:5000/imgs/${user.profilePicture}`}
+                                        src={getImageUrl(user.profilePicture)}
                                         alt="Profile"
                                         className="profile-avatar-img"
                                         style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }}

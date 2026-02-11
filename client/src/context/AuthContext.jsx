@@ -32,13 +32,26 @@ export const AuthProvider = ({ children }) => {
 
     const login = async (email, password) => {
         const response = await authAPI.login(email, password);
+        // If require2FA is true, we don't set user yet
+        if (response.data.require2FA) {
+            return response.data;
+        }
+
+        const { token, user: userData } = response.data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+        return response.data;
+    };
+
+    const verify2FA = async (email, otp) => {
+        const response = await authAPI.verify2FA(email, otp);
         const { token, user: userData } = response.data;
 
         localStorage.setItem('token', token);
         localStorage.setItem('user', JSON.stringify(userData));
         setUser(userData);
-
-        return userData;
+        return response.data;
     };
 
     const signup = async (email, password) => {
@@ -64,6 +77,7 @@ export const AuthProvider = ({ children }) => {
         user,
         loading,
         login,
+        verify2FA,
         signup,
         logout,
         updateUser,
