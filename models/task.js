@@ -33,11 +33,11 @@ const TaskSchema = new mongoose.Schema(
         },
         assigneeEmail: {
             type: String,
-            required: true 
+            required: true
         },
         assignedBy: {
             type: String,
-            required: true 
+            required: false
         },
         teamName: {
             type: String,

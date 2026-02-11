@@ -146,7 +146,19 @@
         gap: 1rem;
     }
 
-    .board-column {
-        min-height: 150px;
+
+    .drag-overlay-item {
+        opacity: 0.8;
+        transform: rotate(3deg);
+        cursor: grabbing;
+        pointer-events: none;
+        /* Important for drag performance */
+    }
+
+    .drag-overlay-item .board-card {
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2) !important;
+        background: white;
+        transform: scale(1.05);
+        /* Slight scale up */
     }
 }
