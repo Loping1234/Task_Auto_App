@@ -5,17 +5,14 @@ const collection = require("../config");
 const Employee = require("../../models/employee");
 const { generateToken } = require("../middleware/auth");
 
-// Shared email transporter — uses port 587 (STARTTLS) to work on Render
-function getTransporter() { 
+// Shared email transporter
+function getTransporter() {
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // STARTTLS
+        service: 'gmail',
         auth: {
             user: (process.env.EMAIL_USER || '').trim(),
             pass: (process.env.EMAIL_PASS || '').trim()
-        },
-        family: 4 // force IPv4
+        }
     });
 }
 
