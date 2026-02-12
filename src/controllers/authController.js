@@ -209,7 +209,8 @@ const signup = async (req, res) => {
         res.status(201).json({ message: "Verification link sent to your email. Please click it to create your account." });
     } catch (err) {
         console.error("Signup error", err);
-        res.status(500).json({ message: "Signup failed" });
+        // Return the actual error message to help debugging
+        res.status(500).json({ message: err.message || "Signup failed" });
     }
 };
 
