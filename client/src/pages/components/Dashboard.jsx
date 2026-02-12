@@ -21,29 +21,34 @@ const Dashboard = () => {
     const [stats, setStats] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
-    const [darkMode, setDarkMode] = useState(false);
+    const [theme, setTheme] = useState(() => {
+        const attrTheme = document.documentElement.getAttribute('data-theme');
+        if (attrTheme === 'dark' || attrTheme === 'light') return attrTheme;
+
+        const saved = localStorage.getItem('theme');
+        return saved === 'dark' ? 'dark' : 'light';
+    });
 
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            setDarkMode(true);
-            document.documentElement.setAttribute('data-theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-        }
+        const nextTheme = savedTheme === 'dark' ? 'dark' : 'light';
+        setTheme(nextTheme);
+        document.documentElement.setAttribute('data-theme', nextTheme);
     }, []);
 
-    const toggleDarkMode = () => {
-        const newMode = !darkMode;
-        setDarkMode(newMode);
-        if (newMode) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        }
-    };
+    useEffect(() => {
+        // Keep theme state in sync if something else toggles data-theme (e.g., Navbar)
+        const el = document.documentElement;
+        const observer = new MutationObserver(() => {
+            const attrTheme = el.getAttribute('data-theme');
+            if (attrTheme === 'dark' || attrTheme === 'light') {
+                setTheme(attrTheme);
+            }
+        });
+
+        observer.observe(el, { attributes: true, attributeFilter: ['data-theme'] });
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         const fetchDashboard = async () => {
@@ -121,7 +126,7 @@ const Dashboard = () => {
     return (
         <div className="dashboard-layout">
             <ClickSpark
-                sparkColor='#fff'
+                sparkColor={theme === 'dark' ? '#ffffff' : '#000000'}
                 sparkSize={10}
                 sparkRadius={15}
                 sparkCount={8}

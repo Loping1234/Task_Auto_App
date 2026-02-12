@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { teamsAPI, employeesAPI, subadminsAPI } from '../../api';
 import Navbar from '../../components/Navbar';
-import '../styles/TeamManagement.css'; // Reusing existing styles
+import '../styles/TeamManagement.css';
 
 const EditTeam = () => {
     const { teamName } = useParams();
     const navigate = useNavigate();
-    const { isAdmin } = useAuth();
 
     const [loading, setLoading] = useState(true);
     const [subadmins, setSubadmins] = useState([]);
@@ -21,11 +19,7 @@ const EditTeam = () => {
         employees: []
     });
 
-    useEffect(() => {
-        fetchData();
-    }, [teamName]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         try {
             const decodedName = decodeURIComponent(teamName);
 
@@ -57,7 +51,11 @@ const EditTeam = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [navigate, teamName]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();

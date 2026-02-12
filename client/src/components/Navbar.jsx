@@ -145,7 +145,7 @@ const Navbar = () => {
                                 <span className="nav-text">Chat</span>
                             </Link>
                             <Link to="/projects" className={`nav-item ${isActive('/projects') ? 'active' : ''}`} title="Projects">
-                                <i className="fas fa-projects"></i>
+                                <i className="fas fa-diagram-project"></i>
                                 <span className="nav-text">Projects</span>                                
                             </Link>
                             {isAdmin && (

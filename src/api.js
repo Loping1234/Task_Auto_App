@@ -1,9 +1,12 @@
 require('dotenv').config();
 const express = require("express");
+const http = require('http');
 const cors = require("cors");
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const jwt = require('jsonwebtoken');
+const { Server } = require('socket.io');
 
 const app = express();
 
@@ -20,6 +23,118 @@ app.use(cors({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// ==========================================
+// SOCKET.IO (Real-time chat)
+// ==========================================
+
+const collection = require('./config');
+const { JWT_SECRET } = require('./middleware/auth');
+const Team = require('../models/team');
+const Employee = require('../models/employee');
+
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+        allowedHeaders: ['Content-Type', 'Authorization']
+    }
+});
+
+// Make io available in route handlers/controllers
+app.set('io', io);
+
+// Authenticate sockets via the same JWT used by REST APIs
+io.use(async (socket, next) => {
+    try {
+        const headerAuth = socket.handshake.headers?.authorization;
+        const authToken = socket.handshake.auth?.token;
+
+        let token;
+        if (typeof authToken === 'string' && authToken.trim()) {
+            token = authToken.trim();
+        } else if (typeof headerAuth === 'string' && headerAuth.startsWith('Bearer ')) {
+            token = headerAuth.split(' ')[1];
+        }
+
+        if (!token) {
+            return next(new Error('Unauthorized'));
+        }
+
+        const decoded = jwt.verify(token, JWT_SECRET);
+        const user = await collection.findById(decoded.id);
+        if (!user) {
+            return next(new Error('Unauthorized'));
+        }
+
+        socket.user = {
+            id: user._id,
+            email: user.email,
+            role: user.role
+        };
+        return next();
+    } catch (err) {
+        return next(new Error('Unauthorized'));
+    }
+});
+
+io.on('connection', (socket) => {
+    socket.on('chat:join', async ({ room } = {}) => {
+        try {
+            if (typeof room !== 'string' || !room.trim()) return;
+
+            // Team rooms: team:<teamName>
+            if (room.startsWith('team:')) {
+                const teamName = room.slice('team:'.length);
+                if (!teamName) return;
+
+                if (socket.user?.role === 'employee') {
+                    const employee = await Employee.findOne({ email: socket.user.email });
+                    if (!employee?.teams?.includes(teamName)) return;
+                }
+
+                const team = await Team.findOne({ teamName });
+                if (!team) return;
+
+                await socket.join(room);
+                return;
+            }
+
+            // Admin chat rooms
+            // - admin:general
+            // - admin:dm:<subadminEmail>
+            if (room === 'admin:general') {
+                if (!['admin', 'subadmin'].includes(socket.user?.role)) return;
+                await socket.join(room);
+                return;
+            }
+
+            if (room.startsWith('admin:dm:')) {
+                if (!['admin', 'subadmin'].includes(socket.user?.role)) return;
+                const subadminEmail = room.slice('admin:dm:'.length);
+                if (!subadminEmail) return;
+
+                // Subadmins can only join their own DM room; admins can join any.
+                if (socket.user.role === 'subadmin' && socket.user.email !== subadminEmail) return;
+
+                await socket.join(room);
+            }
+        } catch (err) {
+            // ignore join errors to avoid crashing socket handlers
+        }
+    });
+
+    socket.on('chat:leave', async ({ room } = {}) => {
+        try {
+            if (typeof room !== 'string' || !room.trim()) return;
+            await socket.leave(room);
+        } catch (err) {
+            // ignore
+        }
+    });
+});
 
 // ==========================================
 // IMAGE UPLOAD SETUP
@@ -95,7 +210,7 @@ if (fs.existsSync(clientBuildPath)) {
 // ==========================================
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`API Server running on port ${PORT}`);
     console.log(`Frontend: http://localhost:5173 (Vite dev server)`);
     console.log(`API: http://localhost:${PORT}/api`);

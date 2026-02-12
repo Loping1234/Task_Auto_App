@@ -1,4 +1,3 @@
-// src/controllers/chatController.js
 const collection = require("../config");
 const Team = require("../../models/team");
 const Employee = require("../../models/employee");
@@ -77,6 +76,9 @@ const sendTeamMessage = async (req, res) => {
             senderEmail: email,
             message: message.trim()
         });
+
+        const io = req.app.get('io');
+        io?.to(`team:${teamName}`).emit('chat:team:new_message', newMessage);
 
         // Send Chat Notifications to team members
         try {
@@ -169,11 +171,24 @@ const sendAdminMessage = async (req, res) => {
             receiverEmail: actualReceiver,
             message: message.trim()
         });
-
-        // Send Chat Notifications
+        try {
+            const io = req.app.get('io');
+            if (io) {
+                if (actualReceiver === 'all@subadmin.com') {
+                    io.to('admin:general').emit('chat:admin:new_message', newMessage);
+                } else {
+                    const dmRoom = role === 'admin'
+                        ? `admin:dm:${actualReceiver}`
+                        : `admin:dm:${email}`;
+                    io.to(dmRoom).emit('chat:admin:new_message', newMessage);
+                }
+            }
+        } catch (socketErr) {
+            console.error('[ADMIN CHAT SOCKET EMIT ERROR]', socketErr);
+        }
         try {
             const notifications = [];
-
+            const io = req.app.get('io');
             if (actualReceiver === 'all@subadmin.com') {
                 const subadmins = await collection.find({ role: 'subadmin' });
                 const admin = await collection.findOne({ role: 'admin' });

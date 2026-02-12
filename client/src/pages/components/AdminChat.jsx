@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { chatAPI } from '../../api';
+import { ensureSocketConnected, socket } from '../../socket';
 import Navbar from '../../components/Navbar';
 import '../styles/TeamChat.css';
 
@@ -16,16 +17,82 @@ const AdminChat = () => {
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const chatBodyRef = useRef(null);
-    const [darkMode, setDarkMode] = useState(false);
+
+    const fetchSubadmins = useCallback(async () => {
+        try {
+            const response = await chatAPI.getSubadmins();
+            setSubadmins(response.data.subadmins || []);
+        } catch (err) {
+            console.error('Failed to load subadmins', err);
+        }
+    }, []);
+
+    const fetchMessages = useCallback(async () => {
+        try {
+            const response = await chatAPI.getAdminSubadminMessages(channel);
+            setMessages(response.data.messages || []);
+        } catch (err) {
+            console.error('Failed to load messages', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [channel]);
 
     useEffect(() => {
         if (isAdmin) {
             fetchSubadmins();
         }
+    }, [fetchSubadmins, isAdmin]);
+
+    useEffect(() => {
         fetchMessages();
-        const interval = setInterval(fetchMessages, 5000);
-        return () => clearInterval(interval);
-    }, [channel]);
+    }, [fetchMessages]);
+
+    useEffect(() => {
+        const s = ensureSocketConnected();
+
+        const userEmail = user?.email;
+        if (!userEmail) return;
+
+        const room = channel === 'general'
+            ? 'admin:general'
+            : isAdmin
+                ? `admin:dm:${channel}`
+                : `admin:dm:${userEmail}`;
+
+        s.emit('chat:join', { room });
+
+        const onNewMessage = (msg) => {
+            // Avoid duplicates
+            setMessages((prev) => {
+                if (msg?._id && prev.some((m) => m?._id === msg._id)) return prev;
+
+                // Filter to match current view
+                const isBroadcast = msg?.receiverEmail === 'all@subadmin.com';
+
+                if (channel === 'general') {
+                    return isBroadcast ? [...prev, msg] : prev;
+                }
+
+                if (isAdmin) {
+                    const isDmBetween =
+                        (msg?.senderEmail === userEmail && msg?.receiverEmail === channel) ||
+                        (msg?.senderEmail === channel && msg?.receiverEmail === userEmail);
+                    return (isBroadcast || isDmBetween) ? [...prev, msg] : prev;
+                }
+
+                const involvesMe = msg?.senderEmail === userEmail || msg?.receiverEmail === userEmail;
+                return (isBroadcast || involvesMe) ? [...prev, msg] : prev;
+            });
+        };
+
+        s.on('chat:admin:new_message', onNewMessage);
+
+        return () => {
+            s.off('chat:admin:new_message', onNewMessage);
+            s.emit('chat:leave', { room });
+        };
+    }, [channel, isAdmin, user?.email]);
 
     useEffect(() => {
         if (chatBodyRef.current) {
@@ -36,45 +103,11 @@ const AdminChat = () => {
     useEffect(() => {
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'dark') {
-            setDarkMode(true);
             document.documentElement.setAttribute('data-theme', 'dark');
         } else {
             document.documentElement.setAttribute('data-theme', 'light');
         }
     }, []);
-
-    const toggleDarkMode = () => {
-        const newMode = !darkMode;
-        setDarkMode(newMode);
-        if (newMode) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-        } else {
-            document.documentElement.setAttribute('data-theme', 'light');
-            localStorage.setItem('theme', 'light');
-        }
-    };
-
-
-    const fetchSubadmins = async () => {
-        try {
-            const response = await chatAPI.getSubadmins();
-            setSubadmins(response.data.subadmins || []);
-        } catch (err) {
-            console.error('Failed to load subadmins', err);
-        }
-    };
-
-    const fetchMessages = async () => {
-        try {
-            const response = await chatAPI.getAdminSubadminMessages(channel);
-            setMessages(response.data.messages || []);
-        } catch (err) {
-            console.error('Failed to load messages', err);
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
@@ -93,7 +126,10 @@ const AdminChat = () => {
 
             await chatAPI.sendAdminSubadminMessage(receiverEmail, newMessage, channel);
             setNewMessage('');
-            await fetchMessages();
+            // Socket.IO should deliver the new message; fallback to refresh if disconnected.
+            if (!socket.connected) {
+                await fetchMessages();
+            }
         } catch (err) {
             console.error('Failed to send message', err);
         } finally {
@@ -110,12 +146,6 @@ const AdminChat = () => {
             hour: '2-digit',
             minute: '2-digit'
         });
-    };
-
-    const getChannelLabel = () => {
-        if (channel === 'general') return 'General Broadcast';
-        if (isAdmin) return `Private: ${channel}`;
-        return 'Direct to Admin';
     };
 
     if (loading) {

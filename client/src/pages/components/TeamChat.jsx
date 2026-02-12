@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { chatAPI, teamsAPI } from '../../api';
+import { chatAPI } from '../../api';
+import { ensureSocketConnected, socket } from '../../socket';
 import Navbar from '../../components/Navbar';
 import '../styles/TeamChat.css';
 
@@ -18,26 +19,7 @@ const TeamChat = () => {
     const [sending, setSending] = useState(false);
     const chatBodyRef = useRef(null);
 
-    useEffect(() => {
-        fetchTeams();
-    }, []);
-
-    useEffect(() => {
-        if (teamName) {
-            fetchMessages();
-            const interval = setInterval(fetchMessages, 5000); // Auto-refresh every 5s
-            return () => clearInterval(interval);
-        }
-    }, [teamName]);
-
-    useEffect(() => {
-        // Scroll to bottom when messages change
-        if (chatBodyRef.current) {
-            chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
-        }
-    }, [messages]);
-
-    const fetchTeams = async () => {
+    const fetchTeams = useCallback(async () => {
         try {
             const response = await chatAPI.getEmployeeTeams();
             setTeams(response.data.teams || []);
@@ -51,9 +33,9 @@ const TeamChat = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [setSearchParams, teamName]);
 
-    const fetchMessages = async () => {
+    const fetchMessages = useCallback(async () => {
         if (!teamName) return;
         try {
             const response = await chatAPI.getTeamMessages(teamName);
@@ -62,7 +44,47 @@ const TeamChat = () => {
         } catch (err) {
             console.error('Failed to load messages', err);
         }
-    };
+    }, [teamName]);
+
+    useEffect(() => {
+        fetchTeams();
+    }, [fetchTeams]);
+
+    useEffect(() => {
+        if (!teamName) return;
+        fetchMessages();
+    }, [fetchMessages, teamName]);
+
+    useEffect(() => {
+        if (!teamName) return;
+
+        const s = ensureSocketConnected();
+        const room = `team:${teamName}`;
+
+        s.emit('chat:join', { room });
+
+        const onNewMessage = (msg) => {
+            if (msg?.teamName !== teamName) return;
+            setMessages((prev) => {
+                if (msg?._id && prev.some((m) => m?._id === msg._id)) return prev;
+                return [...prev, msg];
+            });
+        };
+
+        s.on('chat:team:new_message', onNewMessage);
+
+        return () => {
+            s.off('chat:team:new_message', onNewMessage);
+            s.emit('chat:leave', { room });
+        };
+    }, [teamName]);
+
+    useEffect(() => {
+        // Scroll to bottom when messages change
+        if (chatBodyRef.current) {
+            chatBodyRef.current.scrollTop = chatBodyRef.current.scrollHeight;
+        }
+    }, [messages]);
 
     const handleSendMessage = async (e) => {
         e.preventDefault();
@@ -72,7 +94,10 @@ const TeamChat = () => {
         try {
             await chatAPI.sendTeamMessage(teamName, newMessage);
             setNewMessage('');
-            await fetchMessages();
+            // Socket.IO should deliver the new message; fallback to refresh if disconnected.
+            if (!socket.connected) {
+                await fetchMessages();
+            }
         } catch (err) {
             console.error('Failed to send message', err);
         } finally {
