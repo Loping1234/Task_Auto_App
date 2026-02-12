@@ -8,11 +8,14 @@ const { generateToken } = require("../middleware/auth");
 // Shared email transporter
 function getTransporter() {
     return nodemailer.createTransport({
-        service: 'gmail',
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
         auth: {
             user: (process.env.EMAIL_USER || '').trim(),
             pass: (process.env.EMAIL_PASS || '').trim()
-        }
+        },
+        family: 4 // Force IPv4 to prevent ENETUNREACH errors
     });
 }
 
@@ -122,10 +125,15 @@ const verify2FA = async (req, res) => {
 const signup = async (req, res) => {
     try {
         const { email, password } = req.body;
-        const existingUser = await collection.findOne({ email });
-        if (existingUser) {
+
+        // Check if user exists
+        let user = await collection.findOne({ email });
+
+        // If user exists AND is verified, block them
+        if (user && user.isVerified) {
             return res.status(400).json({ message: "User already exists" });
         }
+
         const hashedPassword = await bcrypt.hash(password, 10);
         const domain = email.split("@")[1];
         let role = "employee";
@@ -143,23 +151,38 @@ const signup = async (req, res) => {
         const emailVerificationToken = crypto.randomBytes(32).toString("hex");
         const emailVerificationExpires = Date.now() + 24 * 3600000; // 24 hours
 
-        const user = await collection.create({
-            email,
-            password: hashedPassword,
-            role,
-            emailVerificationToken,
-            emailVerificationExpires,
-            isVerified: false,
-            fullName: email.split("@")[0],
-            profilePicture: "default-avatar.png"
-        });
+        if (user) {
+            // User exists but NOT verified -> Update them and resend email
+            user.password = hashedPassword;
+            user.role = role;
+            user.emailVerificationToken = emailVerificationToken;
+            user.emailVerificationExpires = emailVerificationExpires;
+            await user.save();
+        } else {
+            // Create new user
+            user = await collection.create({
+                email,
+                password: hashedPassword,
+                role,
+                emailVerificationToken,
+                emailVerificationExpires,
+                isVerified: false,
+                fullName: email.split("@")[0],
+                profilePicture: "default-avatar.png"
+            });
+        }
 
         if (role === "employee") {
-            await Employee.create({
-                name: email.split("@")[0],
-                email,
-                password: hashedPassword
-            });
+            // Upsert employee record (update if exists, create if not)
+            await Employee.findOneAndUpdate(
+                { email },
+                {
+                    name: email.split("@")[0],
+                    email,
+                    password: hashedPassword
+                },
+                { upsert: true, new: true }
+            );
         }
 
         const transporter = getTransporter();
