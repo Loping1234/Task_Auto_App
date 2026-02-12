@@ -154,24 +154,8 @@ io.on('connection', (socket) => {
 });
 
 // ==========================================
-// IMAGE UPLOAD SETUP (S3)
+// IMAGE UPLOAD SETUP
 // ==========================================
-
-const s3Client = require('./config/s3');
-const multerS3 = require('multer-s3');
-
-const upload = multer({
-    storage: multerS3({
-        s3: s3Client,
-        bucket: process.env.AWS_BUCKET_NAME,
-        metadata: function (req, file, cb) {
-            cb(null, { fieldName: file.fieldname });
-        },
-        key: function (req, file, cb) {
-            cb(null, Date.now().toString() + '-' + file.originalname);
-        }
-    })
-});
 
 // Serve static images (Legacy support for old images)
 const imgsDir = path.join(__dirname, '../imgs');
@@ -179,6 +163,36 @@ if (!fs.existsSync(imgsDir)) {
     fs.mkdirSync(imgsDir, { recursive: true });
 }
 app.use('/imgs', express.static(imgsDir));
+
+let upload;
+
+if (process.env.AWS_BUCKET_NAME) {
+    // Use S3 storage in production
+    const s3Client = require('./config/s3');
+    const multerS3 = require('multer-s3');
+
+    upload = multer({
+        storage: multerS3({
+            s3: s3Client,
+            bucket: process.env.AWS_BUCKET_NAME,
+            metadata: function (req, file, cb) {
+                cb(null, { fieldName: file.fieldname });
+            },
+            key: function (req, file, cb) {
+                cb(null, Date.now().toString() + '-' + file.originalname);
+            }
+        })
+    });
+    console.log('✅ Using S3 for file uploads');
+} else {
+    // Fallback to local disk storage
+    const storage = multer.diskStorage({
+        destination: (req, file, cb) => cb(null, imgsDir),
+        filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
+    });
+    upload = multer({ storage });
+    console.log('⚠️  AWS_BUCKET_NAME not set — using local disk for file uploads');
+}
 
 // ==========================================
 // ROUTES
