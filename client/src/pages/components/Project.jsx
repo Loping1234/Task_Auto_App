@@ -4,107 +4,6 @@ import { useAuth } from '../../context/AuthContext';
 import { projectsAPI } from '../../api';
 import Navbar from '../../components/Navbar';
 import '../styles/Project.css';
-import {
-    DndContext,
-    closestCenter,
-    PointerSensor,
-    useSensor,
-    useSensors,
-} from "@dnd-kit/core";
-import {
-    arrayMove,
-    SortableContext,
-    useSortable,
-    horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-
-
-/* ─── Draggable status chip ─── */
-const SortableStatusChip = ({ id, label, color }) => {
-    const {
-        attributes,
-        listeners,
-        setNodeRef,
-        transform,
-        transition,
-        isDragging,
-    } = useSortable({ id });
-
-    const style = {
-        transform: CSS.Transform.toString(transform),
-        transition,
-        backgroundColor: color + '20',
-        color: color,
-        borderColor: color,
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 10 : 'auto',
-    };
-
-    return (
-        <span
-            ref={setNodeRef}
-            style={style}
-            className={`status-chip status-chip-draggable${isDragging ? ' status-chip-dragging' : ''}`}
-            {...attributes}
-            {...listeners}
-        >
-            <i className="fas fa-grip-vertical status-grip"></i>
-            {label}
-        </span>
-    );
-};
-
-/* ─── Container with DndContext for one project's statuses ─── */
-const StatusChipsContainer = ({ projectId, statuses, onReorder }) => {
-    const sensors = useSensors(
-        useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
-    );
-
-    // Use label+index as unique id since statuses may not have _id
-    const items = statuses.map((s, i) => ({ ...s, sortId: `${s.label}-${i}` }));
-
-    const handleDragEnd = (event) => {
-        const { active, over } = event;
-        if (!over || active.id === over.id) return;
-
-        const oldIndex = items.findIndex((s) => s.sortId === active.id);
-        const newIndex = items.findIndex((s) => s.sortId === over.id);
-        if (oldIndex === -1 || newIndex === -1) return;
-
-        const reordered = arrayMove(statuses, oldIndex, newIndex).map((s, i) => ({
-            ...s,
-            order: i,
-        }));
-
-        onReorder(projectId, reordered);
-    };
-
-    return (
-        <div className="project-statuses">
-            <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleDragEnd}
-            >
-                <SortableContext
-                    items={items.map((s) => s.sortId)}
-                    strategy={horizontalListSortingStrategy}
-                >
-                    {items.map((s) => (
-                        <SortableStatusChip
-                            key={s.sortId}
-                            id={s.sortId}
-                            label={s.label}
-                            color={s.color}
-                        />
-                    ))}
-                </SortableContext>
-            </DndContext>
-        </div>
-    );
-};
-
 
 const Project = () => {
     const { isAdmin, isSubadmin } = useAuth();
@@ -139,22 +38,13 @@ const Project = () => {
         }
     };
 
-    /* Optimistic reorder + persist to backend */
-    const handleReorderStatuses = async (projectId, reorderedStatuses) => {
-        // Optimistic update
-        setProjects((prev) =>
-            prev.map((p) =>
-                p._id === projectId ? { ...p, customStatuses: reorderedStatuses } : p
-            )
-        );
-
-        try {
-            await projectsAPI.updateStatuses(projectId, reorderedStatuses);
-        } catch (err) {
-            console.error('Failed to save status order', err);
-            // Rollback on failure
-            fetchProjects();
-        }
+    const getStatusClass = (status) => {
+        if (!status) return 'status-na';
+        const lower = status.toLowerCase();
+        if (lower === 'completed') return 'status-completed';
+        if (lower === 'in progress' || lower === 'inprogress') return 'status-progress';
+        if (lower === 'pending') return 'status-pending';
+        return 'status-na';
     };
 
     if (!isAdmin && !isSubadmin) {
@@ -200,7 +90,7 @@ const Project = () => {
 
                 {error && <div className="error-banner">{error}</div>}
 
-                <div className="projects-grid">
+                <div className="projects-table-container">
                     {projects.length === 0 ? (
                         <div className="empty-state">
                             <i className="fas fa-project-diagram"></i>
@@ -208,75 +98,78 @@ const Project = () => {
                             <p>Create a project to get started</p>
                         </div>
                     ) : (
-                        projects.map(proj => (
-                            <div key={proj._id} className="project-card">
-                                <div className="project-header">
-                                    <div className="project-icon">
-                                        <i className="fas fa-project-diagram"></i>
-                                    </div>
-                                    <div>
-                                        <h3>{proj.projectName}</h3>
-                                        {proj.description && (
-                                            <p className="project-description">{proj.description}</p>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {/* Progress Bar */}
-                                <div className="project-progress">
-                                    <div className="progress-bar-bg">
-                                        <div
-                                            className="progress-bar-fill"
-                                            style={{ width: `${proj.progress || 0}%` }}
-                                        ></div>
-                                    </div>
-                                    <span className="progress-text">{proj.progress || 0}% — {proj.computedStatus || 'N/A'}</span>
-                                </div>
-
-                                <div className="project-details">
-                                    <p className="project-stat">
-                                        <i className="fas fa-tasks"></i>
-                                        {proj.tasks?.length || 0} tasks
-                                    </p>
-                                    <p className="project-stat">
-                                        <i className="fas fa-users"></i>
-                                        {proj.employees?.length || 0} members
-                                    </p>
-                                    <p className="project-stat">
-                                        <i className="fas fa-user-shield"></i>
-                                        {proj.assignedSubadmins?.length || 0} subadmins
-                                    </p>
-                                </div>
-
-                                {/* Draggable Custom Status Tags */}
-                                {proj.customStatuses && proj.customStatuses.length > 0 && (
-                                    <StatusChipsContainer
-                                        projectId={proj._id}
-                                        statuses={proj.customStatuses}
-                                        onReorder={handleReorderStatuses}
-                                    />
-                                )}
-
-                                <div className="project-actions">
-                                    <Link to={`/projects/${proj._id}`} className="action-btn view">
-                                        <i className="fas fa-eye"></i> View
-                                    </Link>
-                                    {isAdmin && (
-                                        <>
-                                            <Link to={`/projects/${proj._id}/edit`} className="action-btn edit">
-                                                <i className="fas fa-edit"></i> Edit
-                                            </Link>
-                                            <button
-                                                className="action-btn delete"
-                                                onClick={() => handleDelete(proj._id, proj.projectName)}
-                                            >
-                                                <i className="fas fa-trash"></i> Delete
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        ))
+                        <table className="projects-table">
+                            <thead>
+                                <tr>
+                                    <th>Project Name</th>
+                                    <th>Progress</th>
+                                    <th>Status</th>
+                                    <th>Tasks</th>
+                                    <th>Members</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {projects.map(proj => (
+                                    <tr key={proj._id}>
+                                        <td>
+                                            <div className="project-name-cell">
+                                                <div className="project-icon-small">
+                                                    <i className="fas fa-project-diagram"></i>
+                                                </div>
+                                                <div className="project-info">
+                                                    <h3>{proj.projectName}</h3>
+                                                    {proj.description && (
+                                                        <p className="project-desc-preview">{proj.description}</p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className="progress-cell">{proj.progress || 0}%</span>
+                                        </td>
+                                        <td>
+                                            <span className={`status-badge ${getStatusClass(proj.computedStatus)}`}>
+                                                {proj.computedStatus || 'N/A'}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="stat-cell">
+                                                <i className="fas fa-tasks"></i>
+                                                {proj.tasks?.length || 0}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span className="stat-cell">
+                                                <i className="fas fa-users"></i>
+                                                {proj.employees?.length || 0}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div className="action-buttons">
+                                                <Link to={`/projects/${proj._id}`} className="action-btn view" title="View Details">
+                                                    <i className="fas fa-eye"></i>
+                                                </Link>
+                                                {isAdmin && (
+                                                    <>
+                                                        <Link to={`/projects/${proj._id}/edit`} className="action-btn edit" title="Edit Project">
+                                                            <i className="fas fa-edit"></i>
+                                                        </Link>
+                                                        <button
+                                                            className="action-btn delete"
+                                                            onClick={() => handleDelete(proj._id, proj.projectName)}
+                                                            title="Delete Project"
+                                                        >
+                                                            <i className="fas fa-trash"></i>
+                                                        </button>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
                     )}
                 </div>
             </main>
