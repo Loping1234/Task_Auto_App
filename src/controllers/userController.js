@@ -9,7 +9,7 @@ const uploadProfilePicture = async (req, res) => {
         }
 
         const userId = req.user.id;
-        const profilePicture = req.file.filename;
+        const profilePicture = req.file.location; // S3 URL
 
         await collection.findByIdAndUpdate(userId, { profilePicture });
 
@@ -66,8 +66,30 @@ const getAllUsers = async (req, res) => {
     }
 };
 
+const toggle2FA = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { enabled } = req.body;
+
+        const user = await collection.findByIdAndUpdate(
+            userId,
+            { twoFactorEnabled: enabled },
+            { new: true }
+        ).select("-password -__v");
+
+        res.json({
+            message: enabled ? "Two-Factor Authentication enabled" : "Two-Factor Authentication disabled",
+            twoFactorEnabled: user.twoFactorEnabled
+        });
+    } catch (err) {
+        console.error("Toggle 2FA error", err);
+        res.status(500).json({ message: "Failed to update 2FA setting" });
+    }
+};
+
 module.exports = {
     uploadProfilePicture,
     updateProfile,
-    getAllUsers
+    getAllUsers,
+    toggle2FA
 };

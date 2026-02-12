@@ -1,4 +1,3 @@
-// src/routes/authRoutes.js
 const express = require("express");
 const router = express.Router();
 const { verifyToken } = require("../middleware/auth");
@@ -8,12 +7,14 @@ const {
     resetPassword,
     signup,
     verifyEmail,
+    verify2FA,
     resendOtp,
     changePassword,
     getMe
 } = require("../controllers/authController");
 
 router.post("/login", login);
+router.post("/verify-2fa", verify2FA);
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 router.post("/signup", signup);

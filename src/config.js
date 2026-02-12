@@ -46,6 +46,16 @@ const LoginSchema = new mongoose.Schema({
     type: String,
     default: "default-avatar.png"
   },
+  loginOtp: {
+    type: String
+  },
+  loginOtpExpires: {
+    type: Date
+  },
+  twoFactorEnabled: {
+    type: Boolean,
+    default: true
+  },
   assignedTasks: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: "tasks"

@@ -25,18 +25,31 @@ app.use(express.urlencoded({ extended: false }));
 // IMAGE UPLOAD SETUP
 // ==========================================
 
+// ==========================================
+// IMAGE UPLOAD SETUP (S3)
+// ==========================================
+
+const s3Client = require('./config/s3');
+const multerS3 = require('multer-s3');
+
+const upload = multer({
+    storage: multerS3({
+        s3: s3Client,
+        bucket: process.env.AWS_BUCKET_NAME,
+        metadata: function (req, file, cb) {
+            cb(null, { fieldName: file.fieldname });
+        },
+        key: function (req, file, cb) {
+            cb(null, Date.now().toString() + '-' + file.originalname);
+        }
+    })
+});
+
+// Serve static images (Legacy support for old images)
 const imgsDir = path.join(__dirname, '../imgs');
 if (!fs.existsSync(imgsDir)) {
     fs.mkdirSync(imgsDir, { recursive: true });
 }
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, imgsDir),
-    filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
-});
-const upload = multer({ storage });
-
-// Serve static images
 app.use('/imgs', express.static(imgsDir));
 
 // ==========================================
@@ -51,6 +64,7 @@ const teamRoutes = require("./routes/teamRoutes");
 const chatRoutes = require("./routes/chatRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const watchlistRoutes = require("./routes/watchlistRoutes");
+const projectRoutes = require("./routes/projectRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes(upload));           // Pass upload middleware
@@ -60,7 +74,7 @@ app.use("/api", teamRoutes);                          // /api/teams, /api/employ
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/watchlist", watchlistRoutes);
-
+app.use("/api/projects", projectRoutes);
 // ==========================================
 // SERVE REACT APP (Production)
 // ==========================================

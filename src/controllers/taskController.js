@@ -61,7 +61,7 @@ const createTask = async (req, res) => {
         const taskData = {
             title,
             description,
-            image: req.file ? req.file.filename : null,
+            image: req.file ? req.file.location : null,
             imageContentType: req.file ? req.file.mimetype : null,
             startDate: startDate ? new Date(startDate) : undefined,
             endDate: endDate ? new Date(endDate) : undefined,
@@ -180,7 +180,7 @@ const updateTask = async (req, res) => {
         };
 
         if (req.file) {
-            updateData.image = req.file.filename;
+            updateData.image = req.file.location;
             updateData.imageContentType = req.file.mimetype;
         }
 
@@ -336,7 +336,7 @@ const addComment = async (req, res) => {
         const comment = {
             text,
             author: req.user.email,
-            image: req.file ? req.file.filename : null
+            image: req.file ? req.file.location : null
         };
 
         const task = await Task.findByIdAndUpdate(
