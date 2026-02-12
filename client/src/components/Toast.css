@@ -1,0 +1,140 @@
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.notification-toast {
+    pointer-events: auto;
+    background: white;
+    min-width: 300px;
+    max-width: 400px;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideIn 0.3s ease-out;
+    cursor: pointer;
+    border-left: 4px solid var(--primary-color, #4f46e5);
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.notification-toast:hover {
+    transform: translateY(-2px);
+}
+
+.notification-toast.assignment {
+    border-left-color: #6366f1;
+}
+
+.notification-toast.task_edit {
+    border-left-color: #f59e0b;
+}
+
+.notification-toast.chat {
+    border-left-color: #10b981;
+}
+
+.notification-toast.team_change {
+    border-left-color: #3b82f6;
+}
+
+.notification-toast.status_change {
+    border-left-color: #ec4899;
+}
+
+.toast-icon {
+    width: 36px;
+    height: 36px;
+    background: #f3f4f6;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color, #4f46e5);
+    flex-shrink: 0;
+}
+
+.assignment .toast-icon {
+    color: #6366f1;
+    background: #eef2ff;
+}
+
+.task_edit .toast-icon {
+    color: #f59e0b;
+    background: #fffbeb;
+}
+
+.chat .toast-icon {
+    color: #10b981;
+    background: #ecfdf5;
+}
+
+.team_change .toast-icon {
+    color: #3b82f6;
+    background: #eff6ff;
+}
+
+.status_change .toast-icon {
+    color: #ec4899;
+    background: #fdf2f8;
+}
+
+.toast-content {
+    flex-grow: 1;
+}
+
+.toast-content p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #1f2937;
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 5px;
+    font-size: 0.8rem;
+    transition: color 0.2s;
+}
+
+.toast-close:hover {
+    color: #4b5563;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Dark mode support */
+[data-theme='dark'] .notification-toast {
+    background: #1f2937;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+[data-theme='dark'] .toast-content p {
+    color: #f9fafb;
+}
+
+[data-theme='dark'] .toast-icon {
+    background: #374151;
+}

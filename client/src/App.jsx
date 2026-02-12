@@ -24,6 +24,8 @@ import EnterOTP from './pages/components/EnterOTP';
 import VerifyEmail from './pages/components/VerifyEmail';
 import Profile from './pages/components/Profile';
 import Project from './pages/components/Project';
+import ProjectDetails from './pages/components/ProjectDetails';
+import EditProject from './pages/components/EditProject';
 import CreateProject from './pages/components/CreateProject';
 
 import './app.css';
@@ -86,7 +88,15 @@ function App() {
             path="/projects/:id"
             element={
               <ProtectedRoute allowedRoles={['admin', 'subadmin']}>
-                <Project />
+                <ProjectDetails />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/projects/:id/edit"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <EditProject />
               </ProtectedRoute>
             }
           />

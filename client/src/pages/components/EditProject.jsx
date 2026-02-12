@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { projectsAPI, employeesAPI, subadminsAPI } from '../../api';
 import Navbar from '../../components/Navbar';
@@ -21,16 +21,10 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-let uidCounter = 0;
-const makeUid = () => `s-${++uidCounter}`;
+let uidCounter = 1000;
+const makeUid = () => `es-${++uidCounter}`;
 
-const defaultStatuses = [
-    { _uid: makeUid(), label: 'To Do', order: 1, color: '#6b7280' },
-    { _uid: makeUid(), label: 'In Progress', order: 2, color: '#f59e0b' },
-    { _uid: makeUid(), label: 'Done', order: 3, color: '#10b981' },
-];
-
-/* ─── Draggable status row ─── */
+/* ─── Draggable status row (shared with CreateProject pattern) ─── */
 const SortableStatusRow = ({ id, status, index, onRemove }) => {
     const {
         attributes,
@@ -54,10 +48,7 @@ const SortableStatusRow = ({ id, status, index, onRemove }) => {
                 <i className="fas fa-grip-vertical"></i>
             </span>
             <span className="status-order">{status.order}</span>
-            <span
-                className="status-color-dot"
-                style={{ backgroundColor: status.color }}
-            ></span>
+            <span className="status-color-dot" style={{ backgroundColor: status.color }}></span>
             <span className="status-label">{status.label}</span>
             <button
                 type="button"
@@ -71,38 +62,50 @@ const SortableStatusRow = ({ id, status, index, onRemove }) => {
     );
 };
 
-const CreateProject = () => {
+const EditProject = () => {
+    const { id } = useParams();
     const { isAdmin } = useAuth();
     const navigate = useNavigate();
 
-    const [formData, setFormData] = useState({
-        projectName: '',
-        description: '',
-    });
+    const [formData, setFormData] = useState({ projectName: '', description: '' });
     const [selectedSubadmins, setSelectedSubadmins] = useState([]);
     const [selectedEmployees, setSelectedEmployees] = useState([]);
-    const [customStatuses, setCustomStatuses] = useState(defaultStatuses);
+    const [customStatuses, setCustomStatuses] = useState([]);
     const [newStatus, setNewStatus] = useState({ label: '', color: '#6b7280' });
 
-    const [subadmins, setSubadmins] = useState([]);
-    const [employees, setEmployees] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [allSubadmins, setAllSubadmins] = useState([]);
+    const [allEmployees, setAllEmployees] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
     useEffect(() => {
-        fetchUsers();
-    }, []);
+        fetchData();
+    }, [id]);
 
-    const fetchUsers = async () => {
+    const fetchData = async () => {
         try {
-            const [subRes, empRes] = await Promise.all([
+            const [projRes, subRes, empRes] = await Promise.all([
+                projectsAPI.getById(id),
                 subadminsAPI.getAll(),
                 employeesAPI.getAll(),
             ]);
-            setSubadmins(subRes.data.subadmins || subRes.data || []);
-            setEmployees(empRes.data.employees || empRes.data || []);
+
+            const proj = projRes.data.project;
+            setFormData({ projectName: proj.projectName || '', description: proj.description || '' });
+            setSelectedSubadmins((proj.assignedSubadmins || []).map(s => s._id || s));
+            setSelectedEmployees((proj.employees || []).map(e => e._id || e));
+            setCustomStatuses(
+                (proj.customStatuses || []).map(s => ({ ...s, _uid: makeUid() }))
+            );
+
+            setAllSubadmins(subRes.data.subadmins || subRes.data || []);
+            setAllEmployees(empRes.data.employees || empRes.data || []);
         } catch (err) {
-            console.error('Failed to load users', err);
+            setError('Failed to load project data');
+            console.error(err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -111,16 +114,15 @@ const CreateProject = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    // ── Member selection ──
-    const toggleSubadmin = (id) => {
+    const toggleSubadmin = (sid) => {
         setSelectedSubadmins(prev =>
-            prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]
+            prev.includes(sid) ? prev.filter(s => s !== sid) : [...prev, sid]
         );
     };
 
-    const toggleEmployee = (id) => {
+    const toggleEmployee = (eid) => {
         setSelectedEmployees(prev =>
-            prev.includes(id) ? prev.filter(e => e !== id) : [...prev, id]
+            prev.includes(eid) ? prev.filter(e => e !== eid) : [...prev, eid]
         );
     };
 
@@ -130,7 +132,6 @@ const CreateProject = () => {
         useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
     );
 
-    // ── Custom statuses ──
     const addStatus = () => {
         if (!newStatus.label.trim()) return;
         setCustomStatuses(prev => [
@@ -158,31 +159,32 @@ const CreateProject = () => {
         });
     };
 
-    // ── Submit ──
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-
         if (!formData.projectName.trim()) {
             setError('Project name is required');
             return;
         }
 
-        setLoading(true);
+        setSaving(true);
+        setError('');
         try {
-            await projectsAPI.create({
+            // Update basic info
+            await projectsAPI.update(id, {
                 projectName: formData.projectName.trim(),
                 description: formData.description.trim(),
-                assignedSubadmins: selectedSubadmins,
-                employees: selectedEmployees,
-                customStatuses,
             });
-            navigate('/projects');
+
+            // Update statuses (strip _uid before sending)
+            const cleanStatuses = customStatuses.map(({ _uid, ...rest }) => rest);
+            await projectsAPI.updateStatuses(id, cleanStatuses);
+
+            navigate(`/projects/${id}`);
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to create project');
+            setError(err.response?.data?.message || 'Failed to update project');
             console.error(err);
         } finally {
-            setLoading(false);
+            setSaving(false);
         }
     };
 
@@ -191,7 +193,21 @@ const CreateProject = () => {
             <div className="page-layout">
                 <Navbar />
                 <main className="page-main">
-                    <div className="error-banner">Only admins can create projects.</div>
+                    <div className="error-banner">Only admins can edit projects.</div>
+                </main>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className="page-layout">
+                <Navbar />
+                <main className="page-main">
+                    <div className="loading-container">
+                        <div className="spinner"></div>
+                        <p>Loading project...</p>
+                    </div>
                 </main>
             </div>
         );
@@ -203,8 +219,11 @@ const CreateProject = () => {
             <main className="page-main">
                 <div className="page-header">
                     <div>
-                        <h1>Create Project</h1>
-                        <p className="page-subtitle">Set up a new project with members and workflow statuses</p>
+                        <Link to={`/projects/${id}`} className="back-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: '0.5rem' }}>
+                            <i className="fas fa-arrow-left"></i> Back to Project
+                        </Link>
+                        <h1>Edit Project</h1>
+                        <p className="page-subtitle">Update project details, members and workflow statuses</p>
                     </div>
                 </div>
 
@@ -242,11 +261,11 @@ const CreateProject = () => {
                     {/* ── Subadmins ── */}
                     <div className="form-section">
                         <h3><i className="fas fa-user-shield"></i> Assign Subadmins</h3>
-                        {subadmins.length === 0 ? (
+                        {allSubadmins.length === 0 ? (
                             <p className="text-muted">No subadmins available</p>
                         ) : (
                             <div className="member-picker">
-                                {subadmins.map(sa => (
+                                {allSubadmins.map(sa => (
                                     <label
                                         key={sa._id}
                                         className={`member-option ${selectedSubadmins.includes(sa._id) ? 'selected' : ''}`}
@@ -267,11 +286,11 @@ const CreateProject = () => {
                     {/* ── Employees ── */}
                     <div className="form-section">
                         <h3><i className="fas fa-users"></i> Assign Employees</h3>
-                        {employees.length === 0 ? (
+                        {allEmployees.length === 0 ? (
                             <p className="text-muted">No employees available</p>
                         ) : (
                             <div className="member-picker">
-                                {employees.map(emp => (
+                                {allEmployees.map(emp => (
                                     <label
                                         key={emp._id}
                                         className={`member-option ${selectedEmployees.includes(emp._id) ? 'selected' : ''}`}
@@ -292,7 +311,7 @@ const CreateProject = () => {
                     {/* ── Custom Statuses ── */}
                     <div className="form-section">
                         <h3><i className="fas fa-tags"></i> Workflow Statuses</h3>
-                        <p className="text-muted">Define the task statuses for this project (drag order = pipeline order)</p>
+                        <p className="text-muted">Drag to reorder status pipeline</p>
 
                         <DndContext
                             sensors={sensors}
@@ -341,12 +360,12 @@ const CreateProject = () => {
                         <button
                             type="button"
                             className="btn btn-secondary"
-                            onClick={() => navigate('/projects')}
+                            onClick={() => navigate(`/projects/${id}`)}
                         >
                             Cancel
                         </button>
-                        <button type="submit" className="btn btn-primary" disabled={loading}>
-                            {loading ? 'Creating...' : 'Create Project'}
+                        <button type="submit" className="btn btn-primary" disabled={saving}>
+                            {saving ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
                 </form>
@@ -355,4 +374,4 @@ const CreateProject = () => {
     );
 };
 
-export default CreateProject;
+export default EditProject;

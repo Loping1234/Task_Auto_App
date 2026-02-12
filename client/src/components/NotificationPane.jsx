@@ -4,6 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { notificationAPI, watchlistAPI, usersAPI } from '../api';
 import './NotificationPane.css';
 import { getImageUrl } from '../utils/imageUtils';
+import { ensureSocketConnected } from '../socket';
+import Toast from './Toast'; // We will create this next
 
 const notificationTypes = [
     { value: 'all', label: 'All Types' },
@@ -45,6 +47,7 @@ const NotificationPane = () => {
     // Pagination state
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
+    const [toasts, setToasts] = useState([]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
@@ -112,11 +115,32 @@ const NotificationPane = () => {
         fetchNotifications(1);
         fetchAllData();
         const interval = setInterval(() => {
-            // Only poll page 1 if we haven't loaded more pages to avoid overwriting scroll state
+            // Long fallback interval (5 minutes) instead of 30 seconds
             if (page === 1) fetchNotifications(1);
-        }, 30000);
+        }, 300000);
         return () => clearInterval(interval);
     }, []);
+
+    useEffect(() => {
+        const s = ensureSocketConnected();
+
+        const onNewNotification = (notif) => {
+            if (watchedUser) return; // Don't push to feed if watching someone else
+
+            setNotifications(prev => {
+                // Check if already exists to prevent duplicates
+                if (prev.some(n => n._id === notif._id)) return prev;
+                return [notif, ...prev];
+            });
+
+            // Add to toast list
+            const id = Date.now();
+            setToasts(prev => [...prev, { id, message: notif.message, type: notif.type }]);
+        };
+
+        s.on('notification:new', onNewNotification);
+        return () => s.off('notification:new', onNewNotification);
+    }, [watchedUser]);
 
     useEffect(() => {
         setNotifications([]); // Clear old notifications immediately when context changes
@@ -631,6 +655,17 @@ const NotificationPane = () => {
                         </div>
                     </div>
                 )}
+            </div>
+            {/* Toasts */}
+            <div className="toast-container">
+                {toasts.map(toast => (
+                    <Toast
+                        key={toast.id}
+                        message={toast.message}
+                        type={toast.type}
+                        onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
+                    />
+                ))}
             </div>
         </div >
     );

@@ -134,6 +134,40 @@
     white-space: nowrap;
 }
 
+/* ========== Draggable Status Chips ========== */
+.status-chip-draggable {
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    transition: box-shadow 0.2s, opacity 0.2s;
+}
+
+.status-chip-draggable:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.status-chip-draggable:active {
+    cursor: grabbing;
+}
+
+.status-chip-dragging {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    cursor: grabbing;
+}
+
+.status-grip {
+    font-size: 0.55rem;
+    opacity: 0.4;
+    transition: opacity 0.15s;
+}
+
+.status-chip-draggable:hover .status-grip {
+    opacity: 0.8;
+}
+
 /* ========== Action Buttons ========== */
 .project-actions {
     display: flex;

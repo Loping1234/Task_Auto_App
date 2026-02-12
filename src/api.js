@@ -81,6 +81,10 @@ io.use(async (socket, next) => {
 });
 
 io.on('connection', (socket) => {
+    const userId = socket.user?.id?.toString();
+    if (userId) {
+        socket.join(`notif:${userId}`);
+    }
     socket.on('chat:join', async ({ room } = {}) => {
         try {
             if (typeof room !== 'string' || !room.trim()) return;

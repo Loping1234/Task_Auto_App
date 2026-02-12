@@ -4,6 +4,7 @@ const Employee = require("../../models/employee");
 const TeamMessage = require("../../models/teamMessage");
 const AdminSubadminMessage = require("../../models/adminSubadminMessage");
 const Notification = require("../../models/notification");
+const { emitNotifications } = require("../utils/emitNotification");
 
 const getEmployeeTeams = async (req, res) => {
     try {
@@ -104,6 +105,7 @@ const sendTeamMessage = async (req, res) => {
 
                 if (notifications.length > 0) {
                     await Notification.insertMany(notifications);
+                    emitNotifications(req.app.get('io'), notifications);
                 }
             }
         } catch (notifErr) {
@@ -226,6 +228,7 @@ const sendAdminMessage = async (req, res) => {
 
             if (notifications.length > 0) {
                 await Notification.insertMany(notifications);
+                emitNotifications(req.app.get('io'), notifications);
             }
         } catch (notifErr) {
             console.error("[ADMIN CHAT NOTIFICATION ERROR]", notifErr);

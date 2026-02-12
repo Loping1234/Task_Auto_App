@@ -4,6 +4,7 @@ const Task = require("../../models/task");
 const Team = require("../../models/team");
 const Employee = require("../../models/employee");
 const Notification = require("../../models/notification");
+const { emitNotifications } = require("../utils/emitNotification");
 
 // Helper function to get teammate emails
 async function getTeammateEmails(teams, excludeEmail) {
@@ -78,7 +79,7 @@ const createTask = async (req, res) => {
             try {
                 const assignee = await collection.findOne({ email: assigneeEmail });
                 if (assignee && assignee._id.toString() !== req.user.id) {
-                    await Notification.create({
+                    const savedNotif = await Notification.create({
                         recipient: assignee._id,
                         sender: req.user.id,
                         task: task._id,
@@ -87,6 +88,7 @@ const createTask = async (req, res) => {
                         priority: 'primary',
                         category: 'assignment'
                     });
+                    emitNotifications(req.app.get('io'), savedNotif);
                 }
             } catch (notifErr) {
                 console.error("[NOTIFICATION ERROR]:", notifErr);
@@ -236,6 +238,7 @@ const updateTask = async (req, res) => {
 
             if (notifications.length > 0) {
                 await Notification.insertMany(notifications);
+                emitNotifications(req.app.get('io'), notifications);
             }
         } catch (notifErr) {
             console.error("[TASK EDIT NOTIFICATION ERROR]", notifErr);
@@ -297,7 +300,8 @@ const updateStatus = async (req, res) => {
                                     category: 'status_change'
                                 });
                             });
-                            await Promise.all(notifPromises);
+                            const savedNotifs = await Promise.all(notifPromises);
+                            emitNotifications(req.app.get('io'), savedNotifs);
                         } catch (innerErr) {
                             console.error("Inner notification error", innerErr);
                         }

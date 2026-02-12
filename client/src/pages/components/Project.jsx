@@ -4,6 +4,107 @@ import { useAuth } from '../../context/AuthContext';
 import { projectsAPI } from '../../api';
 import Navbar from '../../components/Navbar';
 import '../styles/Project.css';
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from "@dnd-kit/core";
+import {
+    arrayMove,
+    SortableContext,
+    useSortable,
+    horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+
+
+/* ─── Draggable status chip ─── */
+const SortableStatusChip = ({ id, label, color }) => {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        backgroundColor: color + '20',
+        color: color,
+        borderColor: color,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 10 : 'auto',
+    };
+
+    return (
+        <span
+            ref={setNodeRef}
+            style={style}
+            className={`status-chip status-chip-draggable${isDragging ? ' status-chip-dragging' : ''}`}
+            {...attributes}
+            {...listeners}
+        >
+            <i className="fas fa-grip-vertical status-grip"></i>
+            {label}
+        </span>
+    );
+};
+
+/* ─── Container with DndContext for one project's statuses ─── */
+const StatusChipsContainer = ({ projectId, statuses, onReorder }) => {
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+    );
+
+    // Use label+index as unique id since statuses may not have _id
+    const items = statuses.map((s, i) => ({ ...s, sortId: `${s.label}-${i}` }));
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = items.findIndex((s) => s.sortId === active.id);
+        const newIndex = items.findIndex((s) => s.sortId === over.id);
+        if (oldIndex === -1 || newIndex === -1) return;
+
+        const reordered = arrayMove(statuses, oldIndex, newIndex).map((s, i) => ({
+            ...s,
+            order: i,
+        }));
+
+        onReorder(projectId, reordered);
+    };
+
+    return (
+        <div className="project-statuses">
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext
+                    items={items.map((s) => s.sortId)}
+                    strategy={horizontalListSortingStrategy}
+                >
+                    {items.map((s) => (
+                        <SortableStatusChip
+                            key={s.sortId}
+                            id={s.sortId}
+                            label={s.label}
+                            color={s.color}
+                        />
+                    ))}
+                </SortableContext>
+            </DndContext>
+        </div>
+    );
+};
+
 
 const Project = () => {
     const { isAdmin, isSubadmin } = useAuth();
@@ -35,6 +136,24 @@ const Project = () => {
             setProjects(projects.filter(p => p._id !== id));
         } catch (err) {
             console.error('Failed to delete project', err);
+        }
+    };
+
+    /* Optimistic reorder + persist to backend */
+    const handleReorderStatuses = async (projectId, reorderedStatuses) => {
+        // Optimistic update
+        setProjects((prev) =>
+            prev.map((p) =>
+                p._id === projectId ? { ...p, customStatuses: reorderedStatuses } : p
+            )
+        );
+
+        try {
+            await projectsAPI.updateStatuses(projectId, reorderedStatuses);
+        } catch (err) {
+            console.error('Failed to save status order', err);
+            // Rollback on failure
+            fetchProjects();
         }
     };
 
@@ -129,15 +248,13 @@ const Project = () => {
                                     </p>
                                 </div>
 
-                                {/* Custom Status Tags */}
+                                {/* Draggable Custom Status Tags */}
                                 {proj.customStatuses && proj.customStatuses.length > 0 && (
-                                    <div className="project-statuses">
-                                        {proj.customStatuses.map((s, idx) => (
-                                            <span key={idx} className="status-chip" style={{ backgroundColor: s.color + '20', color: s.color, borderColor: s.color }}>
-                                                {s.label}
-                                            </span>
-                                        ))}
-                                    </div>
+                                    <StatusChipsContainer
+                                        projectId={proj._id}
+                                        statuses={proj.customStatuses}
+                                        onReorder={handleReorderStatuses}
+                                    />
                                 )}
 
                                 <div className="project-actions">

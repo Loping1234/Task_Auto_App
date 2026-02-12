@@ -4,6 +4,7 @@ const Task = require("../../models/task");
 const Team = require("../../models/team");
 const Employee = require("../../models/employee");
 const Notification = require("../../models/notification");
+const { emitNotifications } = require("../utils/emitNotification");
 
 const getAllTeams = async (req, res) => {
     try {
@@ -193,6 +194,7 @@ const updateTeam = async (req, res) => {
 
             if (notifications.length > 0) {
                 await Notification.insertMany(notifications);
+                emitNotifications(req.app.get('io'), notifications);
             }
         } catch (notifErr) {
             console.error("[TEAM MANAGEMENT NOTIFICATION ERROR]", notifErr);
