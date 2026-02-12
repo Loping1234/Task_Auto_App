@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
-const connect = mongoose.connect("mongodb://localhost:27017/Login-tut");
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/Login-tut";
+const connect = mongoose.connect(MONGODB_URI);
 
 connect.then(() => {
   console.log("Database connected successfully");
