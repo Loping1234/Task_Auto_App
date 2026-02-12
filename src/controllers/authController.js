@@ -51,7 +51,7 @@ const login = async (req, res) => {
         // Send OTP via email
         const emailUser = (process.env.EMAIL_USER || "").trim();
         const emailPass = (process.env.EMAIL_PASS || "").trim();
-        
+
         console.log("DEBUG: EMAIL_USER:", `'${emailUser}'`);
         console.log("DEBUG: EMAIL_PASS length:", emailPass.length);
         console.log("DEBUG: EMAIL_PASS starts with:", emailPass.substring(0, 2));
@@ -172,7 +172,8 @@ const signup = async (req, res) => {
             }
         });
 
-        const verificationLink = `http://localhost:5173/verify-email?token=${emailVerificationToken}&email=${email}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const verificationLink = `${frontendUrl}/verify-email?token=${emailVerificationToken}&email=${email}`;
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -235,7 +236,8 @@ const resendOtp = async (req, res) => {
             user.emailVerificationExpires = Date.now() + 24 * 3600000;
             await user.save();
 
-            const verificationLink = `http://localhost:5173/verify-email?token=${emailVerificationToken}&email=${email}`;
+            const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+            const verificationLink = `${frontendUrl}/verify-email?token=${emailVerificationToken}&email=${email}`;
             const transporter = nodemailer.createTransport({
                 service: "gmail",
                 auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
@@ -295,7 +297,7 @@ const forgotPassword = async (req, res) => {
             from: process.env.EMAIL_USER,
             to: email,
             subject: "Password Reset",
-            text: `You requested a password reset. Click the link to reset your password: http://localhost:5173/reset-password/${token}`
+            text: `You requested a password reset. Click the link to reset your password: ${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password/${token}`
         };
         await transporter.sendMail(mailOptions);
         res.json({ message: "Password reset link sent" });
