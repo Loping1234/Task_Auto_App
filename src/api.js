@@ -14,7 +14,12 @@ const app = express();
 // MIDDLEWARE
 // ==========================================
 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'];
+const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'http://localhost:3000',
+    'https://task-auto-app-9k64.vercel.app'
+];
 if (process.env.FRONTEND_URL) allowedOrigins.push(process.env.FRONTEND_URL);
 
 const corsOptions = {
