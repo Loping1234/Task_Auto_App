@@ -8,15 +8,24 @@ const { generateToken } = require("../middleware/auth");
 // Shared email transporter
 function getTransporter() {
     return nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 587,
-        secure: false, // use STARTTLS
-        auth: {
-            user: (process.env.EMAIL_USER || '').trim(),
-            pass: (process.env.EMAIL_PASS || '').trim()
-        },
-        family: 4 // Force IPv4 to prevent ENETUNREACH errors
-    });
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: false, // use STARTTLS
+    auth: {
+      user: (process.env.EMAIL_USER || '').trim(),
+      pass: (process.env.EMAIL_PASS || '').trim()
+    },
+    tls: {
+      rejectUnauthorized: false, // Accept self-signed certificates
+      ciphers: 'SSLv3'
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+    dnsTimeout: 10000,
+    logger: true, // Enable logging
+    debug: true // Enable debug output
+  });
 }
 
 const login = async (req, res) => {
