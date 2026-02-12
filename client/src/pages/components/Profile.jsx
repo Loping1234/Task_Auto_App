@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext'; // Adjusted import path
 import Navbar from '../../components/Navbar';
-import axios from 'axios';
+import api from '../../api';
 import '../styles/Dashboard.css'; // Reuse dashboard styles for layout
 import { getImageUrl } from '../../utils/imageUtils';
 
@@ -29,10 +29,7 @@ const Profile = () => {
         setMessage('');
         setError('');
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.put('http://localhost:5000/api/users/profile', { fullName }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.put('/users/profile', { fullName });
             setMessage(res.data.message);
             updateUser(res.data.user); // Update local user context
         } catch (err) {
@@ -52,12 +49,9 @@ const Profile = () => {
         setMessage('');
         setError('');
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/auth/change-password', {
+            const res = await api.post('/auth/change-password', {
                 currentPassword,
                 newPassword
-            }, {
-                headers: { Authorization: `Bearer ${token}` }
             });
             setMessage(res.data.message);
             setCurrentPassword('');
@@ -89,10 +83,8 @@ const Profile = () => {
         formData.append('profilePicture', fileInputRef.current.files[0]);
 
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.post('http://localhost:5000/api/users/profile-picture', formData, {
+            const res = await api.post('/users/profile-picture', formData, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
                 }
             });
@@ -112,10 +104,7 @@ const Profile = () => {
         setMessage('');
         setError('');
         try {
-            const token = localStorage.getItem('token');
-            const res = await axios.put('/api/users/toggle2fa', { enabled }, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const res = await api.put('/users/toggle2fa', { enabled });
             setTwoFactorEnabled(enabled);
             setMessage(res.data.message);
             updateUser({ twoFactorEnabled: enabled });
@@ -230,9 +219,9 @@ const Profile = () => {
 
                         {activeTab === 'security' && (
                             <div className="security-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                <div className="form-group" style={{ 
-                                    display: 'flex', 
-                                    alignItems: 'center', 
+                                <div className="form-group" style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
                                     justifyContent: 'space-between',
                                     padding: '1.5rem',
                                     background: 'var(--bg-primary)',
@@ -244,15 +233,15 @@ const Profile = () => {
                                             Two-Factor Authentication (2FA)
                                         </label>
                                         <p style={{ color: 'var(--text-secondary)', margin: 0, fontSize: '0.9rem' }}>
-                                            {twoFactorEnabled 
-                                                ? 'An OTP will be sent to your email each time you log in.' 
+                                            {twoFactorEnabled
+                                                ? 'An OTP will be sent to your email each time you log in.'
                                                 : '2FA is disabled. You will log in directly without OTP verification.'}
                                         </p>
                                     </div>
-                                    <label style={{ 
-                                        position: 'relative', 
-                                        display: 'inline-block', 
-                                        width: '60px', 
+                                    <label style={{
+                                        position: 'relative',
+                                        display: 'inline-block',
+                                        width: '60px',
                                         height: '34px',
                                         flexShrink: 0,
                                         marginLeft: '1rem'
