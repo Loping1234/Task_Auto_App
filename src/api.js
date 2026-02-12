@@ -149,10 +149,6 @@ io.on('connection', (socket) => {
 });
 
 // ==========================================
-// IMAGE UPLOAD SETUP
-// ==========================================
-
-// ==========================================
 // IMAGE UPLOAD SETUP (S3)
 // ==========================================
 
@@ -202,6 +198,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/watchlist", watchlistRoutes);
 app.use("/api/projects", projectRoutes);
+
 // ==========================================
 // SERVE REACT APP (Production)
 // ==========================================

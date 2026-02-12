@@ -1,5 +1,7 @@
 import axios from 'axios';
 
+// In production: VITE_API_URL = "https://your-app.fly.dev/api"
+// In local dev: falls back to "/api" (uses Vite proxy)
 const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 const api = axios.create({
