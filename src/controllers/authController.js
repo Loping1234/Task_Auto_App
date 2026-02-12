@@ -5,6 +5,19 @@ const collection = require("../config");
 const Employee = require("../../models/employee");
 const { generateToken } = require("../middleware/auth");
 
+// Shared email transporter — uses port 587 (STARTTLS) to work on Render
+function getTransporter() {
+    return nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 587,
+        secure: false,
+        auth: {
+            user: (process.env.EMAIL_USER || '').trim(),
+            pass: (process.env.EMAIL_PASS || '').trim()
+        }
+    });
+}
+
 const login = async (req, res) => {
     try {
         const { email, password } = req.body;
@@ -49,20 +62,7 @@ const login = async (req, res) => {
         await user.save();
 
         // Send OTP via email
-        const emailUser = (process.env.EMAIL_USER || "").trim();
-        const emailPass = (process.env.EMAIL_PASS || "").trim();
-
-        console.log("DEBUG: EMAIL_USER:", `'${emailUser}'`);
-        console.log("DEBUG: EMAIL_PASS length:", emailPass.length);
-        console.log("DEBUG: EMAIL_PASS starts with:", emailPass.substring(0, 2));
-
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: emailUser,
-                pass: emailPass
-            }
-        });
+        const transporter = getTransporter();
 
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -164,13 +164,7 @@ const signup = async (req, res) => {
             });
         }
 
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        const transporter = getTransporter();
 
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
         const verificationLink = `${frontendUrl}/verify-email?token=${emailVerificationToken}&email=${email}`;
@@ -238,10 +232,7 @@ const resendOtp = async (req, res) => {
 
             const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
             const verificationLink = `${frontendUrl}/verify-email?token=${emailVerificationToken}&email=${email}`;
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-            });
+            const transporter = getTransporter();
             await transporter.sendMail({
                 from: process.env.EMAIL_USER,
                 to: email,
@@ -256,10 +247,7 @@ const resendOtp = async (req, res) => {
             user.loginOtpExpires = Date.now() + 600000;
             await user.save();
 
-            const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS }
-            });
+            const transporter = getTransporter();
             await transporter.sendMail({
                 from: process.env.EMAIL_USER,
                 to: email,
@@ -286,13 +274,7 @@ const forgotPassword = async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000;
         await user.save();
 
-        const transporter = nodemailer.createTransport({
-            service: "gmail",
-            auth: {
-                user: process.env.EMAIL_USER,
-                pass: process.env.EMAIL_PASS
-            }
-        });
+        const transporter = getTransporter();
         const mailOptions = {
             from: process.env.EMAIL_USER,
             to: email,
