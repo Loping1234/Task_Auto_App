@@ -19,7 +19,7 @@ const AdminSubadminMessageSchema = new mongoose.Schema({
     },
     attachments: [{
         url: String,
-        type: String,
+        type: { type: String },
         name: String,
         size: Number
     }],
