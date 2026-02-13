@@ -12,12 +12,23 @@ const TeamMessageSchema = new mongoose.Schema({
     },
     message: {
         type: String,
-        required: true
+        default: ""
     },
     createdAt: {
         type: Date,
         default: Date.now
-    }
+    },
+    attachments: [{
+        url: String,
+        type: String,
+        name: String,
+        size: Number
+    }],
+    isEdited: {
+        type: Boolean,
+        default: false
+    },
+    editedAt: Date
 });
 
 const TeamMessage = mongoose.model("teamMessages", TeamMessageSchema);

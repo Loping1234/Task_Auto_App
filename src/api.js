@@ -138,6 +138,14 @@ io.on('connection', (socket) => {
 
                 await socket.join(room);
             }
+            // Typing indicators
+            socket.on('chat:typing', ({ room }) => {
+                socket.to(room).emit('chat:typing', { user: socket.user.email, room });
+            });
+
+            socket.on('chat:stop_typing', ({ room }) => {
+                socket.to(room).emit('chat:stop_typing', { user: socket.user.email, room });
+            });
         } catch (err) {
             // ignore join errors to avoid crashing socket handlers
         }
@@ -213,10 +221,11 @@ app.use("/api/users", userRoutes(upload));           // Pass upload middleware
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/tasks", taskRoutes(upload));            // Pass upload middleware
 app.use("/api", teamRoutes);                          // /api/teams, /api/employees, /api/subadmins
-app.use("/api/chat", chatRoutes);
+app.use("/api/chat", chatRoutes(upload));
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/watchlist", watchlistRoutes);
 app.use("/api/projects", projectRoutes);
+
 
 // ==========================================
 // SERVE REACT APP (Production)

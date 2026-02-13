@@ -109,13 +109,17 @@ export const chatAPI = {
     // Team Chat (Employee)
     getEmployeeTeams: () => api.get('/chat/teams'),
     getTeamMessages: (teamName) => api.get(`/chat/team/${encodeURIComponent(teamName)}`),
-    sendTeamMessage: (teamName, message) => api.post(`/chat/team/${encodeURIComponent(teamName)}`, { message }),
+    sendTeamMessage: (teamName, data) => api.post(`/chat/team/${encodeURIComponent(teamName)}`, data),
+    editMessage: (messageId, newMessage, type) => api.put(`/chat/team/${encodeURIComponent(messageId)}`, { message: newMessage, type }),
+    deleteMessage: (messageId) => api.delete(`/chat/team/${encodeURIComponent(messageId)}`),
 
     // Admin-Subadmin Chat
     getSubadmins: () => api.get('/subadmins'),
     getAdminSubadminMessages: (channel) => api.get(`/chat/admin?channel=${encodeURIComponent(channel)}`),
-    sendAdminSubadminMessage: (receiverEmail, message, channel) =>
-        api.post('/chat/admin', { receiverEmail, message, channel }),
+    sendAdminSubadminMessage: (data) => api.post('/chat/admin', data),
+    sendAdminSubadminFile: (fileData) => api.post('/chat/admin/file', fileData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 // Messages API (legacy, kept for backwards compatibility)
@@ -124,6 +128,8 @@ export const messagesAPI = {
     sendTeamMessage: (teamName, message) => api.post(`/messages/team/${encodeURIComponent(teamName)}`, { message }),
     getAdminChat: () => api.get('/messages/admin-chat'),
     sendAdminMessage: (message) => api.post('/messages/admin-chat', { message }),
+    editMessage: (messageId, newMessage, type) => api.put(`/messages/team/${encodeURIComponent(messageId)}`, { message: newMessage, type }),
+    deleteMessage: (messageId) => api.delete(`/messages/team/${encodeURIComponent(messageId)}`),
 };
 
 // Notifications API

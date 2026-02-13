@@ -57,11 +57,16 @@ const getTeamMessages = async (req, res) => {
 
 const sendTeamMessage = async (req, res) => {
     try {
+        console.log("--- sendTeamMessage Debug ---");
+        console.log("Headers Content-Type:", req.headers['content-type']);
+        console.log("Body:", req.body);
+        console.log("Files:", req.files);
+
         const { email, role } = req.user;
         const teamName = decodeURIComponent(req.params.teamName);
         const { message } = req.body;
 
-        if (!message?.trim()) {
+        if ((!message || !message.trim()) && (!req.files || req.files.length === 0)) {
             return res.status(400).json({ message: "Message cannot be empty" });
         }
 
@@ -72,10 +77,21 @@ const sendTeamMessage = async (req, res) => {
             }
         }
 
+        let attachments = [];
+        if (req.files && req.files.length > 0) {
+            attachments = req.files.map(file => ({
+                url: file.location || `/imgs/${file.filename}`, // S3 or Local
+                type: file.mimetype,
+                name: file.originalname,
+                size: file.size
+            }));
+        }
+
         const newMessage = await TeamMessage.create({
             teamName,
             senderEmail: email,
-            message: message.trim()
+            message: message ? message.trim() : "",
+            attachments
         });
 
         const io = req.app.get('io');
@@ -159,7 +175,7 @@ const sendAdminMessage = async (req, res) => {
         const { email, role } = req.user;
         const { receiverEmail, message, channel } = req.body;
 
-        if (!message?.trim()) {
+        if ((!message || !message.trim()) && (!req.files || req.files.length === 0)) {
             return res.status(400).json({ message: "Message cannot be empty" });
         }
 
@@ -168,10 +184,21 @@ const sendAdminMessage = async (req, res) => {
             actualReceiver = 'all@subadmin.com';
         }
 
+        let attachments = [];
+        if (req.files && req.files.length > 0) {
+            attachments = req.files.map(file => ({
+                url: file.location || `/imgs/${file.filename}`,
+                type: file.mimetype,
+                name: file.originalname,
+                size: file.size
+            }));
+        }
+
         const newMessage = await AdminSubadminMessage.create({
             senderEmail: email,
             receiverEmail: actualReceiver,
-            message: message.trim()
+            message: message ? message.trim() : "",
+            attachments
         });
         try {
             const io = req.app.get('io');
@@ -241,10 +268,72 @@ const sendAdminMessage = async (req, res) => {
     }
 };
 
+const editMessage = async (req, res) => {
+    try {
+        const { email } = req.user;
+        const { messageId } = req.params;
+        const { message } = req.body;
+
+        if (!message || !message.trim()) {
+            return res.status(400).json({ message: "Message cannot be empty" });
+        }
+
+        // Try finding in TeamMessage first
+        let msg = await TeamMessage.findById(messageId);
+        let type = 'team';
+
+        // If not found, try AdminSubadminMessage
+        if (!msg) {
+            msg = await AdminSubadminMessage.findById(messageId);
+            type = 'admin';
+        }
+
+        if (!msg) {
+            return res.status(404).json({ message: "Message not found" });
+        }
+
+        if (msg.senderEmail !== email) {
+            return res.status(403).json({ message: "You can only edit your own messages" });
+        }
+
+        msg.message = message.trim();
+        msg.isEdited = true;
+        msg.editedAt = new Date();
+        await msg.save();
+
+        const io = req.app.get('io');
+        if (io) {
+            if (type === 'team') {
+                io.to(`team:${msg.teamName}`).emit('chat:message_updated', msg);
+            } else {
+                // Admin chat broadcast logic
+                if (msg.receiverEmail === 'all@subadmin.com') {
+                    io.to('admin:general').emit('chat:message_updated', msg);
+                } else {
+                    // Emit to DM rooms of both sender and receiver
+                    const role = req.user.role; // This might be tricky if we don't have role here easily, but we have msg details
+                    // Safer to emission to specific DM rooms directly if we reconstruct them, 
+                    // or just emit to the rooms the clients are listening to:
+                    // Receiver's DM room
+                    io.to(`admin:dm:${msg.receiverEmail}`).emit('chat:message_updated', msg);
+                    // Sender's DM room (so they see the update on other devices)
+                    io.to(`admin:dm:${msg.senderEmail}`).emit('chat:message_updated', msg);
+                }
+            }
+        }
+
+        res.json({ message: msg });
+    } catch (err) {
+        console.error("Edit message error", err);
+        res.status(500).json({ message: "Failed to edit message" });
+    }
+};
+
 module.exports = {
     getEmployeeTeams,
     getTeamMessages,
     sendTeamMessage,
     getAdminMessages,
-    sendAdminMessage
+    sendAdminMessage,
+    editMessage
 };

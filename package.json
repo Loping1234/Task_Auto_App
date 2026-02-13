@@ -39,6 +39,6 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "documentation": "^14.0.3"
+    "documentation": "^6.2.0"
   }
 }

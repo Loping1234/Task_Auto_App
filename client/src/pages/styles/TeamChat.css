@@ -389,3 +389,114 @@
 .help-tip-box a:hover {
     text-decoration: underline;
 }
+
+/* Attachments & Editing */
+.attachments-preview-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: #f1f2f6;
+    border-bottom: 1px solid var(--border-color);
+    width: 100%;
+}
+
+.attachment-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    border: 1px solid var(--border-color);
+}
+
+.attachment-preview-item i {
+    cursor: pointer;
+    color: #ef4444;
+}
+
+.message-attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.attachment-preview {
+    max-width: 200px;
+    max-height: 200px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid var(--border-color);
+}
+
+.attachment-link {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.5rem;
+    border-radius: 4px;
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.85rem;
+}
+
+.edited-label {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    font-style: italic;
+    margin-left: 0.25rem;
+}
+
+.edit-icon {
+    font-size: 0.7rem;
+    margin-left: 0.5rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.message-bubble:hover .edit-icon {
+    opacity: 1;
+}
+
+.typing-indicator {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    color: #6b7280;
+    font-style: italic;
+    background: transparent;
+}
+
+.attach-btn,
+.cancel-edit-btn {
+    width: 48px;
+    height: 48px;
+    /* Match send-btn height */
+    border-radius: 50%;
+    background: transparent;
+    color: #4b5563;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.attach-btn:hover,
+.cancel-edit-btn:hover {
+    background: #f3f4f6;
+    color: var(--primary);
+    border-color: var(--primary);
+}
+
+.chat-footer {
+    flex-wrap: wrap;
+    align-items: flex-end;
+    /* Align bottom */
+}

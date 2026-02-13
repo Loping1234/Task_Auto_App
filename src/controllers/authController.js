@@ -8,24 +8,21 @@ const { generateToken } = require("../middleware/auth");
 // Shared email transporter
 function getTransporter() {
     return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: false, // use STARTTLS
-    auth: {
-      user: (process.env.EMAIL_USER || '').trim(),
-      pass: (process.env.EMAIL_PASS || '').trim()
-    },
-    tls: {
-      rejectUnauthorized: false, // Accept self-signed certificates
-      ciphers: 'SSLv3'
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-    dnsTimeout: 10000,
-    logger: true, // Enable logging
-    debug: true // Enable debug output
-  });
+        service: 'gmail',
+        auth: {
+            user: (process.env.EMAIL_USER || '').trim(),
+            pass: (process.env.EMAIL_PASS || '').trim()
+        },
+        tls: {
+            rejectUnauthorized: false // Accept self-signed certificates if any
+        },
+        connectionTimeout: 10000, // 10 seconds
+        greetingTimeout: 10000,
+        socketTimeout: 10000,
+        dnsTimeout: 10000,
+        logger: true, // Enable logging
+        debug: true // Enable debug output
+    });
 }
 
 const login = async (req, res) => {
@@ -151,11 +148,10 @@ const signup = async (req, res) => {
         } else if (email === "pranaykumar1029@gmail.com" || email === "lopingcucumber@gmail.com") {
             role = "subadmin";
         } else if (domain === "gmail.com") {
-            role = "employee";
-        } else {
-            if (domain === "admin.com") role = "admin";
-            else if (domain === "subadmin.com") role = "subadmin";
-        }
+                           role = "employee";
+                       }
+               else if (domain === "admin.com") role = "admin";
+               else if (domain === "subadmin.com") role = "subadmin";
 
         const emailVerificationToken = crypto.randomBytes(32).toString("hex");
         const emailVerificationExpires = Date.now() + 24 * 3600000; // 24 hours
