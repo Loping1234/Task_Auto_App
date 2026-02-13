@@ -171,59 +171,77 @@ const AdminChat = () => {
     };
 
     const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (!newMessage.trim() && attachments.length === 0) return;
+    e.preventDefault();
+    if (!newMessage.trim() && attachments.length === 0) return;
 
-        setSending(true);
-        try {
-            if (editingMessageId) {
-                await chatAPI.editMessage(editingMessageId, newMessage);
-                setEditingMessageId(null);
+    setSending(true);
+    try {
+        if (editingMessageId) {
+            await chatAPI.editMessage(editingMessageId, newMessage);
+            setEditingMessageId(null);
+        } else {
+            let receiverEmail;
+            if (channel === 'general') {
+                receiverEmail = 'all@subadmin.com';
+            } else if (isAdmin) {
+                receiverEmail = channel;
             } else {
-                let receiverEmail;
-                if (channel === 'general') {
-                    receiverEmail = 'all@subadmin.com';
-                } else if (isAdmin) {
-                    receiverEmail = channel;
-                } else {
-                    receiverEmail = 'admin@admin.com'; // Subadmin sending to admin
-                }
-
-                let data = { receiverEmail, message: newMessage, channel };
-                if (attachments.length > 0) {
-                    const formData = new FormData();
-                    formData.append('receiverEmail', receiverEmail);
-                    formData.append('message', newMessage);
-                    formData.append('channel', channel);
-                    attachments.forEach(file => {
-                        formData.append('attachments', file);
-                    });
-                    data = formData;
-                }
-
-                await chatAPI.sendAdminSubadminMessage(data);
+                receiverEmail = 'admin@admin.com';
             }
 
-            setNewMessage('');
-            setAttachments([]);
-            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
-            const room = channel === 'general'
-                ? 'admin:general'
-                : isAdmin
-                    ? `admin:dm:${channel}`
-                    : `admin:dm:${user?.email}`;
-            socket.emit('chat:stop_typing', { room });
+            // ===== DEBUG LOGS =====
+            console.log('Attachments array:', attachments);
+            console.log('Attachments length:', attachments.length);
+            console.log('First attachment type:', attachments[0]?.constructor.name);
+            // ======================
 
-            // Socket.IO should deliver the new message; fallback to refresh if disconnected.
-            if (!socket.connected) {
-                await fetchMessages();
+            if (attachments.length > 0) {
+                const formData = new FormData();
+                formData.append('receiverEmail', receiverEmail);
+                formData.append('message', newMessage);
+                formData.append('channel', channel);
+                
+                // Append each file
+                attachments.forEach((file, index) => {
+                    console.log(`Appending file ${index}:`, file.name, file.type, file.size);
+                    formData.append('attachments', file);
+                });
+
+                // Debug FormData
+                for (let pair of formData.entries()) {
+                    console.log('FormData:', pair[0], pair[1]);
+                }
+
+                await chatAPI.sendAdminSubadminMessage(formData);
+            } else {
+                await chatAPI.sendAdminSubadminMessage({ 
+                    receiverEmail, 
+                    message: newMessage, 
+                    channel 
+                });
             }
-        } catch (err) {
-            console.error('Failed to send message', err);
-        } finally {
-            setSending(false);
         }
-    };
+
+        setNewMessage('');
+        setAttachments([]);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        const room = channel === 'general'
+            ? 'admin:general'
+            : isAdmin
+                ? `admin:dm:${channel}`
+                : `admin:dm:${user?.email}`;
+        socket.emit('chat:stop_typing', { room });
+
+        if (!socket.connected) {
+            await fetchMessages();
+        }
+    } catch (err) {
+        console.error('Failed to send message', err);
+        console.error('Error response:', err.response?.data);
+    } finally {
+        setSending(false);
+    }
+};
 
     const switchChannel = (newChannel) => {
         setSearchParams({ channel: newChannel });

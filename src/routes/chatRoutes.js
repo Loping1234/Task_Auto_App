@@ -1,4 +1,3 @@
-// src/routes/chatRoutes.js
 const express = require("express");
 const { verifyToken, isAdminOrSubadmin } = require("../middleware/auth");
 const {
@@ -18,11 +17,18 @@ module.exports = (upload) => {
     router.get("/team/:teamName", verifyToken, getTeamMessages);
     router.post("/team/:teamName", verifyToken, upload.array('attachments', 5), sendTeamMessage);
 
-    // Admin-Subadmin chat
-    router.get("/admin", verifyToken, isAdminOrSubadmin, getAdminMessages);
-    router.post("/admin", verifyToken, isAdminOrSubadmin, upload.array('attachments', 5), sendAdminMessage);
+    // Admin-Subadmin chat with error handling
+    router.post("/admin", verifyToken, isAdminOrSubadmin, (req, res, next) => {
+        upload.array('attachments', 5)(req, res, (err) => {
+            if (err) {
+                console.error('Multer error:', err);
+                return res.status(400).json({ message: err.message });
+            }
+            next();
+        });
+    }, sendAdminMessage);
 
-    // Edit Message (works for both if controller handles logic)
+    // Edit Message
     router.put("/message/:messageId", verifyToken, editMessage);
 
     return router;

@@ -175,7 +175,6 @@ app.use('/imgs', express.static(imgsDir));
 let upload;
 
 if (process.env.AWS_BUCKET_NAME) {
-    // Use S3 storage in production
     const s3Client = require('./config/s3');
     const multerS3 = require('multer-s3');
 
@@ -189,17 +188,18 @@ if (process.env.AWS_BUCKET_NAME) {
             key: function (req, file, cb) {
                 cb(null, Date.now().toString() + '-' + file.originalname);
             }
-        })
+        }),
+        limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
     });
-    console.log('✅ Using S3 for file uploads');
 } else {
-    // Fallback to local disk storage
     const storage = multer.diskStorage({
         destination: (req, file, cb) => cb(null, imgsDir),
         filename: (req, file, cb) => cb(null, Date.now() + path.extname(file.originalname))
     });
-    upload = multer({ storage });
-    console.log('⚠️  AWS_BUCKET_NAME not set — using local disk for file uploads');
+    upload = multer({ 
+        storage,
+        limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+    });
 }
 
 // ==========================================
