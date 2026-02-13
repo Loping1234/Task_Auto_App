@@ -126,7 +126,7 @@
 }
 
 .section-title {
-  padding: 8px 12px;
+  padding: 5px 8px;
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--nav-icon);
@@ -141,7 +141,7 @@
 .nav-item {
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 5px;
   min-height: 40px;
   border-radius: 10px;
   text-decoration: none;
@@ -153,7 +153,7 @@
   width: 100%;
   border: none;
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   text-align: left;
   /* Ensure buttons align like links */
 }
@@ -175,7 +175,7 @@
 /* Icon Styling */
 .nav-item i {
   width: 24px;
-  font-size: 1.4rem;
+  font-size: 1rem;
   margin-right: 24px;
   color: var(--nav-icon);
   text-align: center;
@@ -186,7 +186,7 @@
 .navbar.collapsed .nav-item {
   flex-direction: column;
   justify-content: center;
-  padding: 10px 0;
+  padding: 5px 0;
   min-height: auto;
   gap: 10px;
   border-radius: 10px;
@@ -200,7 +200,7 @@
 .nav-text {
   flex: 1;
   white-space: nowrap;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
   opacity: 1;
   transition: opacity 0.2s;
 }
@@ -224,14 +224,14 @@
 /* User Profile Section */
 .user-profile-section {
   margin-top: auto;
-  padding-top: 12px;
+  padding-top: 10px;
   border-top: 1px solid var(--border-color);
 }
 
 .user-profile-link {
   display: flex;
   align-items: center;
-  padding: 8px 23px;
+  padding: 5px 20px;
   gap: 12px;
   text-decoration: none;
   color: var(--nav-text);
@@ -289,7 +289,7 @@
 /* Collapsed adjustments for user profile */
 .navbar.collapsed .user-profile-link {
   justify-content: center;
-  padding: 10px 0;
+  padding: 5px 0;
 }
 
 .navbar.collapsed .user-profile-link img,
