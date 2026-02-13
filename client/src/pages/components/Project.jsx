@@ -126,7 +126,7 @@ const Project = () => {
                                             </div>
                                         </td>
                                         <td>
-                                            <span className="progress-cell">{proj.progress || 0}%</span>
+                                            <span className="progress-cell">{proj.progress || 'No Tasks'}</span>
                                         </td>
                                         <td>
                                             <span className={`status-badge ${getStatusClass(proj.computedStatus)}`}>

@@ -132,11 +132,19 @@ const updateProject = async (req, res) => {
             return res.status(403).json({ message: "Only admin can update projects" });
         }
 
-        const { projectName, description } = req.body;
+        const { projectName, description, employees, assignedSubadmins } = req.body;
+
+        const updateData = {
+            projectName,
+            description
+        };
+
+        if (employees) updateData.employees = employees;
+        if (assignedSubadmins) updateData.assignedSubadmins = assignedSubadmins;
 
         const project = await Project.findByIdAndUpdate(
             req.params.id,
-            { projectName, description },
+            updateData,
             { new: true }
         );
 

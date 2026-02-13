@@ -169,10 +169,12 @@ const EditProject = () => {
         setSaving(true);
         setError('');
         try {
-            // Update basic info
+            // Update basic info & members
             await projectsAPI.update(id, {
                 projectName: formData.projectName.trim(),
                 description: formData.description.trim(),
+                employees: selectedEmployees,
+                assignedSubadmins: selectedSubadmins
             });
 
             // Update statuses (strip _uid before sending)
@@ -219,7 +221,7 @@ const EditProject = () => {
             <main className="page-main">
                 <div className="page-header">
                     <div>
-                        <Link to={`/projects/${id}`} className="back-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: '0.5rem' }}>
+                        <Link to={`/projects`} className="back-link" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--text-secondary)', textDecoration: 'none', marginBottom: '0.5rem' }}>
                             <i className="fas fa-arrow-left"></i> Back to Project
                         </Link>
                         <h1>Edit Project</h1>

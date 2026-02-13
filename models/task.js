@@ -33,7 +33,7 @@ const TaskSchema = new mongoose.Schema(
         },
         assigneeEmail: {
             type: String,
-            required: true
+            required: false
         },
         assignedBy: {
             type: String,
@@ -96,7 +96,12 @@ const TaskSchema = new mongoose.Schema(
                     default: Date.now
                 }
             }
-        ]
+        ],
+        project: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "projects",
+            required: false
+        }
     },
     {
         timestamps: true

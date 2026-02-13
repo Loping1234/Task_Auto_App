@@ -356,6 +356,37 @@
     font-weight: 500;
 }
 
+/* ── Tabs ── */
+.pd-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1px;
+}
+
+.filter-tab {
+    background: none;
+    border: none;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    margin-bottom: -3px;
+    /* Align with bottom border */
+}
+
+.filter-tab:hover {
+    color: var(--primary);
+}
+
+.filter-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
 .pd-task-status {
     display: inline-block;
     padding: 0.2rem 0.5rem;

@@ -95,16 +95,6 @@ const Members = () => {
                             </button>
                         )}
                     </div>
-
-                    <div className="search-box">
-                        <i className="fas fa-search"></i>
-                        <input
-                            type="text"
-                            placeholder={`Search ${activeView}...`}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
                 </div>
 
                 {error && <div className="error-banner">{error}</div>}

@@ -13,6 +13,7 @@ const ProjectDetails = () => {
     const [project, setProject] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [activeView, setActiveView] = useState('employees');
 
     useEffect(() => {
         fetchProject();
@@ -194,50 +195,76 @@ const ProjectDetails = () => {
                         </div>
                     </div>
 
-                    {/* Subadmins */}
+                    {/* Employees & Subadmins */}
                     <div className="pd-section">
-                        <h3><i className="fas fa-user-shield"></i> Subadmins</h3>
-                        {project.assignedSubadmins && project.assignedSubadmins.length > 0 ? (
-                            <div className="pd-member-list">
-                                {project.assignedSubadmins.map(sa => (
-                                    <div key={sa._id} className="pd-member-card">
-                                        <div className="pd-member-avatar">{(sa.fullName || sa.email)?.[0]?.toUpperCase()}</div>
-                                        <div>
-                                            <div className="pd-member-name">{sa.fullName || sa.email}</div>
-                                            <div className="pd-member-email">{sa.email}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-muted">No subadmins assigned</p>
-                        )}
-                    </div>
+                        <div className="pd-tabs">
+                            <button
+                                className={`filter-tab ${activeView === 'employees' ? 'active' : ''}`}
+                                onClick={() => setActiveView('employees')}
+                            >
+                                Employees
+                            </button>
+                            <button
+                                className={`filter-tab ${activeView === 'subadmins' ? 'active' : ''}`}
+                                onClick={() => setActiveView('subadmins')}
+                            >
+                                Subadmins
+                            </button>
+                        </div>
 
-                    {/* Employees */}
-                    <div className="pd-section">
-                        <h3><i className="fas fa-users"></i> Team Members</h3>
-                        {project.employees && project.employees.length > 0 ? (
-                            <div className="pd-member-list">
-                                {project.employees.map(emp => (
-                                    <div key={emp._id} className="pd-member-card">
-                                        <div className="pd-member-avatar">{(emp.fullName || emp.email)?.[0]?.toUpperCase()}</div>
-                                        <div>
-                                            <div className="pd-member-name">{emp.fullName || emp.email}</div>
-                                            <div className="pd-member-email">{emp.email}</div>
-                                        </div>
+                        {activeView === 'employees' ? (
+                            <>
+                                {project.employees && project.employees.length > 0 ? (
+                                    <div className="pd-member-list">
+                                        {project.employees.map(emp => (
+                                            <div key={emp._id} className="pd-member-card">
+                                                <div className="pd-member-avatar">{(emp.fullName || emp.email)?.[0]?.toUpperCase()}</div>
+                                                <div>
+                                                    <div className="pd-member-name">{emp.fullName || emp.email}</div>
+                                                    <div className="pd-member-email">{emp.email}</div>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                ))}
-                            </div>
+                                ) : (
+                                    <p className="text-muted">No employees assigned</p>
+                                )}
+                            </>
                         ) : (
-                            <p className="text-muted">No members assigned</p>
+                            <>
+                                {project.assignedSubadmins && project.assignedSubadmins.length > 0 ? (
+                                    <div className="pd-member-list">
+                                        {project.assignedSubadmins.map(sa => (
+                                            <div key={sa._id} className="pd-member-card">
+                                                <div className="pd-member-avatar">{(sa.fullName || sa.email)?.[0]?.toUpperCase()}</div>
+                                                <div>
+                                                    <div className="pd-member-name">{sa.fullName || sa.email}</div>
+                                                    <div className="pd-member-email">{sa.email}</div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-muted">No subadmins assigned</p>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>
 
                 {/* Tasks */}
                 <div className="pd-section pd-tasks-section">
-                    <h3><i className="fas fa-tasks"></i> Tasks ({project.tasks?.length || 0})</h3>
+                    <div className="pd-section-header">
+                        <h3><i className="fas fa-tasks"></i> Tasks ({project.tasks?.length || 0})</h3>
+                        {(isAdmin || isSubadmin) && (
+                            <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => navigate('/assign', { state: { projectId: id } })}
+                            >
+                                <i className="fas fa-plus"></i> Add Task
+                            </button>
+                        )}
+                    </div>
                     {project.tasks && project.tasks.length > 0 ? (
                         <div className="pd-tasks-table-wrapper">
                             <table className="pd-tasks-table">

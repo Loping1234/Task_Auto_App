@@ -56,6 +56,7 @@ export const tasksAPI = {
     }),
     update: (id, data, config = {}) => api.put(`/tasks/${id}`, data, config),
     updateStatus: (id, status) => api.patch(`/tasks/${id}/status`, { status }),
+    updateCustomStatuses: (id, customStatuses) => api.put(`/projects/${id}/statuses`, customStatuses),
     updateAssignee: (id, assignee) => api.patch(`/tasks/${id}/assignee`, { assignee }),
     delete: (id) => api.delete(`/tasks/${id}`),
     addComment: (id, data) => api.post(`/tasks/${id}/comments`, data, {
@@ -83,7 +84,7 @@ export const projectsAPI = {
     delete: (id) => api.delete(`/projects/${id}`),
     addMembers: (id, data) => api.post(`/projects/${id}/members`, data),
     removeMember: (id, userId, memberType) => api.delete(`/projects/${id}/members`, { data: { userId, memberType } }),
-    updateStatuses: (id, customStatuses) => api.put(`/projects/${id}/statuses`, { customStatuses }),
+    updateCustomStatuses: (id, customStatuses) => api.put(`/projects/${id}/statuses`, customStatuses),
     addTask: (id, taskId) => api.post(`/projects/${id}/tasks`, { taskId }),
     removeTask: (id, taskId) => api.delete(`/projects/${id}/tasks`, { data: { taskId } }),
 };

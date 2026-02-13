@@ -48,15 +48,25 @@ const getAllTasks = async (req, res) => {
 
 const createTask = async (req, res) => {
     try {
-        const { title, description, startDate, endDate, status, assigneeEmail, teamName } = req.body;
+        const { title, description, startDate, endDate, status, assigneeEmail, teamName, projectId } = req.body;
         const { role } = req.user;
 
         if (role === 'employee') {
             // Optional: Add validation logic here
         }
 
-        if (!title || (!assigneeEmail && !teamName)) {
-            return res.status(400).json({ message: "Title and either an assignee or team are required" });
+        if (!title || (!assigneeEmail && !teamName && !projectId)) {
+            return res.status(400).json({ message: "Title and either an assignee, team, or project are required" });
+        }
+
+        // Validate project if provided
+        let project = null;
+        if (projectId) {
+            const Project = require("../../models/project");
+            project = await Project.findById(projectId);
+            if (!project) {
+                return res.status(404).json({ message: "Project not found" });
+            }
         }
 
         const taskData = {
@@ -69,10 +79,17 @@ const createTask = async (req, res) => {
             status: status || "Pending",
             assigneeEmail: assigneeEmail || null,
             teamName: teamName || null,
+            project: projectId || null,
             assignedBy: req.user.fullName || req.user.email
         };
 
         const task = await Task.create(taskData);
+
+        // Add task to project if applicable
+        if (project) {
+            project.tasks.push(task._id);
+            await project.save();
+        }
 
         // Send Notification if assigned to someone
         if (assigneeEmail) {
